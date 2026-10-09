@@ -119,7 +119,8 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
   1. Add temporary logging of the `WM_NOTIFY` codes from the header in
      `TableView.lvWndProc` and of each `updateLVSizes` call.
   2. No example has frozen columns, so write a test program with a
-     `TableView` that has a frozen column (`TableViewColumn.Frozen`) and
+     `TableView` that has a frozen column (`Frozen: true` in the declarative
+     `TableViewColumn`, or `TableViewColumn.SetFrozen(true)`) and
      some normal ones: `updateLVSizes` keeps the frozen and the normal
      list view aligned. Also run `examples/tableview`.
   3. Change a column width programmatically with `LVM_SETCOLUMNWIDTH`, and
