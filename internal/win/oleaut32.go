@@ -18,36 +18,21 @@ type DISPID int32
 const (
 	DISPID_BEFORENAVIGATE             DISPID = 100
 	DISPID_NAVIGATECOMPLETE           DISPID = 101
-	DISPID_STATUSTEXTCHANGE           DISPID = 102
 	DISPID_QUIT                       DISPID = 103
-	DISPID_DOWNLOADCOMPLETE           DISPID = 104
-	DISPID_COMMANDSTATECHANGE         DISPID = 105
-	DISPID_DOWNLOADBEGIN              DISPID = 106
 	DISPID_NEWWINDOW                  DISPID = 107
-	DISPID_PROGRESSCHANGE             DISPID = 108
 	DISPID_WINDOWMOVE                 DISPID = 109
 	DISPID_WINDOWRESIZE               DISPID = 110
 	DISPID_WINDOWACTIVATE             DISPID = 111
 	DISPID_PROPERTYCHANGE             DISPID = 112
-	DISPID_TITLECHANGE                DISPID = 113
 	DISPID_TITLEICONCHANGE            DISPID = 114
 	DISPID_FRAMEBEFORENAVIGATE        DISPID = 200
 	DISPID_FRAMENAVIGATECOMPLETE      DISPID = 201
 	DISPID_FRAMENEWWINDOW             DISPID = 204
-	DISPID_BEFORENAVIGATE2            DISPID = 250
 	DISPID_NEWWINDOW2                 DISPID = 251
-	DISPID_NAVIGATECOMPLETE2          DISPID = 252
-	DISPID_ONQUIT                     DISPID = 253
-	DISPID_ONVISIBLE                  DISPID = 254
-	DISPID_ONTOOLBAR                  DISPID = 255
 	DISPID_ONMENUBAR                  DISPID = 256
-	DISPID_ONSTATUSBAR                DISPID = 257
 	DISPID_ONFULLSCREEN               DISPID = 258
-	DISPID_DOCUMENTCOMPLETE           DISPID = 259
-	DISPID_ONTHEATERMODE              DISPID = 260
 	DISPID_ONADDRESSBAR               DISPID = 261
 	DISPID_WINDOWSETRESIZABLE         DISPID = 262
-	DISPID_WINDOWCLOSING              DISPID = 263
 	DISPID_WINDOWSETLEFT              DISPID = 264
 	DISPID_WINDOWSETTOP               DISPID = 265
 	DISPID_WINDOWSETWIDTH             DISPID = 266
@@ -55,9 +40,7 @@ const (
 	DISPID_CLIENTTOHOSTWINDOW         DISPID = 268
 	DISPID_SETSECURELOCKICON          DISPID = 269
 	DISPID_FILEDOWNLOAD               DISPID = 270
-	DISPID_NAVIGATEERROR              DISPID = 271
 	DISPID_PRIVACYIMPACTEDSTATECHANGE DISPID = 272
-	DISPID_NEWWINDOW3                 DISPID = 273
 )
 
 var (
@@ -66,12 +49,6 @@ var (
 
 const (
 	DISP_E_MEMBERNOTFOUND = 0x80020003
-)
-
-const (
-	CSC_UPDATECOMMANDS  = ^0x0
-	CSC_NAVIGATEFORWARD = 0x1
-	CSC_NAVIGATEBACK    = 0x2
 )
 
 type IDispatchVtbl struct {
@@ -107,7 +84,6 @@ const (
 	VT_UNKNOWN          VARTYPE = 13
 	VT_DECIMAL          VARTYPE = 14
 	VT_I1               VARTYPE = 16
-	VT_UI1              VARTYPE = 17
 	VT_UI2              VARTYPE = 18
 	VT_UI4              VARTYPE = 19
 	VT_I8               VARTYPE = 20
@@ -137,7 +113,6 @@ const (
 	VT_VERSIONED_STREAM VARTYPE = 73
 	VT_BSTR_BLOB        VARTYPE = 0xfff
 	VT_VECTOR           VARTYPE = 0x1000
-	VT_ARRAY            VARTYPE = 0x2000
 	VT_BYREF            VARTYPE = 0x4000
 	VT_RESERVED         VARTYPE = 0x8000
 	VT_ILLEGAL          VARTYPE = 0xffff
@@ -150,11 +125,6 @@ type VARIANTARG struct {
 }
 
 type VARIANT_BOOL int16
-
-const (
-	VARIANT_TRUE  VARIANT_BOOL = -1
-	VARIANT_FALSE VARIANT_BOOL = 0
-)
 
 type SAFEARRAYBOUND struct {
 	CElements uint32
@@ -418,22 +388,15 @@ type DISPPARAMS struct {
 }
 
 var (
-	// Library
-	liboleaut32 *windows.LazyDLL
 
 	// Functions
 	sysAllocString *windows.LazyProc
-	sysFreeString  *windows.LazyProc
 	sysStringLen   *windows.LazyProc
 )
 
 func init() {
-	// Library
-	liboleaut32 = windows.NewLazySystemDLL("oleaut32.dll")
-
 	// Functions
 	sysAllocString = liboleaut32.NewProc("SysAllocString")
-	sysFreeString = liboleaut32.NewProc("SysFreeString")
 	sysStringLen = liboleaut32.NewProc("SysStringLen")
 }
 
@@ -444,13 +407,6 @@ func SysAllocString(s string) *uint16 /*BSTR*/ {
 		0)
 
 	return (*uint16) /*BSTR*/ (unsafe.Pointer(ret))
-}
-
-func SysFreeString(bstr *uint16 /*BSTR*/) {
-	syscall.Syscall(sysFreeString.Addr(), 1,
-		uintptr(unsafe.Pointer(bstr)),
-		0,
-		0)
 }
 
 func SysStringLen(bstr *uint16 /*BSTR*/) uint32 {

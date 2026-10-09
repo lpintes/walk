@@ -6,25 +6,16 @@
 
 package win
 
-// Styles
-const (
-	SBARS_SIZEGRIP = 0x100
-	SBARS_TOOLTIPS = 0x800
-)
-
 // Messages
 const (
-	SB_SETPARTS         = WM_USER + 4
 	SB_GETPARTS         = WM_USER + 6
 	SB_GETBORDERS       = WM_USER + 7
 	SB_SETMINHEIGHT     = WM_USER + 8
 	SB_SIMPLE           = WM_USER + 9
 	SB_GETRECT          = WM_USER + 10
-	SB_SETTEXT          = WM_USER + 11
 	SB_GETTEXTLENGTH    = WM_USER + 12
 	SB_GETTEXT          = WM_USER + 13
 	SB_ISSIMPLE         = WM_USER + 14
-	SB_SETICON          = WM_USER + 15
 	SB_SETTIPTEXT       = WM_USER + 17
 	SB_GETTIPTEXT       = WM_USER + 19
 	SB_GETICON          = WM_USER + 20

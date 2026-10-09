@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	S_OK           = 0x00000000
-	S_FALSE        = 0x00000001
 	E_UNEXPECTED   = 0x8000FFFF
 	E_NOTIMPL      = 0x80004001
 	E_OUTOFMEMORY  = 0x8007000E
@@ -26,11 +24,6 @@ const (
 	E_FAIL         = 0x80004005
 	E_ACCESSDENIED = 0x80070005
 	E_PENDING      = 0x8000000A
-)
-
-const (
-	FALSE = 0
-	TRUE  = 1
 )
 
 type (

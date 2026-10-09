@@ -19,10 +19,6 @@ const (
 	TECHNOLOGY      = 2
 	HORZSIZE        = 4
 	VERTSIZE        = 6
-	HORZRES         = 8
-	VERTRES         = 10
-	LOGPIXELSX      = 88
-	LOGPIXELSY      = 90
 	BITSPIXEL       = 12
 	PLANES          = 14
 	NUMBRUSHES      = 16
@@ -168,73 +164,33 @@ const (
 
 // Brush styles
 const (
-	BS_SOLID         = 0
-	BS_NULL          = 1
 	BS_HOLLOW        = BS_NULL
-	BS_HATCHED       = 2
 	BS_PATTERN       = 3
 	BS_INDEXED       = 4
-	BS_DIBPATTERN    = 5
 	BS_DIBPATTERNPT  = 6
 	BS_PATTERN8X8    = 7
 	BS_DIBPATTERN8X8 = 8
 	BS_MONOPATTERN   = 9
 )
 
-// Hatch styles
-const (
-	HS_HORIZONTAL = 0
-	HS_VERTICAL   = 1
-	HS_FDIAGONAL  = 2
-	HS_BDIAGONAL  = 3
-	HS_CROSS      = 4
-	HS_DIAGCROSS  = 5
-)
-
 // Pen types
 const (
-	PS_COSMETIC  = 0x00000000
-	PS_GEOMETRIC = 0x00010000
 	PS_TYPE_MASK = 0x000F0000
 )
 
 // Pen styles
 const (
-	PS_SOLID       = 0
-	PS_DASH        = 1
-	PS_DOT         = 2
-	PS_DASHDOT     = 3
-	PS_DASHDOTDOT  = 4
-	PS_NULL        = 5
-	PS_INSIDEFRAME = 6
-	PS_USERSTYLE   = 7
-	PS_ALTERNATE   = 8
-	PS_STYLE_MASK  = 0x0000000F
+	PS_STYLE_MASK = 0x0000000F
 )
 
 // Pen cap types
 const (
-	PS_ENDCAP_ROUND  = 0x00000000
-	PS_ENDCAP_SQUARE = 0x00000100
-	PS_ENDCAP_FLAT   = 0x00000200
-	PS_ENDCAP_MASK   = 0x00000F00
+	PS_ENDCAP_MASK = 0x00000F00
 )
 
 // Pen join types
 const (
-	PS_JOIN_ROUND = 0x00000000
-	PS_JOIN_BEVEL = 0x00001000
-	PS_JOIN_MITER = 0x00002000
-	PS_JOIN_MASK  = 0x0000F000
-)
-
-// Print constants
-const (
-	PRF_NONCLIENT  = 0x00000002
-	PRF_CLIENT     = 0x00000004
-	PRF_ERASEBKGND = 0x00000008
-	PRF_CHILDREN   = 0x00000010
-	PRF_OWNED      = 0x00000020
+	PS_JOIN_MASK = 0x0000F000
 )
 
 // Stock logical objects
@@ -270,12 +226,10 @@ const (
 	FW_EXTRALIGHT = 200
 	FW_ULTRALIGHT = FW_EXTRALIGHT
 	FW_LIGHT      = 300
-	FW_NORMAL     = 400
 	FW_REGULAR    = 400
 	FW_MEDIUM     = 500
 	FW_SEMIBOLD   = 600
 	FW_DEMIBOLD   = FW_SEMIBOLD
-	FW_BOLD       = 700
 	FW_EXTRABOLD  = 800
 	FW_ULTRABOLD  = FW_EXTRABOLD
 	FW_HEAVY      = 900
@@ -285,7 +239,6 @@ const (
 // Charset constants
 const (
 	ANSI_CHARSET        = 0
-	DEFAULT_CHARSET     = 1
 	SYMBOL_CHARSET      = 2
 	SHIFTJIS_CHARSET    = 128
 	HANGEUL_CHARSET     = 129
@@ -312,7 +265,6 @@ const (
 	OUT_STRING_PRECIS    = 1
 	OUT_CHARACTER_PRECIS = 2
 	OUT_STROKE_PRECIS    = 3
-	OUT_TT_PRECIS        = 4
 	OUT_DEVICE_PRECIS    = 5
 	OUT_RASTER_PRECIS    = 6
 	OUT_TT_ONLY_PRECIS   = 7
@@ -322,7 +274,6 @@ const (
 
 // Font clipping precision constants
 const (
-	CLIP_DEFAULT_PRECIS   = 0
 	CLIP_CHARACTER_PRECIS = 1
 	CLIP_STROKE_PRECIS    = 2
 	CLIP_MASK             = 15
@@ -338,14 +289,12 @@ const (
 	PROOF_QUALITY          = 2
 	NONANTIALIASED_QUALITY = 3
 	ANTIALIASED_QUALITY    = 4
-	CLEARTYPE_QUALITY      = 5
 )
 
 // Font pitch constants
 const (
-	DEFAULT_PITCH  = 0
-	FIXED_PITCH    = 1
-	VARIABLE_PITCH = 2
+	DEFAULT_PITCH = 0
+	FIXED_PITCH   = 1
 )
 
 // Font family constants
@@ -355,7 +304,6 @@ const (
 	FF_MODERN     = 48
 	FF_ROMAN      = 16
 	FF_SCRIPT     = 64
-	FF_SWISS      = 32
 )
 
 // DeviceCapabilities capabilities
@@ -636,13 +584,11 @@ const (
 
 // Background modes
 const (
-	TRANSPARENT = 1
-	OPAQUE      = 2
+	OPAQUE = 2
 )
 
 // Ternary raster operations
 const (
-	SRCCOPY        = 0x00CC0020
 	SRCPAINT       = 0x00EE0086
 	SRCAND         = 0x008800C6
 	SRCINVERT      = 0x00660046
@@ -666,7 +612,6 @@ const (
 	BLACKONWHITE        = 1
 	WHITEONBLACK        = 2
 	COLORONCOLOR        = 3
-	HALFTONE            = 4
 	MAXSTRETCHBLTMODE   = 4
 	STRETCH_ANDSCANS    = BLACKONWHITE
 	STRETCH_ORSCANS     = WHITEONBLACK
@@ -676,24 +621,20 @@ const (
 
 // Bitmap compression constants
 const (
-	BI_RGB       = 0
-	BI_RLE8      = 1
-	BI_RLE4      = 2
-	BI_BITFIELDS = 3
-	BI_JPEG      = 4
-	BI_PNG       = 5
+	BI_RLE8 = 1
+	BI_RLE4 = 2
+	BI_JPEG = 4
+	BI_PNG  = 5
 )
 
 // Bitmap color table usage
 const (
-	DIB_RGB_COLORS = 0
 	DIB_PAL_COLORS = 1
 )
 
 const CBM_INIT = 4
 
 const (
-	CLR_INVALID = 0xFFFFFFFF
 	CLR_NONE    = CLR_INVALID
 	CLR_DEFAULT = 0xFF000000
 )
@@ -732,17 +673,14 @@ const (
 
 // GradientFill constants
 const (
-	GRADIENT_FILL_RECT_H   = 0x00
-	GRADIENT_FILL_RECT_V   = 0x01
-	GRADIENT_FILL_TRIANGLE = 0x02
+	GRADIENT_FILL_RECT_H = 0x00
+	GRADIENT_FILL_RECT_V = 0x01
 )
 
 // Region Combine Modes
 const (
 	RGN_AND  = 1
-	RGN_OR   = 2
 	RGN_XOR  = 3
-	RGN_DIFF = 4
 	RGN_COPY = 5
 )
 
@@ -752,11 +690,6 @@ const (
 	NULLREGION    = 1
 	SIMPLEREGION  = 2
 	COMPLEXREGION = 3
-)
-
-// AlphaBlend operations
-const (
-	AC_SRC_ALPHA = 0x1
 )
 
 // AddFontResourceEx flags
@@ -1038,166 +971,67 @@ type BLENDFUNCTION struct {
 }
 
 var (
-	// Library
-	libgdi32   *windows.LazyDLL
-	libmsimg32 *windows.LazyDLL
 
 	// Functions
-	abortDoc                *windows.LazyProc
-	addFontResourceEx       *windows.LazyProc
-	addFontMemResourceEx    *windows.LazyProc
-	alphaBlend              *windows.LazyProc
-	bitBlt                  *windows.LazyProc
-	choosePixelFormat       *windows.LazyProc
-	closeEnhMetaFile        *windows.LazyProc
-	combineRgn              *windows.LazyProc
-	copyEnhMetaFile         *windows.LazyProc
-	createBitmap            *windows.LazyProc
-	createCompatibleBitmap  *windows.LazyProc
-	createBrushIndirect     *windows.LazyProc
-	createCompatibleDC      *windows.LazyProc
-	createDC                *windows.LazyProc
-	createDIBSection        *windows.LazyProc
-	createFontIndirect      *windows.LazyProc
-	createEnhMetaFile       *windows.LazyProc
-	createIC                *windows.LazyProc
-	createPatternBrush      *windows.LazyProc
-	createRectRgn           *windows.LazyProc
-	deleteDC                *windows.LazyProc
-	deleteEnhMetaFile       *windows.LazyProc
-	deleteObject            *windows.LazyProc
-	ellipse                 *windows.LazyProc
-	endDoc                  *windows.LazyProc
-	endPage                 *windows.LazyProc
-	excludeClipRect         *windows.LazyProc
-	extCreatePen            *windows.LazyProc
-	fillRgn                 *windows.LazyProc
-	gdiFlush                *windows.LazyProc
-	getBkColor              *windows.LazyProc
-	getDeviceCaps           *windows.LazyProc
-	getDIBits               *windows.LazyProc
-	getEnhMetaFile          *windows.LazyProc
-	getEnhMetaFileHeader    *windows.LazyProc
-	getObject               *windows.LazyProc
-	getPixel                *windows.LazyProc
-	getRgnBox               *windows.LazyProc
-	getStockObject          *windows.LazyProc
-	getTextColor            *windows.LazyProc
-	getTextExtentExPoint    *windows.LazyProc
-	getTextExtentPoint32    *windows.LazyProc
-	getTextMetrics          *windows.LazyProc
-	getViewportOrgEx        *windows.LazyProc
-	gradientFill            *windows.LazyProc
-	intersectClipRect       *windows.LazyProc
-	lineTo                  *windows.LazyProc
-	moveToEx                *windows.LazyProc
-	playEnhMetaFile         *windows.LazyProc
-	polyline                *windows.LazyProc
-	rectangle               *windows.LazyProc
-	removeFontResourceEx    *windows.LazyProc
-	removeFontMemResourceEx *windows.LazyProc
-	resetDC                 *windows.LazyProc
-	restoreDC               *windows.LazyProc
-	roundRect               *windows.LazyProc
-	selectObject            *windows.LazyProc
-	setBkColor              *windows.LazyProc
-	setBkMode               *windows.LazyProc
-	setBrushOrgEx           *windows.LazyProc
-	setDIBits               *windows.LazyProc
-	setPixel                *windows.LazyProc
-	setPixelFormat          *windows.LazyProc
-	setStretchBltMode       *windows.LazyProc
-	setTextColor            *windows.LazyProc
-	setViewportOrgEx        *windows.LazyProc
-	saveDC                  *windows.LazyProc
-	startDoc                *windows.LazyProc
-	startPage               *windows.LazyProc
-	stretchBlt              *windows.LazyProc
-	swapBuffers             *windows.LazyProc
-	textOut                 *windows.LazyProc
-	transparentBlt          *windows.LazyProc
+	abortDoc             *windows.LazyProc
+	addFontResourceEx    *windows.LazyProc
+	alphaBlend           *windows.LazyProc
+	choosePixelFormat    *windows.LazyProc
+	createDC             *windows.LazyProc
+	createIC             *windows.LazyProc
+	endDoc               *windows.LazyProc
+	endPage              *windows.LazyProc
+	getBkColor           *windows.LazyProc
+	getObject            *windows.LazyProc
+	getPixel             *windows.LazyProc
+	getRgnBox            *windows.LazyProc
+	getStockObject       *windows.LazyProc
+	getTextColor         *windows.LazyProc
+	getTextExtentExPoint *windows.LazyProc
+	getViewportOrgEx     *windows.LazyProc
+	rectangle            *windows.LazyProc
+	removeFontResourceEx *windows.LazyProc
+	resetDC              *windows.LazyProc
+	restoreDC            *windows.LazyProc
+	setPixel             *windows.LazyProc
+	setPixelFormat       *windows.LazyProc
+	saveDC               *windows.LazyProc
+	startDoc             *windows.LazyProc
+	startPage            *windows.LazyProc
+	swapBuffers          *windows.LazyProc
+	textOut              *windows.LazyProc
 )
 
 func init() {
-	// Library
-	libgdi32 = windows.NewLazySystemDLL("gdi32.dll")
-	libmsimg32 = windows.NewLazySystemDLL("msimg32.dll")
-
 	// Functions
 	abortDoc = libgdi32.NewProc("AbortDoc")
 	addFontResourceEx = libgdi32.NewProc("AddFontResourceExW")
-	addFontMemResourceEx = libgdi32.NewProc("AddFontMemResourceEx")
-	bitBlt = libgdi32.NewProc("BitBlt")
 	choosePixelFormat = libgdi32.NewProc("ChoosePixelFormat")
-	closeEnhMetaFile = libgdi32.NewProc("CloseEnhMetaFile")
-	combineRgn = libgdi32.NewProc("CombineRgn")
-	copyEnhMetaFile = libgdi32.NewProc("CopyEnhMetaFileW")
-	createBitmap = libgdi32.NewProc("CreateBitmap")
-	createCompatibleBitmap = libgdi32.NewProc("CreateCompatibleBitmap")
-	createBrushIndirect = libgdi32.NewProc("CreateBrushIndirect")
-	createCompatibleDC = libgdi32.NewProc("CreateCompatibleDC")
 	createDC = libgdi32.NewProc("CreateDCW")
-	createDIBSection = libgdi32.NewProc("CreateDIBSection")
-	createEnhMetaFile = libgdi32.NewProc("CreateEnhMetaFileW")
-	createFontIndirect = libgdi32.NewProc("CreateFontIndirectW")
 	createIC = libgdi32.NewProc("CreateICW")
-	createPatternBrush = libgdi32.NewProc("CreatePatternBrush")
-	createRectRgn = libgdi32.NewProc("CreateRectRgn")
-	deleteDC = libgdi32.NewProc("DeleteDC")
-	deleteEnhMetaFile = libgdi32.NewProc("DeleteEnhMetaFile")
-	deleteObject = libgdi32.NewProc("DeleteObject")
-	ellipse = libgdi32.NewProc("Ellipse")
 	endDoc = libgdi32.NewProc("EndDoc")
 	endPage = libgdi32.NewProc("EndPage")
-	excludeClipRect = libgdi32.NewProc("ExcludeClipRect")
-	extCreatePen = libgdi32.NewProc("ExtCreatePen")
-	fillRgn = libgdi32.NewProc("FillRgn")
-	gdiFlush = libgdi32.NewProc("GdiFlush")
 	getBkColor = libgdi32.NewProc("GetBkColor")
-	getDeviceCaps = libgdi32.NewProc("GetDeviceCaps")
-	getDIBits = libgdi32.NewProc("GetDIBits")
-	getEnhMetaFile = libgdi32.NewProc("GetEnhMetaFileW")
-	getEnhMetaFileHeader = libgdi32.NewProc("GetEnhMetaFileHeader")
 	getObject = libgdi32.NewProc("GetObjectW")
 	getPixel = libgdi32.NewProc("GetPixel")
 	getRgnBox = libgdi32.NewProc("GetRgnBox")
 	getStockObject = libgdi32.NewProc("GetStockObject")
 	getTextColor = libgdi32.NewProc("GetTextColor")
 	getTextExtentExPoint = libgdi32.NewProc("GetTextExtentExPointW")
-	getTextExtentPoint32 = libgdi32.NewProc("GetTextExtentPoint32W")
-	getTextMetrics = libgdi32.NewProc("GetTextMetricsW")
 	getViewportOrgEx = libgdi32.NewProc("GetViewportOrgEx")
-	intersectClipRect = libgdi32.NewProc("IntersectClipRect")
-	lineTo = libgdi32.NewProc("LineTo")
-	moveToEx = libgdi32.NewProc("MoveToEx")
-	playEnhMetaFile = libgdi32.NewProc("PlayEnhMetaFile")
-	polyline = libgdi32.NewProc("Polyline")
 	rectangle = libgdi32.NewProc("Rectangle")
 	removeFontResourceEx = libgdi32.NewProc("RemoveFontResourceExW")
-	removeFontMemResourceEx = libgdi32.NewProc("RemoveFontMemResourceEx")
 	resetDC = libgdi32.NewProc("ResetDCW")
 	restoreDC = libgdi32.NewProc("RestoreDC")
-	roundRect = libgdi32.NewProc("RoundRect")
 	saveDC = libgdi32.NewProc("SaveDC")
-	selectObject = libgdi32.NewProc("SelectObject")
-	setBkColor = libgdi32.NewProc("SetBkColor")
-	setBkMode = libgdi32.NewProc("SetBkMode")
-	setBrushOrgEx = libgdi32.NewProc("SetBrushOrgEx")
-	setDIBits = libgdi32.NewProc("SetDIBits")
 	setPixel = libgdi32.NewProc("SetPixel")
 	setPixelFormat = libgdi32.NewProc("SetPixelFormat")
-	setStretchBltMode = libgdi32.NewProc("SetStretchBltMode")
-	setTextColor = libgdi32.NewProc("SetTextColor")
-	setViewportOrgEx = libgdi32.NewProc("SetViewportOrgEx")
 	startDoc = libgdi32.NewProc("StartDocW")
 	startPage = libgdi32.NewProc("StartPage")
-	stretchBlt = libgdi32.NewProc("StretchBlt")
 	swapBuffers = libgdi32.NewProc("SwapBuffers")
 	textOut = libgdi32.NewProc("TextOutW")
 
 	alphaBlend = libmsimg32.NewProc("AlphaBlend")
-	gradientFill = libmsimg32.NewProc("GradientFill")
-	transparentBlt = libmsimg32.NewProc("TransparentBlt")
 }
 
 func AbortDoc(hdc HDC) int32 {
@@ -1218,18 +1052,6 @@ func AddFontResourceEx(lpszFilename *uint16, fl uint32, pdv unsafe.Pointer) int3
 	return int32(ret)
 }
 
-func AddFontMemResourceEx(pFileView uintptr, cjSize uint32, pvReserved unsafe.Pointer, pNumFonts *uint32) HANDLE {
-	ret, _, _ := syscall.Syscall6(addFontMemResourceEx.Addr(), 4,
-		pFileView,
-		uintptr(cjSize),
-		uintptr(pvReserved),
-		uintptr(unsafe.Pointer(pNumFonts)),
-		0,
-		0)
-
-	return HANDLE(ret)
-}
-
 func AlphaBlend(hdcDest HDC, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest int32, hdcSrc HDC, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc int32, ftn BLENDFUNCTION) bool {
 	ret, _, _ := syscall.Syscall12(alphaBlend.Addr(), 11,
 		uintptr(hdcDest),
@@ -1248,21 +1070,6 @@ func AlphaBlend(hdcDest HDC, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest
 	return ret != 0
 }
 
-func BitBlt(hdcDest HDC, nXDest, nYDest, nWidth, nHeight int32, hdcSrc HDC, nXSrc, nYSrc int32, dwRop uint32) bool {
-	ret, _, _ := syscall.Syscall9(bitBlt.Addr(), 9,
-		uintptr(hdcDest),
-		uintptr(nXDest),
-		uintptr(nYDest),
-		uintptr(nWidth),
-		uintptr(nHeight),
-		uintptr(hdcSrc),
-		uintptr(nXSrc),
-		uintptr(nYSrc),
-		uintptr(dwRop))
-
-	return ret != 0
-}
-
 func ChoosePixelFormat(hdc HDC, ppfd *PIXELFORMATDESCRIPTOR) int32 {
 	ret, _, _ := syscall.Syscall(choosePixelFormat.Addr(), 2,
 		uintptr(hdc),
@@ -1270,75 +1077,6 @@ func ChoosePixelFormat(hdc HDC, ppfd *PIXELFORMATDESCRIPTOR) int32 {
 		0)
 
 	return int32(ret)
-}
-
-func CloseEnhMetaFile(hdc HDC) HENHMETAFILE {
-	ret, _, _ := syscall.Syscall(closeEnhMetaFile.Addr(), 1,
-		uintptr(hdc),
-		0,
-		0)
-
-	return HENHMETAFILE(ret)
-}
-
-func CombineRgn(hrgnDest, hrgnSrc1, hrgnSrc2 HRGN, fnCombineMode int32) int32 {
-	ret, _, _ := syscall.Syscall6(combineRgn.Addr(), 4,
-		uintptr(hrgnDest),
-		uintptr(hrgnSrc1),
-		uintptr(hrgnSrc2),
-		uintptr(fnCombineMode),
-		0,
-		0)
-
-	return int32(ret)
-}
-
-func CopyEnhMetaFile(hemfSrc HENHMETAFILE, lpszFile *uint16) HENHMETAFILE {
-	ret, _, _ := syscall.Syscall(copyEnhMetaFile.Addr(), 2,
-		uintptr(hemfSrc),
-		uintptr(unsafe.Pointer(lpszFile)),
-		0)
-
-	return HENHMETAFILE(ret)
-}
-
-func CreateBitmap(nWidth, nHeight int32, cPlanes, cBitsPerPel uint32, lpvBits unsafe.Pointer) HBITMAP {
-	ret, _, _ := syscall.Syscall6(createBitmap.Addr(), 5,
-		uintptr(nWidth),
-		uintptr(nHeight),
-		uintptr(cPlanes),
-		uintptr(cBitsPerPel),
-		uintptr(lpvBits),
-		0)
-
-	return HBITMAP(ret)
-}
-
-func CreateCompatibleBitmap(hdc HDC, nWidth, nHeight int32) HBITMAP {
-	ret, _, _ := syscall.Syscall(createCompatibleBitmap.Addr(), 3,
-		uintptr(hdc),
-		uintptr(nWidth),
-		uintptr(nHeight))
-
-	return HBITMAP(ret)
-}
-
-func CreateBrushIndirect(lplb *LOGBRUSH) HBRUSH {
-	ret, _, _ := syscall.Syscall(createBrushIndirect.Addr(), 1,
-		uintptr(unsafe.Pointer(lplb)),
-		0,
-		0)
-
-	return HBRUSH(ret)
-}
-
-func CreateCompatibleDC(hdc HDC) HDC {
-	ret, _, _ := syscall.Syscall(createCompatibleDC.Addr(), 1,
-		uintptr(hdc),
-		0,
-		0)
-
-	return HDC(ret)
 }
 
 func CreateDC(lpszDriver, lpszDevice, lpszOutput *uint16, lpInitData *DEVMODE) HDC {
@@ -1353,39 +1091,6 @@ func CreateDC(lpszDriver, lpszDevice, lpszOutput *uint16, lpInitData *DEVMODE) H
 	return HDC(ret)
 }
 
-func CreateDIBSection(hdc HDC, pbmih *BITMAPINFOHEADER, iUsage uint32, ppvBits *unsafe.Pointer, hSection HANDLE, dwOffset uint32) HBITMAP {
-	ret, _, _ := syscall.Syscall6(createDIBSection.Addr(), 6,
-		uintptr(hdc),
-		uintptr(unsafe.Pointer(pbmih)),
-		uintptr(iUsage),
-		uintptr(unsafe.Pointer(ppvBits)),
-		uintptr(hSection),
-		uintptr(dwOffset))
-
-	return HBITMAP(ret)
-}
-
-func CreateEnhMetaFile(hdcRef HDC, lpFilename *uint16, lpRect *RECT, lpDescription *uint16) HDC {
-	ret, _, _ := syscall.Syscall6(createEnhMetaFile.Addr(), 4,
-		uintptr(hdcRef),
-		uintptr(unsafe.Pointer(lpFilename)),
-		uintptr(unsafe.Pointer(lpRect)),
-		uintptr(unsafe.Pointer(lpDescription)),
-		0,
-		0)
-
-	return HDC(ret)
-}
-
-func CreateFontIndirect(lplf *LOGFONT) HFONT {
-	ret, _, _ := syscall.Syscall(createFontIndirect.Addr(), 1,
-		uintptr(unsafe.Pointer(lplf)),
-		0,
-		0)
-
-	return HFONT(ret)
-}
-
 func CreateIC(lpszDriver, lpszDevice, lpszOutput *uint16, lpdvmInit *DEVMODE) HDC {
 	ret, _, _ := syscall.Syscall6(createIC.Addr(), 4,
 		uintptr(unsafe.Pointer(lpszDriver)),
@@ -1396,66 +1101,6 @@ func CreateIC(lpszDriver, lpszDevice, lpszOutput *uint16, lpdvmInit *DEVMODE) HD
 		0)
 
 	return HDC(ret)
-}
-
-func CreatePatternBrush(hbmp HBITMAP) HBRUSH {
-	ret, _, _ := syscall.Syscall(createPatternBrush.Addr(), 1,
-		uintptr(hbmp),
-		0,
-		0)
-
-	return HBRUSH(ret)
-}
-
-func CreateRectRgn(nLeftRect, nTopRect, nRightRect, nBottomRect int32) HRGN {
-	ret, _, _ := syscall.Syscall6(createRectRgn.Addr(), 4,
-		uintptr(nLeftRect),
-		uintptr(nTopRect),
-		uintptr(nRightRect),
-		uintptr(nBottomRect),
-		0,
-		0)
-
-	return HRGN(ret)
-}
-
-func DeleteDC(hdc HDC) bool {
-	ret, _, _ := syscall.Syscall(deleteDC.Addr(), 1,
-		uintptr(hdc),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func DeleteEnhMetaFile(hemf HENHMETAFILE) bool {
-	ret, _, _ := syscall.Syscall(deleteEnhMetaFile.Addr(), 1,
-		uintptr(hemf),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func DeleteObject(hObject HGDIOBJ) bool {
-	ret, _, _ := syscall.Syscall(deleteObject.Addr(), 1,
-		uintptr(hObject),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func Ellipse(hdc HDC, nLeftRect, nTopRect, nRightRect, nBottomRect int32) bool {
-	ret, _, _ := syscall.Syscall6(ellipse.Addr(), 5,
-		uintptr(hdc),
-		uintptr(nLeftRect),
-		uintptr(nTopRect),
-		uintptr(nRightRect),
-		uintptr(nBottomRect),
-		0)
-
-	return ret != 0
 }
 
 func EndDoc(hdc HDC) int32 {
@@ -1476,48 +1121,6 @@ func EndPage(hdc HDC) int32 {
 	return int32(ret)
 }
 
-func ExcludeClipRect(hdc HDC, nLeftRect, nTopRect, nRightRect, nBottomRect int32) int32 {
-	ret, _, _ := syscall.Syscall6(excludeClipRect.Addr(), 5,
-		uintptr(hdc),
-		uintptr(nLeftRect),
-		uintptr(nTopRect),
-		uintptr(nRightRect),
-		uintptr(nBottomRect),
-		0)
-
-	return int32(ret)
-}
-
-func ExtCreatePen(dwPenStyle, dwWidth uint32, lplb *LOGBRUSH, dwStyleCount uint32, lpStyle *uint32) HPEN {
-	ret, _, _ := syscall.Syscall6(extCreatePen.Addr(), 5,
-		uintptr(dwPenStyle),
-		uintptr(dwWidth),
-		uintptr(unsafe.Pointer(lplb)),
-		uintptr(dwStyleCount),
-		uintptr(unsafe.Pointer(lpStyle)),
-		0)
-
-	return HPEN(ret)
-}
-
-func FillRgn(hdc HDC, hrgn HRGN, hbr HBRUSH) bool {
-	ret, _, _ := syscall.Syscall(fillRgn.Addr(), 3,
-		uintptr(hdc),
-		uintptr(hrgn),
-		uintptr(hbr))
-
-	return ret != 0
-}
-
-func GdiFlush() bool {
-	ret, _, _ := syscall.Syscall(gdiFlush.Addr(), 0,
-		0,
-		0,
-		0)
-
-	return ret != 0
-}
-
 func GetBkColor(hdc HDC) COLORREF {
 	ret, _, _ := syscall.Syscall(getBkColor.Addr(), 1,
 		uintptr(hdc),
@@ -1525,47 +1128,6 @@ func GetBkColor(hdc HDC) COLORREF {
 		0)
 
 	return COLORREF(ret)
-}
-
-func GetDeviceCaps(hdc HDC, nIndex int32) int32 {
-	ret, _, _ := syscall.Syscall(getDeviceCaps.Addr(), 2,
-		uintptr(hdc),
-		uintptr(nIndex),
-		0)
-
-	return int32(ret)
-}
-
-func GetDIBits(hdc HDC, hbmp HBITMAP, uStartScan uint32, cScanLines uint32, lpvBits *byte, lpbi *BITMAPINFO, uUsage uint32) int32 {
-	ret, _, _ := syscall.Syscall9(getDIBits.Addr(), 7,
-		uintptr(hdc),
-		uintptr(hbmp),
-		uintptr(uStartScan),
-		uintptr(cScanLines),
-		uintptr(unsafe.Pointer(lpvBits)),
-		uintptr(unsafe.Pointer(lpbi)),
-		uintptr(uUsage),
-		0,
-		0)
-	return int32(ret)
-}
-
-func GetEnhMetaFile(lpszMetaFile *uint16) HENHMETAFILE {
-	ret, _, _ := syscall.Syscall(getEnhMetaFile.Addr(), 1,
-		uintptr(unsafe.Pointer(lpszMetaFile)),
-		0,
-		0)
-
-	return HENHMETAFILE(ret)
-}
-
-func GetEnhMetaFileHeader(hemf HENHMETAFILE, cbBuffer uint32, lpemh *ENHMETAHEADER) uint32 {
-	ret, _, _ := syscall.Syscall(getEnhMetaFileHeader.Addr(), 3,
-		uintptr(hemf),
-		uintptr(cbBuffer),
-		uintptr(unsafe.Pointer(lpemh)))
-
-	return uint32(ret)
 }
 
 func GetObject(hgdiobj HGDIOBJ, cbBuffer uintptr, lpvObject unsafe.Pointer) int32 {
@@ -1628,95 +1190,11 @@ func GetTextExtentExPoint(hdc HDC, lpszStr *uint16, cchString, nMaxExtent int32,
 	return ret != 0
 }
 
-func GetTextExtentPoint32(hdc HDC, lpString *uint16, c int32, lpSize *SIZE) bool {
-	ret, _, _ := syscall.Syscall6(getTextExtentPoint32.Addr(), 4,
-		uintptr(hdc),
-		uintptr(unsafe.Pointer(lpString)),
-		uintptr(c),
-		uintptr(unsafe.Pointer(lpSize)),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func GetTextMetrics(hdc HDC, lptm *TEXTMETRIC) bool {
-	ret, _, _ := syscall.Syscall(getTextMetrics.Addr(), 2,
-		uintptr(hdc),
-		uintptr(unsafe.Pointer(lptm)),
-		0)
-
-	return ret != 0
-}
-
 func GetViewportOrgEx(hdc HDC, lpPoint *POINT) bool {
 	ret, _, _ := syscall.Syscall(getViewportOrgEx.Addr(), 2,
 		uintptr(hdc),
 		uintptr(unsafe.Pointer(lpPoint)),
 		0)
-
-	return ret != 0
-}
-
-func GradientFill(hdc HDC, pVertex *TRIVERTEX, nVertex uint32, pMesh unsafe.Pointer, nMesh, ulMode uint32) bool {
-	ret, _, _ := syscall.Syscall6(gradientFill.Addr(), 6,
-		uintptr(hdc),
-		uintptr(unsafe.Pointer(pVertex)),
-		uintptr(nVertex),
-		uintptr(pMesh),
-		uintptr(nMesh),
-		uintptr(ulMode))
-
-	return ret != 0
-}
-
-func IntersectClipRect(hdc HDC, nLeftRect, nTopRect, nRightRect, nBottomRect int32) int32 {
-	ret, _, _ := syscall.Syscall6(intersectClipRect.Addr(), 5,
-		uintptr(hdc),
-		uintptr(nLeftRect),
-		uintptr(nTopRect),
-		uintptr(nRightRect),
-		uintptr(nBottomRect),
-		0)
-
-	return int32(ret)
-}
-
-func LineTo(hdc HDC, nXEnd, nYEnd int32) bool {
-	ret, _, _ := syscall.Syscall(lineTo.Addr(), 3,
-		uintptr(hdc),
-		uintptr(nXEnd),
-		uintptr(nYEnd))
-
-	return ret != 0
-}
-
-func MoveToEx(hdc HDC, x, y int, lpPoint *POINT) bool {
-	ret, _, _ := syscall.Syscall6(moveToEx.Addr(), 4,
-		uintptr(hdc),
-		uintptr(x),
-		uintptr(y),
-		uintptr(unsafe.Pointer(lpPoint)),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func PlayEnhMetaFile(hdc HDC, hemf HENHMETAFILE, lpRect *RECT) bool {
-	ret, _, _ := syscall.Syscall(playEnhMetaFile.Addr(), 3,
-		uintptr(hdc),
-		uintptr(hemf),
-		uintptr(unsafe.Pointer(lpRect)))
-
-	return ret != 0
-}
-
-func Polyline(hdc HDC, lppt unsafe.Pointer, cPoints int32) bool {
-	ret, _, _ := syscall.Syscall(polyline.Addr(), 3,
-		uintptr(hdc),
-		uintptr(lppt),
-		uintptr(cPoints))
 
 	return ret != 0
 }
@@ -1742,15 +1220,6 @@ func RemoveFontResourceEx(lpszFilename *uint16, fl uint32, pdv unsafe.Pointer) b
 	return ret != 0
 }
 
-func RemoveFontMemResourceEx(h HANDLE) bool {
-	ret, _, _ := syscall.Syscall(removeFontMemResourceEx.Addr(), 1,
-		uintptr(h),
-		0,
-		0)
-
-	return ret != 0
-}
-
 func ResetDC(hdc HDC, lpInitData *DEVMODE) HDC {
 	ret, _, _ := syscall.Syscall(resetDC.Addr(), 2,
 		uintptr(hdc),
@@ -1768,80 +1237,11 @@ func RestoreDC(hdc HDC, nSaveDC int32) bool {
 	return ret != 0
 }
 
-func RoundRect(hdc HDC, nLeftRect, nTopRect, nRightRect, nBottomRect, nWidth, nHeight int32) bool {
-	ret, _, _ := syscall.Syscall9(roundRect.Addr(), 7,
-		uintptr(hdc),
-		uintptr(nLeftRect),
-		uintptr(nTopRect),
-		uintptr(nRightRect),
-		uintptr(nBottomRect),
-		uintptr(nWidth),
-		uintptr(nHeight),
-		0,
-		0)
-
-	return ret != 0
-}
-
 func SaveDC(hdc HDC) int32 {
 	ret, _, _ := syscall.Syscall(saveDC.Addr(), 1,
 		uintptr(hdc),
 		0,
 		0)
-	return int32(ret)
-}
-
-func SelectObject(hdc HDC, hgdiobj HGDIOBJ) HGDIOBJ {
-	ret, _, _ := syscall.Syscall(selectObject.Addr(), 2,
-		uintptr(hdc),
-		uintptr(hgdiobj),
-		0)
-
-	return HGDIOBJ(ret)
-}
-
-func SetBkColor(hdc HDC, crColor COLORREF) COLORREF {
-	ret, _, _ := syscall.Syscall(setBkColor.Addr(), 2,
-		uintptr(hdc),
-		uintptr(crColor),
-		0)
-
-	return COLORREF(ret)
-}
-
-func SetBkMode(hdc HDC, iBkMode int32) int32 {
-	ret, _, _ := syscall.Syscall(setBkMode.Addr(), 2,
-		uintptr(hdc),
-		uintptr(iBkMode),
-		0)
-
-	return int32(ret)
-}
-
-func SetBrushOrgEx(hdc HDC, nXOrg, nYOrg int32, lppt *POINT) bool {
-	ret, _, _ := syscall.Syscall6(setBrushOrgEx.Addr(), 4,
-		uintptr(hdc),
-		uintptr(nXOrg),
-		uintptr(nYOrg),
-		uintptr(unsafe.Pointer(lppt)),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func SetDIBits(hdc HDC, hbmp HBITMAP, uStartScan, cScanLines uint32, lpvBits *byte, lpbmi *BITMAPINFO, fuColorUse uint32) int32 {
-	ret, _, _ := syscall.Syscall9(setDIBits.Addr(), 7,
-		uintptr(hdc),
-		uintptr(hbmp),
-		uintptr(uStartScan),
-		uintptr(cScanLines),
-		uintptr(unsafe.Pointer(lpvBits)),
-		uintptr(unsafe.Pointer(lpbmi)),
-		uintptr(fuColorUse),
-		0,
-		0)
-
 	return int32(ret)
 }
 
@@ -1866,36 +1266,6 @@ func SetPixelFormat(hdc HDC, iPixelFormat int32, ppfd *PIXELFORMATDESCRIPTOR) bo
 	return ret != 0
 }
 
-func SetStretchBltMode(hdc HDC, iStretchMode int32) int32 {
-	ret, _, _ := syscall.Syscall(setStretchBltMode.Addr(), 2,
-		uintptr(hdc),
-		uintptr(iStretchMode),
-		0)
-
-	return int32(ret)
-}
-
-func SetTextColor(hdc HDC, crColor COLORREF) COLORREF {
-	ret, _, _ := syscall.Syscall(setTextColor.Addr(), 2,
-		uintptr(hdc),
-		uintptr(crColor),
-		0)
-
-	return COLORREF(ret)
-}
-
-func SetViewportOrgEx(hdc HDC, x, y int32, lpPoint *POINT) COLORREF {
-	ret, _, _ := syscall.Syscall6(setViewportOrgEx.Addr(), 4,
-		uintptr(hdc),
-		uintptr(x),
-		uintptr(y),
-		uintptr(unsafe.Pointer(lpPoint)),
-		0,
-		0)
-
-	return COLORREF(ret)
-}
-
 func StartDoc(hdc HDC, lpdi *DOCINFO) int32 {
 	ret, _, _ := syscall.Syscall(startDoc.Addr(), 2,
 		uintptr(hdc),
@@ -1912,24 +1282,6 @@ func StartPage(hdc HDC) int32 {
 		0)
 
 	return int32(ret)
-}
-
-func StretchBlt(hdcDest HDC, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest int32, hdcSrc HDC, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc int32, dwRop uint32) bool {
-	ret, _, _ := syscall.Syscall12(stretchBlt.Addr(), 11,
-		uintptr(hdcDest),
-		uintptr(nXOriginDest),
-		uintptr(nYOriginDest),
-		uintptr(nWidthDest),
-		uintptr(nHeightDest),
-		uintptr(hdcSrc),
-		uintptr(nXOriginSrc),
-		uintptr(nYOriginSrc),
-		uintptr(nWidthSrc),
-		uintptr(nHeightSrc),
-		uintptr(dwRop),
-		0)
-
-	return ret != 0
 }
 
 func SwapBuffers(hdc HDC) bool {
@@ -1949,23 +1301,5 @@ func TextOut(hdc HDC, nXStart, nYStart int32, lpString *uint16, cchString int32)
 		uintptr(unsafe.Pointer(lpString)),
 		uintptr(cchString),
 		0)
-	return ret != 0
-}
-
-func TransparentBlt(hdcDest HDC, xoriginDest, yoriginDest, wDest, hDest int32, hdcSrc HDC, xoriginSrc, yoriginSrc, wSrc, hSrc int32, crTransparent uint32) bool {
-	ret, _, _ := syscall.Syscall12(transparentBlt.Addr(), 11,
-		uintptr(hdcDest),
-		uintptr(xoriginDest),
-		uintptr(yoriginDest),
-		uintptr(wDest),
-		uintptr(hDest),
-		uintptr(hdcSrc),
-		uintptr(xoriginSrc),
-		uintptr(yoriginSrc),
-		uintptr(wSrc),
-		uintptr(hSrc),
-		uintptr(crTransparent),
-		0)
-
 	return ret != 0
 }

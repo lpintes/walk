@@ -1,3 +1,5 @@
+github.com/microsoft/go-winmd v0.0.0-20260113112744-dbc8a42468d0 h1:mUAPJEAALGyHKfSwqVHlieX0MH6x/dhKZxfWAfotHOQ=
+github.com/microsoft/go-winmd v0.0.0-20260113112744-dbc8a42468d0/go.mod h1:df75pl4Oo0zJB9VnBSzEkfgaYW+JxLM1En7H90JQzm8=
 golang.org/x/sys v0.35.0 h1:vz1N37gP5bs89s7He8XuIYXpyY0+QlsKmzipCbUtyxI=
 golang.org/x/sys v0.35.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
 gopkg.in/Knetic/govaluate.v3 v3.0.0 h1:18mUyIt4ZlRlFZAAfVetz4/rzlJs9yhN+U02F4u1AOc=

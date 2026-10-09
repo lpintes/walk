@@ -6,10 +6,6 @@
 
 package win
 
-const (
-	HDS_NOSIZING = 0x0800
-)
-
 type HDITEM struct {
 	Mask       uint32
 	Cxy        int32
@@ -39,7 +35,6 @@ const (
 	HDI_WIDTH      = 0x0001
 	HDI_HEIGHT     = HDI_WIDTH
 	HDI_TEXT       = 0x0002
-	HDI_FORMAT     = 0x0004
 	HDI_LPARAM     = 0x0008
 	HDI_BITMAP     = 0x0010
 	HDI_IMAGE      = 0x0020
@@ -58,8 +53,6 @@ const (
 	HDF_CHECKBOX        = 0x0040
 	HDF_CHECKED         = 0x0080
 	HDF_FIXEDWIDTH      = 0x0100
-	HDF_SORTDOWN        = 0x0200
-	HDF_SORTUP          = 0x0400
 	HDF_IMAGE           = 0x0800
 	HDF_BITMAP_ON_RIGHT = 0x1000
 	HDF_BITMAP          = 0x2000
@@ -76,21 +69,15 @@ const (
 	HDM_FIRST                  = 0x1200
 	HDM_GETITEMCOUNT           = HDM_FIRST + 0
 	HDM_DELETEITEM             = HDM_FIRST + 2
-	HDM_LAYOUT                 = HDM_FIRST + 5
-	HDM_HITTEST                = HDM_FIRST + 6
-	HDM_GETITEMRECT            = HDM_FIRST + 7
 	HDM_SETIMAGELIST           = HDM_FIRST + 8
 	HDM_GETIMAGELIST           = HDM_FIRST + 9
 	HDM_INSERTITEM             = HDM_FIRST + 10
-	HDM_GETITEM                = HDM_FIRST + 11
-	HDM_SETITEM                = HDM_FIRST + 12
 	HDM_ORDERTOINDEX           = HDM_FIRST + 15
 	HDM_CREATEDRAGIMAGE        = HDM_FIRST + 16
 	HDM_GETORDERARRAY          = HDM_FIRST + 17
 	HDM_SETORDERARRAY          = HDM_FIRST + 18
 	HDM_SETHOTDIVIDER          = HDM_FIRST + 19
 	HDM_SETBITMAPMARGIN        = HDM_FIRST + 20
-	HDM_GETBITMAPMARGIN        = HDM_FIRST + 21
 	HDM_SETFILTERCHANGETIMEOUT = HDM_FIRST + 22
 	HDM_EDITFILTER             = HDM_FIRST + 23
 	HDM_CLEARFILTER            = HDM_FIRST + 24

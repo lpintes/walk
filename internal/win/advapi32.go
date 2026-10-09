@@ -12,7 +12,6 @@ import (
 	"unsafe"
 )
 
-const KEY_READ REGSAM = 0x20019
 const KEY_WRITE REGSAM = 0x20006
 
 const (
@@ -55,60 +54,14 @@ const (
 )
 
 var (
-	// Library
-	libadvapi32 *windows.LazyDLL
-
-	// Functions
-	regCloseKey     *windows.LazyProc
-	regOpenKeyEx    *windows.LazyProc
-	regQueryValueEx *windows.LazyProc
-	regEnumValue    *windows.LazyProc
-	regSetValueEx   *windows.LazyProc
+	regEnumValue  *windows.LazyProc
+	regSetValueEx *windows.LazyProc
 )
 
 func init() {
-	// Library
-	libadvapi32 = windows.NewLazySystemDLL("advapi32.dll")
-
 	// Functions
-	regCloseKey = libadvapi32.NewProc("RegCloseKey")
-	regOpenKeyEx = libadvapi32.NewProc("RegOpenKeyExW")
-	regQueryValueEx = libadvapi32.NewProc("RegQueryValueExW")
 	regEnumValue = libadvapi32.NewProc("RegEnumValueW")
 	regSetValueEx = libadvapi32.NewProc("RegSetValueExW")
-}
-
-func RegCloseKey(hKey HKEY) int32 {
-	ret, _, _ := syscall.Syscall(regCloseKey.Addr(), 1,
-		uintptr(hKey),
-		0,
-		0)
-
-	return int32(ret)
-}
-
-func RegOpenKeyEx(hKey HKEY, lpSubKey *uint16, ulOptions uint32, samDesired REGSAM, phkResult *HKEY) int32 {
-	ret, _, _ := syscall.Syscall6(regOpenKeyEx.Addr(), 5,
-		uintptr(hKey),
-		uintptr(unsafe.Pointer(lpSubKey)),
-		uintptr(ulOptions),
-		uintptr(samDesired),
-		uintptr(unsafe.Pointer(phkResult)),
-		0)
-
-	return int32(ret)
-}
-
-func RegQueryValueEx(hKey HKEY, lpValueName *uint16, lpReserved, lpType *uint32, lpData *byte, lpcbData *uint32) int32 {
-	ret, _, _ := syscall.Syscall6(regQueryValueEx.Addr(), 6,
-		uintptr(hKey),
-		uintptr(unsafe.Pointer(lpValueName)),
-		uintptr(unsafe.Pointer(lpReserved)),
-		uintptr(unsafe.Pointer(lpType)),
-		uintptr(unsafe.Pointer(lpData)),
-		uintptr(unsafe.Pointer(lpcbData)))
-
-	return int32(ret)
 }
 
 func RegEnumValue(hKey HKEY, index uint32, lpValueName *uint16, lpcchValueName *uint32, lpReserved, lpType *uint32, lpData *byte, lpcbData *uint32) int32 {

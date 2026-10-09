@@ -90,7 +90,6 @@ const (
 
 // GetOpenFileName and GetSaveFileName flags
 const (
-	OFN_ALLOWMULTISELECT     = 0x00000200
 	OFN_CREATEPROMPT         = 0x00002000
 	OFN_DONTADDTORECENT      = 0x02000000
 	OFN_ENABLEHOOK           = 0x00000020
@@ -98,13 +97,9 @@ const (
 	OFN_ENABLESIZING         = 0x00800000
 	OFN_ENABLETEMPLATE       = 0x00000040
 	OFN_ENABLETEMPLATEHANDLE = 0x00000080
-	OFN_EXPLORER             = 0x00080000
 	OFN_EXTENSIONDIFFERENT   = 0x00000400
-	OFN_FILEMUSTEXIST        = 0x00001000
 	OFN_FORCESHOWHIDDEN      = 0x10000000
-	OFN_HIDEREADONLY         = 0x00000004
 	OFN_LONGNAMES            = 0x00200000
-	OFN_NOCHANGEDIR          = 0x00000008
 	OFN_NODEREFERENCELINKS   = 0x00100000
 	OFN_NOLONGNAMES          = 0x00040000
 	OFN_NONETWORKBUTTON      = 0x00020000
@@ -231,59 +226,21 @@ type PRINTDLGEX struct {
 }
 
 var (
-	// Library
-	libcomdlg32 *windows.LazyDLL
 
 	// Functions
-	chooseColor          *windows.LazyProc
-	commDlgExtendedError *windows.LazyProc
-	getOpenFileName      *windows.LazyProc
-	getSaveFileName      *windows.LazyProc
-	printDlgEx           *windows.LazyProc
+	chooseColor *windows.LazyProc
+	printDlgEx  *windows.LazyProc
 )
 
 func init() {
-	// Library
-	libcomdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
-
 	// Functions
 	chooseColor = libcomdlg32.NewProc("ChooseColorW")
-	commDlgExtendedError = libcomdlg32.NewProc("CommDlgExtendedError")
-	getOpenFileName = libcomdlg32.NewProc("GetOpenFileNameW")
-	getSaveFileName = libcomdlg32.NewProc("GetSaveFileNameW")
 	printDlgEx = libcomdlg32.NewProc("PrintDlgExW")
 }
 
 func ChooseColor(lpcc *CHOOSECOLOR) bool {
 	ret, _, _ := syscall.Syscall(chooseColor.Addr(), 1,
 		uintptr(unsafe.Pointer(lpcc)),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func CommDlgExtendedError() uint32 {
-	ret, _, _ := syscall.Syscall(commDlgExtendedError.Addr(), 0,
-		0,
-		0,
-		0)
-
-	return uint32(ret)
-}
-
-func GetOpenFileName(lpofn *OPENFILENAME) bool {
-	ret, _, _ := syscall.Syscall(getOpenFileName.Addr(), 1,
-		uintptr(unsafe.Pointer(lpofn)),
-		0,
-		0)
-
-	return ret != 0
-}
-
-func GetSaveFileName(lpofn *OPENFILENAME) bool {
-	ret, _, _ := syscall.Syscall(getSaveFileName.Addr(), 1,
-		uintptr(unsafe.Pointer(lpofn)),
 		0,
 		0)
 
