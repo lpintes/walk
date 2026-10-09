@@ -52,6 +52,17 @@ The `LICENSE` and `AUTHORS` files must be preserved.
    not in the metadata and stay hand-written. Watch out for
    architecture-specific structs and for COM interfaces that walk implements
    itself (WebView, OLE hosting).
+4. Dialogs recognized by screen readers: option A first, then option B if
+   needed (see "Real dialogs for screen readers" below).
+5. `RichEdit` widget.
+6. Internal COM helper package (`internal/com`); move the existing WebView
+   site implementations onto it.
+7. `WebView2` widget; deprecate the old `WebView`.
+8. Internal code modernization without public API changes.
+9. Generic public API (events, models); breaking, needs a separate decision
+   before it starts.
+
+Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
 
 ## Status
 
@@ -60,12 +71,13 @@ The `LICENSE` and `AUTHORS` files must be preserved.
   v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
   `README.md`.
 - Step 3: not started.
+- Steps 4 to 9: not started.
 
-## Candidate next steps (analysis, not yet scheduled)
+## Candidate next steps (analysis for steps 4 to 9)
 
-Order is open; each item would be its own step and pull request. Step 3
-(generator) should go first, because RichEdit, WebView2 and real dialogs all
-need new Win32/COM declarations.
+Each item is its own step and pull request, in the order given in the
+modernization plan. Step 3 (generator) goes first, because RichEdit, WebView2
+and real dialogs all need new Win32/COM declarations.
 
 ### RichEdit widget
 
