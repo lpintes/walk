@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -32,6 +33,10 @@ type goType struct {
 	name string   // Go type expression
 	kind typeKind // how a value is passed to a syscall
 	size int      // size in bytes for kindScalar and kindFloat on the target architecture
+
+	// undefined is set for a pointer to a struct the Go package does
+	// not define. It needs a type override.
+	undefined bool
 }
 
 // typeMapper translates metadata signature types to Go types of package
@@ -67,42 +72,46 @@ func (tm *typeMapper) sigType(t winmd.SigType) (goType, error) {
 	case flags.ElementType_VOID:
 		return goType{kind: kindVoid}, nil
 	case flags.ElementType_BOOLEAN:
-		return goType{"bool", kindScalar, 1}, nil
+		return goType{name: "bool", kind: kindScalar, size: 1}, nil
 	case flags.ElementType_I1:
-		return goType{"int8", kindScalar, 1}, nil
+		return goType{name: "int8", kind: kindScalar, size: 1}, nil
 	case flags.ElementType_U1:
-		return goType{"byte", kindScalar, 1}, nil
+		return goType{name: "byte", kind: kindScalar, size: 1}, nil
 	case flags.ElementType_I2:
-		return goType{"int16", kindScalar, 2}, nil
+		return goType{name: "int16", kind: kindScalar, size: 2}, nil
 	case flags.ElementType_U2, flags.ElementType_CHAR:
-		return goType{"uint16", kindScalar, 2}, nil
+		return goType{name: "uint16", kind: kindScalar, size: 2}, nil
 	case flags.ElementType_I4:
-		return goType{"int32", kindScalar, 4}, nil
+		return goType{name: "int32", kind: kindScalar, size: 4}, nil
 	case flags.ElementType_U4:
-		return goType{"uint32", kindScalar, 4}, nil
+		return goType{name: "uint32", kind: kindScalar, size: 4}, nil
 	case flags.ElementType_I8:
-		return goType{"int64", kindScalar, 8}, nil
+		return goType{name: "int64", kind: kindScalar, size: 8}, nil
 	case flags.ElementType_U8:
-		return goType{"uint64", kindScalar, 8}, nil
+		return goType{name: "uint64", kind: kindScalar, size: 8}, nil
 	case flags.ElementType_R4:
-		return goType{"float32", kindFloat, 4}, nil
+		return goType{name: "float32", kind: kindFloat, size: 4}, nil
 	case flags.ElementType_R8:
-		return goType{"float64", kindFloat, 8}, nil
+		return goType{name: "float64", kind: kindFloat, size: 8}, nil
 	case flags.ElementType_I, flags.ElementType_U:
-		return goType{"uintptr", kindScalar, ptr}, nil
+		return goType{name: "uintptr", kind: kindScalar, size: ptr}, nil
 	case flags.ElementType_PTR:
 		elem, ok := t.Value.(winmd.SigType)
 		if !ok {
 			return goType{}, fmt.Errorf("unexpected pointer value %#v", t.Value)
 		}
 		if elem.Kind == flags.ElementType_VOID {
-			return goType{"unsafe.Pointer", kindPointer, ptr}, nil
+			return goType{name: "unsafe.Pointer", kind: kindPointer, size: ptr}, nil
 		}
 		et, err := tm.sigType(elem)
+		var undef *undefinedStructError
+		if errors.As(err, &undef) {
+			return goType{name: "*" + undef.name, kind: kindPointer, size: ptr, undefined: true}, nil
+		}
 		if err != nil {
 			return goType{}, err
 		}
-		return goType{"*" + et.name, kindPointer, ptr}, nil
+		return goType{name: "*" + et.name, kind: kindPointer, size: ptr, undefined: et.undefined}, nil
 	case flags.ElementType_ARRAY:
 		a, ok := t.Value.(winmd.SigArray)
 		if !ok || a.Rank != 1 || len(a.Sizes) != 1 {
@@ -112,7 +121,7 @@ func (tm *typeMapper) sigType(t winmd.SigType) (goType, error) {
 		if err != nil {
 			return goType{}, err
 		}
-		return goType{"[" + strconv.Itoa(int(a.Sizes[0])) + "]" + et.name, kindStruct, 0}, nil
+		return goType{name: "[" + strconv.Itoa(int(a.Sizes[0])) + "]" + et.name, kind: kindStruct, undefined: et.undefined}, nil
 	case flags.ElementType_VALUETYPE, flags.ElementType_CLASS:
 		ci, ok := t.Value.(winmd.CodedIndex)
 		if !ok {
@@ -150,7 +159,7 @@ func (tm *typeMapper) named(ci winmd.CodedIndex) (goType, error) {
 	}
 
 	if name == "BOOL" && !tm.rawBool {
-		return goType{"bool", kindBool, 4}, nil
+		return goType{name: "bool", kind: kindBool, size: 4}, nil
 	}
 	if r, ok := defaultRenames[name]; ok {
 		return tm.fixedType(r, td)
@@ -161,11 +170,11 @@ func (tm *typeMapper) named(ci winmd.CodedIndex) (goType, error) {
 
 	switch {
 	case tm.m.isInterface(td):
-		return goType{"*" + name, kindInterface, tm.arch.ptrSize()}, nil
+		return goType{name: "*" + name, kind: kindInterface, size: tm.arch.ptrSize()}, nil
 	case tm.m.isDelegate(td):
 		// Callbacks are passed as uintptr values created by
 		// syscall.NewCallback.
-		return goType{"uintptr", kindScalar, tm.arch.ptrSize()}, nil
+		return goType{name: "uintptr", kind: kindScalar, size: tm.arch.ptrSize()}, nil
 	case tm.m.isEnum(td), td.hasAttr("NativeTypedefAttribute"):
 		u, err := tm.m.underlying(td)
 		if err != nil {
@@ -185,19 +194,28 @@ func (tm *typeMapper) named(ci winmd.CodedIndex) (goType, error) {
 		name = name[:len(name)-1]
 	}
 	if !tm.pkg.hasType(name) {
-		return goType{}, fmt.Errorf("struct %s is not defined in the Go package", name)
+		return goType{}, &undefinedStructError{name}
 	}
-	return goType{name, kindStruct, 0}, nil
+	return goType{name: name, kind: kindStruct}, nil
+}
+
+// undefinedStructError reports a struct the Go package does not define.
+type undefinedStructError struct {
+	name string
+}
+
+func (e *undefinedStructError) Error() string {
+	return fmt.Sprintf("struct %s is not defined in the Go package", e.name)
 }
 
 // fixedType returns a renamed type. The kind is derived from the
 // metadata definition if there is one.
 func (tm *typeMapper) fixedType(name string, td *typeDef) (goType, error) {
 	if name[0] == '*' || name == "unsafe.Pointer" {
-		return goType{name, kindPointer, tm.arch.ptrSize()}, nil
+		return goType{name: name, kind: kindPointer, size: tm.arch.ptrSize()}, nil
 	}
 	if name == "uintptr" {
-		return goType{name, kindScalar, tm.arch.ptrSize()}, nil
+		return goType{name: name, kind: kindScalar, size: tm.arch.ptrSize()}, nil
 	}
 	if td != nil && (tm.m.isEnum(td) || td.hasAttr("NativeTypedefAttribute")) {
 		u, err := tm.m.underlying(td)
@@ -211,7 +229,7 @@ func (tm *typeMapper) fixedType(name string, td *typeDef) (goType, error) {
 		ut.name = name
 		return ut, nil
 	}
-	return goType{name, kindStruct, 0}, nil
+	return goType{name: name, kind: kindStruct, size: 0}, nil
 }
 
 // lookupTypeDef finds a top level TypeDef by name and namespace that

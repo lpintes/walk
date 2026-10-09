@@ -138,17 +138,24 @@ func (c *constant) goValue() (string, error) {
 
 // genFunc is a function ready to be written.
 type genFunc struct {
-	spec   *funcSpec
-	method *method
-	params []param // with Go types and code shapes resolved
-	shapes []shape
-	result string
-	rshape shape
+	spec    *funcSpec
+	method  *method // on the first architecture
+	proc    string  // name of the LazyProc variable
+	params  []param // with Go types and code shapes resolved
+	shapes  []shape
+	byValue []int // size of a struct passed by value, 0 for other parameters
+	result  string
+	rshape  shape
+
+	// methods holds the method of each architecture if the function
+	// uses a fallback on some of them, nil otherwise.
+	methods map[arch]*method
 }
 
 // functions generates the DLL and procedure variables and the wrapper
-// functions.
-func (g *generator) functions() []byte {
+// functions. The procedure variables of functions with a fallback differ
+// between architectures and are returned separately for each.
+func (g *generator) functions() (common []byte, perArch map[arch][]byte) {
 	dlls := make(map[string]*dllSpec)
 	for _, d := range g.s.dlls {
 		dlls[d.name] = d
@@ -187,11 +194,32 @@ func (g *generator) functions() []byte {
 	}
 	b.WriteString("\n")
 	for _, f := range funcs {
-		fmt.Fprintf(&b, "\tproc%s = %s.NewProc(%q)\n", f.method.entry, dlls[f.method.dll].goName, f.method.entry)
+		if f.methods == nil {
+			fmt.Fprintf(&b, "\t%s = %s.NewProc(%q)\n", f.proc, dlls[f.method.dll].goName, f.method.entry)
+		}
 	}
 	b.WriteString(")\n\n")
 	b.Write(body.Bytes())
-	return b.Bytes()
+
+	perArch = make(map[arch][]byte)
+	for _, an := range archNames {
+		var vars bytes.Buffer
+		for _, f := range funcs {
+			if md := f.methods[an.arch]; md != nil {
+				fmt.Fprintf(&vars, "\t%s = %s.NewProc(%q)\n", f.proc, dlls[md.dll].goName, md.entry)
+			}
+		}
+		if vars.Len() == 0 {
+			continue
+		}
+		var ab bytes.Buffer
+		header(&ab, g.s)
+		ab.WriteString("var (\n")
+		ab.Write(vars.Bytes())
+		ab.WriteString(")\n")
+		perArch[an.arch] = ab.Bytes()
+	}
+	return b.Bytes(), perArch
 }
 
 // goSignature returns the Go parameter and result types.
@@ -203,12 +231,14 @@ func (f *genFunc) goSignature() string {
 	return "(" + strings.Join(types, ", ") + ") " + f.result
 }
 
-func (g *generator) function(fs *funcSpec) (*genFunc, error) {
-	var mds []*method
-	if fs.entry != "" {
-		mds = g.m.methods[fs.entry]
-	} else if mds = g.m.methods[fs.name+"W"]; len(mds) == 0 {
-		mds = g.m.methods[fs.name]
+// lookupMethod finds the metadata function NAME+"W", or NAME if there is
+// no such function.
+func (m *metadata) lookupMethod(name string, exact bool) (*method, error) {
+	mds := m.methods[name]
+	if !exact {
+		if mds = m.methods[name+"W"]; len(mds) == 0 {
+			mds = m.methods[name]
+		}
 	}
 	switch {
 	case len(mds) == 0:
@@ -216,23 +246,59 @@ func (g *generator) function(fs *funcSpec) (*genFunc, error) {
 	case len(mds) > 1:
 		return nil, fmt.Errorf("function has %d definitions in the metadata", len(mds))
 	}
-	md := mds[0]
-	if md.arch != archAll {
-		return nil, fmt.Errorf("function is specific to %v", md.arch)
-	}
-	if md.dll == "" {
+	if mds[0].dll == "" {
 		return nil, fmt.Errorf("function has no DLL import")
+	}
+	return mds[0], nil
+}
+
+func (g *generator) function(fs *funcSpec) (*genFunc, error) {
+	name, exact := fs.name, false
+	if fs.entry != "" {
+		name, exact = fs.entry, true
+	}
+	md, err := g.m.lookupMethod(name, exact)
+	if err != nil {
+		return nil, err
+	}
+	// methods[a] is the method used on architecture a.
+	methods := make(map[arch]*method)
+	for _, an := range archNames {
+		methods[an.arch] = md
+	}
+	switch {
+	case md.arch != archAll && fs.fallback == "":
+		return nil, fmt.Errorf("function is specific to %v", md.arch)
+	case md.arch == archAll && fs.fallback != "":
+		return nil, fmt.Errorf("function exists on all architectures, fallback is not used")
+	case fs.fallback != "":
+		fb, err := g.m.lookupMethod(fs.fallback, false)
+		if err != nil {
+			return nil, fmt.Errorf("fallback %s: %w", fs.fallback, err)
+		}
+		if fb.arch|md.arch != archAll {
+			return nil, fmt.Errorf("fallback %s does not exist on %v", fs.fallback, archAll&^md.arch)
+		}
+		if fb.dll != md.dll {
+			return nil, fmt.Errorf("fallback %s is in %s, not in %s", fs.fallback, fb.dll, md.dll)
+		}
+		for _, an := range archNames {
+			if md.arch&an.arch == 0 {
+				methods[an.arch] = fb
+			}
+		}
 	}
 
 	// The Go signature must be the same on all architectures.
 	var f *genFunc
 	for _, an := range archNames {
+		amd := methods[an.arch]
 		tm := &typeMapper{m: g.m, arch: an.arch, pkg: g.pkg, rawBool: fs.rawBool}
-		sig, err := tm.signature(md)
+		sig, err := tm.signature(amd)
 		if err != nil {
 			return nil, err
 		}
-		af, err := g.project(fs, md, sig, an.arch)
+		af, err := g.project(fs, amd, sig, an.arch)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", an.name, err)
 		}
@@ -240,9 +306,14 @@ func (g *generator) function(fs *funcSpec) (*genFunc, error) {
 			f = af
 			continue
 		}
-		if af.goSignature() != f.goSignature() {
+		if af.goSignature() != f.goSignature() || fmt.Sprint(af.byValue) != fmt.Sprint(f.byValue) {
 			return nil, fmt.Errorf("signature differs between architectures")
 		}
+	}
+	f.proc = "proc" + f.method.entry
+	if fs.fallback != "" {
+		f.methods = methods
+		f.proc = "proc" + fs.name
 	}
 	for name := range fs.params {
 		found := false
@@ -269,13 +340,22 @@ func (g *generator) project(fs *funcSpec, md *method, sig *signature, a arch) (*
 		case p.typ.kind == kindFloat:
 			return nil, fmt.Errorf("parameter %s is a floating-point value", p.name)
 		case p.typ.kind == kindStruct:
-			return nil, fmt.Errorf("parameter %s is a struct passed by value", p.name)
+			size, err := g.byValueSize(fs, p, a)
+			if err != nil {
+				return nil, fmt.Errorf("parameter %s: %w", p.name, err)
+			}
+			f.params = append(f.params, p)
+			f.shapes = append(f.shapes, shapeOther)
+			f.byValue = append(f.byValue, size)
+			continue
 		case p.typ.size > a.ptrSize():
 			return nil, fmt.Errorf("parameter %s is larger than a pointer", p.name)
 		}
 		name := p.typ.name
 		if o, ok := fs.params[p.name]; ok {
 			name = o
+		} else if p.typ.undefined {
+			return nil, fmt.Errorf("parameter %s: %s refers to a struct the Go package does not define", p.name, name)
 		}
 		sh := g.pkg.shapeOf(name)
 		if err := g.checkShape(p.typ, name, sh); err != nil {
@@ -284,6 +364,7 @@ func (g *generator) project(fs *funcSpec, md *method, sig *signature, a arch) (*
 		p.typ.name = name
 		f.params = append(f.params, p)
 		f.shapes = append(f.shapes, sh)
+		f.byValue = append(f.byValue, 0)
 	}
 
 	r := sig.result
@@ -303,6 +384,8 @@ func (g *generator) project(fs *funcSpec, md *method, sig *signature, a arch) (*
 	f.result = r.name
 	if fs.result != "" {
 		f.result = fs.result
+	} else if r.undefined {
+		return nil, fmt.Errorf("result: %s refers to a struct the Go package does not define", r.name)
 	}
 	f.rshape = g.pkg.shapeOf(f.result)
 	if err := g.checkShape(r, f.result, f.rshape); err != nil {
@@ -314,6 +397,35 @@ func (g *generator) project(fs *funcSpec, md *method, sig *signature, a arch) (*
 		return nil, fmt.Errorf("result %s is a pointer", f.result)
 	}
 	return f, nil
+}
+
+// byValueSize returns the size of a struct parameter passed by value. Only
+// structs of 1, 2 or 4 bytes without floating-point fields are supported:
+// the calling conventions of all architectures pass them like an integer
+// of the same size in a single register or stack slot. The Go struct must
+// be generated, so that its layout is checked against the metadata.
+func (g *generator) byValueSize(fs *funcSpec, p param, a arch) (int, error) {
+	if _, ok := fs.params[p.name]; ok {
+		return 0, fmt.Errorf("the type of a struct passed by value cannot be overridden")
+	}
+	generated := false
+	for _, ss := range g.s.structs {
+		generated = generated || ss.name == p.typ.name
+	}
+	if !generated {
+		return 0, fmt.Errorf("struct %s passed by value is not generated", p.typ.name)
+	}
+	l, err := g.m.layoutOf(p.meta, a, cRules)
+	if err != nil {
+		return 0, err
+	}
+	if l.size != 1 && l.size != 2 && l.size != 4 {
+		return 0, fmt.Errorf("struct %s of %d bytes is passed by value", p.typ.name, l.size)
+	}
+	if hasFloat, err := g.m.hasFloat(p.meta, a); err != nil || hasFloat {
+		return 0, fmt.Errorf("struct %s with floating-point fields is passed by value", p.typ.name)
+	}
+	return l.size, nil
 }
 
 // checkShape checks that a Go type with the given shape can stand for a
@@ -353,9 +465,11 @@ func (g *generator) writeFunc(b *bytes.Buffer, f *genFunc) {
 	}
 	fmt.Fprintf(b, "func %s(%s) %s {\n", f.spec.name, strings.Join(params, ", "), f.result)
 
-	args := []string{"proc" + f.method.entry + ".Addr()"}
+	args := []string{f.proc + ".Addr()"}
 	for i, p := range f.params {
 		switch {
+		case f.byValue[i] > 0:
+			args = append(args, fmt.Sprintf("uintptr(*(*uint%d)(unsafe.Pointer(&%s)))", 8*f.byValue[i], p.name))
 		case f.shapes[i] == shapeBool:
 			args = append(args, "uintptr(BoolToBOOL("+p.name+"))")
 		case p.typ.name == "uintptr":

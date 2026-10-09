@@ -52,6 +52,19 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(BROWSEINFO{})-32]
+	_ = layoutCheck[unsafe.Alignof(BROWSEINFO{})-4]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.HwndOwner)-0]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.PidlRoot)-4]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.PszDisplayName)-8]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.LpszTitle)-12]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.UlFlags)-16]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.Lpfn)-20]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.LParam)-24]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.IImage)-28]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(CIEXYZ{})-12]
 	_ = layoutCheck[unsafe.Alignof(CIEXYZ{})-4]
 	_ = layoutCheck[unsafe.Offsetof(CIEXYZ{}.CiexyzX)-0]
@@ -583,6 +596,20 @@ func _() {
 	_ = layoutCheck[unsafe.Offsetof(TEXTMETRIC{}.TmStruckOut)-54]
 	_ = layoutCheck[unsafe.Offsetof(TEXTMETRIC{}.TmPitchAndFamily)-55]
 	_ = layoutCheck[unsafe.Offsetof(TEXTMETRIC{}.TmCharSet)-56]
+}
+
+func _() {
+	_ = layoutCheck[unsafe.Sizeof(TOOLINFO{})-48]
+	_ = layoutCheck[unsafe.Alignof(TOOLINFO{})-4]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.CbSize)-0]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.UFlags)-4]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.Hwnd)-8]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.UId)-12]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.Rect)-16]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.Hinst)-32]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.LpszText)-36]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.LParam)-40]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.LpReserved)-44]
 }
 
 func _() {

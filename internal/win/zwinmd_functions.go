@@ -26,6 +26,7 @@ var (
 	libuxtheme  = windows.NewLazySystemDLL("uxtheme.dll")
 
 	procAddFontMemResourceEx        = libgdi32.NewProc("AddFontMemResourceEx")
+	procAlphaBlend                  = libmsimg32.NewProc("AlphaBlend")
 	procBeginDeferWindowPos         = libuser32.NewProc("BeginDeferWindowPos")
 	procBeginPaint                  = libuser32.NewProc("BeginPaint")
 	procBitBlt                      = libgdi32.NewProc("BitBlt")
@@ -107,6 +108,7 @@ var (
 	procGetMessageW                 = libuser32.NewProc("GetMessageW")
 	procGetModuleHandleW            = libkernel32.NewProc("GetModuleHandleW")
 	procGetMonitorInfoW             = libuser32.NewProc("GetMonitorInfoW")
+	procGetObjectW                  = libgdi32.NewProc("GetObjectW")
 	procGetOpenFileNameW            = libcomdlg32.NewProc("GetOpenFileNameW")
 	procGetParent                   = libuser32.NewProc("GetParent")
 	procGetSaveFileNameW            = libcomdlg32.NewProc("GetSaveFileNameW")
@@ -171,8 +173,10 @@ var (
 	procRemoveFontMemResourceEx     = libgdi32.NewProc("RemoveFontMemResourceEx")
 	procRemoveMenu                  = libuser32.NewProc("RemoveMenu")
 	procRoundRect                   = libgdi32.NewProc("RoundRect")
+	procSHBrowseForFolderW          = libshell32.NewProc("SHBrowseForFolderW")
 	procSHDefExtractIconW           = libshell32.NewProc("SHDefExtractIconW")
 	procSHGetFileInfoW              = libshell32.NewProc("SHGetFileInfoW")
+	procSHGetPathFromIDListW        = libshell32.NewProc("SHGetPathFromIDListW")
 	procSHGetSpecialFolderPathW     = libshell32.NewProc("SHGetSpecialFolderPathW")
 	procScreenToClient              = libuser32.NewProc("ScreenToClient")
 	procSelectObject                = libgdi32.NewProc("SelectObject")
@@ -219,6 +223,11 @@ var (
 func AddFontMemResourceEx(pFileView uintptr, cjSize uint32, pvResrved unsafe.Pointer, pNumFonts *uint32) HANDLE {
 	r1, _, _ := syscall.SyscallN(procAddFontMemResourceEx.Addr(), pFileView, uintptr(cjSize), uintptr(pvResrved), uintptr(unsafe.Pointer(pNumFonts)))
 	return HANDLE(r1)
+}
+
+func AlphaBlend(hdcDest HDC, xoriginDest int32, yoriginDest int32, wDest int32, hDest int32, hdcSrc HDC, xoriginSrc int32, yoriginSrc int32, wSrc int32, hSrc int32, ftn BLENDFUNCTION) bool {
+	r1, _, _ := syscall.SyscallN(procAlphaBlend.Addr(), uintptr(hdcDest), uintptr(xoriginDest), uintptr(yoriginDest), uintptr(wDest), uintptr(hDest), uintptr(hdcSrc), uintptr(xoriginSrc), uintptr(yoriginSrc), uintptr(wSrc), uintptr(hSrc), uintptr(*(*uint32)(unsafe.Pointer(&ftn))))
+	return r1 != 0
 }
 
 func BeginDeferWindowPos(nNumWindows int32) HDWP {
@@ -625,6 +634,11 @@ func GetMonitorInfo(hMonitor HMONITOR, lpmi *MONITORINFO) bool {
 	return r1 != 0
 }
 
+func GetObject(h HGDIOBJ, c uintptr, pv unsafe.Pointer) int32 {
+	r1, _, _ := syscall.SyscallN(procGetObjectW.Addr(), uintptr(h), c, uintptr(pv))
+	return int32(r1)
+}
+
 func GetOpenFileName(param0 *OPENFILENAME) bool {
 	r1, _, _ := syscall.SyscallN(procGetOpenFileNameW.Addr(), uintptr(unsafe.Pointer(param0)))
 	return r1 != 0
@@ -683,6 +697,11 @@ func GetWindow(hWnd HWND, uCmd uint32) HWND {
 func GetWindowLong(hWnd HWND, nIndex int32) int32 {
 	r1, _, _ := syscall.SyscallN(procGetWindowLongW.Addr(), uintptr(hWnd), uintptr(nIndex))
 	return int32(r1)
+}
+
+func GetWindowLongPtr(hWnd HWND, nIndex int32) uintptr {
+	r1, _, _ := syscall.SyscallN(procGetWindowLongPtr.Addr(), uintptr(hWnd), uintptr(nIndex))
+	return r1
 }
 
 func GetWindowPlacement(hWnd HWND, lpwndpl *WINDOWPLACEMENT) bool {
@@ -942,6 +961,11 @@ func RoundRect(hdc HDC, left int32, top int32, right int32, bottom int32, width 
 	return r1 != 0
 }
 
+func SHBrowseForFolder(lpbi *BROWSEINFO) uintptr {
+	r1, _, _ := syscall.SyscallN(procSHBrowseForFolderW.Addr(), uintptr(unsafe.Pointer(lpbi)))
+	return r1
+}
+
 func SHDefExtractIcon(pszIconFile *uint16, iIndex int32, uFlags uint32, phiconLarge *HICON, phiconSmall *HICON, nIconSize uint32) HRESULT {
 	r1, _, _ := syscall.SyscallN(procSHDefExtractIconW.Addr(), uintptr(unsafe.Pointer(pszIconFile)), uintptr(iIndex), uintptr(uFlags), uintptr(unsafe.Pointer(phiconLarge)), uintptr(unsafe.Pointer(phiconSmall)), uintptr(nIconSize))
 	return HRESULT(r1)
@@ -950,6 +974,11 @@ func SHDefExtractIcon(pszIconFile *uint16, iIndex int32, uFlags uint32, phiconLa
 func SHGetFileInfo(pszPath *uint16, dwFileAttributes uint32, psfi *SHFILEINFO, cbFileInfo uint32, uFlags uint32) uintptr {
 	r1, _, _ := syscall.SyscallN(procSHGetFileInfoW.Addr(), uintptr(unsafe.Pointer(pszPath)), uintptr(dwFileAttributes), uintptr(unsafe.Pointer(psfi)), uintptr(cbFileInfo), uintptr(uFlags))
 	return r1
+}
+
+func SHGetPathFromIDList(pidl uintptr, pszPath *uint16) bool {
+	r1, _, _ := syscall.SyscallN(procSHGetPathFromIDListW.Addr(), pidl, uintptr(unsafe.Pointer(pszPath)))
+	return r1 != 0
 }
 
 func SHGetSpecialFolderPath(hwnd HWND, pszPath *uint16, csidl CSIDL, fCreate bool) bool {
@@ -1079,6 +1108,11 @@ func SetViewportOrgEx(hdc HDC, x int32, y int32, lppt *POINT) COLORREF {
 func SetWindowLong(hWnd HWND, nIndex int32, dwNewLong int32) int32 {
 	r1, _, _ := syscall.SyscallN(procSetWindowLongW.Addr(), uintptr(hWnd), uintptr(nIndex), uintptr(dwNewLong))
 	return int32(r1)
+}
+
+func SetWindowLongPtr(hWnd HWND, nIndex int, dwNewLong uintptr) uintptr {
+	r1, _, _ := syscall.SyscallN(procSetWindowLongPtr.Addr(), uintptr(hWnd), uintptr(nIndex), dwNewLong)
+	return r1
 }
 
 func SetWindowPlacement(hWnd HWND, lpwndpl *WINDOWPLACEMENT) bool {

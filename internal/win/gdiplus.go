@@ -118,11 +118,8 @@ type GdiplusStartupOutput struct {
 type ARGB uint32
 
 var (
-
-	// Functions
-	gdipCreateBitmapFromHBITMAP *windows.LazyProc
-	gdiplusShutdown             *windows.LazyProc
-	gdiplusStartup              *windows.LazyProc
+	gdiplusShutdown *windows.LazyProc
+	gdiplusStartup  *windows.LazyProc
 )
 
 var (
@@ -131,18 +128,8 @@ var (
 
 func init() {
 	// Functions
-	gdipCreateBitmapFromHBITMAP = libgdiplus.NewProc("GdipCreateBitmapFromHBITMAP")
 	gdiplusShutdown = libgdiplus.NewProc("GdiplusShutdown")
 	gdiplusStartup = libgdiplus.NewProc("GdiplusStartup")
-}
-
-func GdipCreateBitmapFromHBITMAP(hbm HBITMAP, hpal HPALETTE, bitmap **GpBitmap) GpStatus {
-	ret, _, _ := syscall.Syscall(gdipCreateBitmapFromHBITMAP.Addr(), 3,
-		uintptr(hbm),
-		uintptr(hpal),
-		uintptr(unsafe.Pointer(bitmap)))
-
-	return GpStatus(ret)
 }
 
 func GdiplusShutdown() {

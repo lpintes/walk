@@ -32,9 +32,13 @@ dll USER32.dll libuser32
 const WS_CHILD
 const LOCALE_USER_DEFAULT LCID # typed
 func GetMessage rawbool
-func GetLocaleInfo Locale:LCID result=int32 entry=GetLocaleInfoW
+func GetLocaleInfo Locale:LCID result=int32 entry=GetLocaleInfoW fallback=GetLocaleInfoA
 struct MSG hwnd=HWnd lParam:LPARAM
 struct NMHDR2 entry=NMHDR
+guid IID_IUnknown
+guid PROPID_ACC_NAME MSAAPROPID
+interface IUnknown
+interface IFoo entry=IBar get_Name=GetName
 `)
 	s, err := parseSpec(path)
 	if err != nil {
@@ -55,7 +59,7 @@ struct NMHDR2 entry=NMHDR
 	if f := s.functions[0]; !f.rawBool {
 		t.Errorf("GetMessage = %+v", f)
 	}
-	if f := s.functions[1]; f.params["Locale"] != "LCID" || f.result != "int32" || f.entry != "GetLocaleInfoW" {
+	if f := s.functions[1]; f.params["Locale"] != "LCID" || f.result != "int32" || f.entry != "GetLocaleInfoW" || f.fallback != "GetLocaleInfoA" {
 		t.Errorf("GetLocaleInfo = %+v", f)
 	}
 	if len(s.structs) != 2 {
@@ -70,6 +74,80 @@ struct NMHDR2 entry=NMHDR
 	if got := s.structs[1].metaNames(); strings.Join(got, " ") != "NMHDR" {
 		t.Errorf("NMHDR2 metadata names = %q", got)
 	}
+	if len(s.guids) != 2 || s.guids[0].guidType() != "IID" || s.guids[1].guidType() != "MSAAPROPID" {
+		t.Errorf("guids = %+v", s.guids)
+	}
+	if len(s.interfaces) != 2 {
+		t.Fatalf("interfaces = %+v", s.interfaces)
+	}
+	if is := s.interfaces[0]; is.metaName() != "IUnknown" || len(is.names) != 0 {
+		t.Errorf("IUnknown = %+v", is)
+	}
+	if is := s.interfaces[1]; is.metaName() != "IBar" || is.names["get_Name"] != "GetName" || len(is.names) != 1 {
+		t.Errorf("IFoo = %+v", is)
+	}
+}
+
+func TestGUID(t *testing.T) {
+	g := [16]byte{0x61, 0xf9, 0x56, 0x88, 0x0a, 0x34, 0xd0, 0x11, 0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2}
+	want := "CLSID{0x8856f961, 0x340a, 0x11d0, [8]byte{0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2}}"
+	if got := goGUID("CLSID", &g); got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+	for _, tc := range []struct{ name, typ string }{
+		{"IID_IUnknown", "IID"},
+		{"DIID_DWebBrowserEvents2", "IID"},
+		{"CLSID_WebBrowser", "CLSID"},
+		{"FOLDERID_Desktop", "syscall.GUID"},
+	} {
+		if got := (&guidSpec{name: tc.name}).guidType(); got != tc.typ {
+			t.Errorf("type of %s = %s, want %s", tc.name, got, tc.typ)
+		}
+	}
+}
+
+func TestCOM(t *testing.T) {
+	skipWithoutMetadata(t)
+	_, m, err := load(filepath.Join(winDir, "winmd.txt"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ name, guid string }{
+		// Interface.
+		{"IID_IUnknown", "IID{0x00000000, 0x0000, 0x0000, [8]byte{0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}"},
+		// Coclass.
+		{"CLSID_WebBrowser", "IID{0x8856f961, 0x340a, 0x11d0, [8]byte{0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2}}"},
+		// Constant.
+		{"CLSID_AccPropServices", "IID{0xb5f8350b, 0x0548, 0x48b1, [8]byte{0xa6, 0xee, 0x88, 0xbd, 0x00, 0xb4, 0xa5, 0xe7}}"},
+	} {
+		g, _, err := m.lookupGUID(tc.name)
+		if err != nil {
+			t.Errorf("%s: %v", tc.name, err)
+			continue
+		}
+		if got := goGUID("IID", g); got != tc.guid {
+			t.Errorf("%s = %s, want %s", tc.name, got, tc.guid)
+		}
+	}
+	if _, _, err := m.lookupGUID("IID_NoSuchInterface"); err == nil {
+		t.Error("IID_NoSuchInterface: no error")
+	}
+
+	td, err := m.lookupInterface("IOleInPlaceSite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	methods, err := m.vtable(td)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// IUnknown, then IOleWindow, then IOleInPlaceSite.
+	want := "QueryInterface AddRef Release GetWindow ContextSensitiveHelp CanInPlaceActivate OnInPlaceActivate " +
+		"OnUIActivate GetWindowContext Scroll OnUIDeactivate OnInPlaceDeactivate DiscardUndoState " +
+		"DeactivateAndUndo OnPosRectChange"
+	if got := strings.Join(methods, " "); got != want {
+		t.Errorf("IOleInPlaceSite vtable:\n%s\nwant:\n%s", got, want)
+	}
 }
 
 func TestParseSpecErrors(t *testing.T) {
@@ -79,6 +157,8 @@ func TestParseSpecErrors(t *testing.T) {
 		{"metadata 1 sha256:x\nfunc F bogus\n", "unknown option"},
 		{"metadata 1 sha256:x\ntype T\n", "unknown directive"},
 		{"metadata 1\n", "want: metadata"},
+		{"metadata 1 sha256:x\nguid A B C\n", "want: guid"},
+		{"metadata 1 sha256:x\ninterface I x:y\n", "unknown option"},
 	} {
 		path := writeFile(t, t.TempDir(), "winmd.txt", tc.spec)
 		_, err := parseSpec(path)
@@ -163,21 +243,24 @@ func TestWriteFunc(t *testing.T) {
 	f := &genFunc{
 		spec:   &funcSpec{name: "EnableWindow"},
 		method: &method{entry: "EnableWindow"},
+		proc:   "procEnableWindow",
 		params: []param{
-			{"hWnd", goType{name: "HWND"}},
-			{"bEnable", goType{name: "bool"}},
-			{"lpRect", goType{name: "*RECT"}},
-			{"pv", goType{name: "unsafe.Pointer"}},
-			{"lParam", goType{name: "uintptr"}},
+			{name: "hWnd", typ: goType{name: "HWND"}},
+			{name: "bEnable", typ: goType{name: "bool"}},
+			{name: "lpRect", typ: goType{name: "*RECT"}},
+			{name: "pv", typ: goType{name: "unsafe.Pointer"}},
+			{name: "lParam", typ: goType{name: "uintptr"}},
+			{name: "ftn", typ: goType{name: "BLENDFUNCTION"}},
 		},
-		shapes: []shape{shapeScalar, shapeBool, shapePointer, shapePointer, shapeScalar},
-		result: "bool",
-		rshape: shapeBool,
+		shapes:  []shape{shapeScalar, shapeBool, shapePointer, shapePointer, shapeScalar, shapeOther},
+		byValue: []int{0, 0, 0, 0, 0, 4},
+		result:  "bool",
+		rshape:  shapeBool,
 	}
 	var b bytes.Buffer
 	(&generator{}).writeFunc(&b, f)
-	want := `func EnableWindow(hWnd HWND, bEnable bool, lpRect *RECT, pv unsafe.Pointer, lParam uintptr) bool {
-	r1, _, _ := syscall.SyscallN(procEnableWindow.Addr(), uintptr(hWnd), uintptr(BoolToBOOL(bEnable)), uintptr(unsafe.Pointer(lpRect)), uintptr(pv), lParam)
+	want := `func EnableWindow(hWnd HWND, bEnable bool, lpRect *RECT, pv unsafe.Pointer, lParam uintptr, ftn BLENDFUNCTION) bool {
+	r1, _, _ := syscall.SyscallN(procEnableWindow.Addr(), uintptr(hWnd), uintptr(BoolToBOOL(bEnable)), uintptr(unsafe.Pointer(lpRect)), uintptr(pv), lParam, uintptr(*(*uint32)(unsafe.Pointer(&ftn))))
 	return r1 != 0
 }
 

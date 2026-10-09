@@ -1067,6 +1067,7 @@ const WS_VSCROLL
 # Functions
 
 func AddFontMemResourceEx pFileView:uintptr
+func AlphaBlend
 func BeginDeferWindowPos
 func BeginPaint
 func BitBlt
@@ -1148,6 +1149,7 @@ func GetMenuInfo
 func GetMessage rawbool
 func GetModuleHandle result=HINSTANCE
 func GetMonitorInfo
+func GetObject c:uintptr
 func GetOpenFileName
 func GetParent
 func GetSaveFileName
@@ -1160,6 +1162,7 @@ func GetThemeColor
 func GetVersion
 func GetWindow
 func GetWindowLong
+func GetWindowLongPtr fallback=GetWindowLong result=uintptr
 func GetWindowPlacement
 func GetWindowRect
 func GlobalAlloc
@@ -1212,8 +1215,10 @@ func ReleaseDC result=bool
 func RemoveFontMemResourceEx
 func RemoveMenu
 func RoundRect
+func SHBrowseForFolder result=uintptr
 func SHDefExtractIcon
 func SHGetFileInfo
+func SHGetPathFromIDList pidl:uintptr
 func SHGetSpecialFolderPath csidl:CSIDL
 func ScreenToClient
 func SelectObject
@@ -1240,6 +1245,7 @@ func SetTextColor
 func SetTimer
 func SetViewportOrgEx result=COLORREF
 func SetWindowLong
+func SetWindowLongPtr fallback=SetWindowLong dwNewLong:uintptr nIndex:int result=uintptr
 func SetWindowPlacement
 func SetWindowPos
 func SetWindowTheme
@@ -1261,6 +1267,7 @@ func WindowFromDC
 struct BITMAP
 struct BITMAPINFOHEADER
 struct BLENDFUNCTION
+struct BROWSEINFO pidlRoot:uintptr
 struct CIEXYZ
 struct CIEXYZTRIPLE
 struct DIBSECTION
@@ -1312,6 +1319,7 @@ struct SYSTEMTIME
 struct TBBUTTONINFO pszText:uintptr
 struct TCITEM
 struct TEXTMETRIC
+struct TOOLINFO entry=TTTOOLINFOW
 struct TRACKMOUSEEVENT
 struct TRIVERTEX
 struct TTGETTITLE
@@ -1320,3 +1328,52 @@ struct TVITEM pszText:uintptr
 struct WINDOWPLACEMENT
 struct WINDOWPOS
 struct WNDCLASSEX
+
+# GUIDs
+
+guid CLSID_AccPropServices
+guid CLSID_TaskbarList
+guid CLSID_WebBrowser
+guid DIID_DWebBrowserEvents2
+guid IID_IAccPropServices
+guid IID_IClassFactory
+guid IID_IConnectionPointContainer
+guid IID_IDocHostUIHandler
+guid IID_IOleClientSite
+guid IID_IOleInPlaceActiveObject
+guid IID_IOleInPlaceObject
+guid IID_IOleInPlaceSite
+guid IID_IOleObject
+guid IID_ITaskbarList3
+guid IID_IUnknown
+guid IID_IWebBrowser2
+guid PROPID_ACC_DEFAULTACTION MSAAPROPID
+guid PROPID_ACC_DESCRIPTION MSAAPROPID
+guid PROPID_ACC_HELP MSAAPROPID
+guid PROPID_ACC_KEYBOARDSHORTCUT MSAAPROPID
+guid PROPID_ACC_NAME MSAAPROPID
+guid PROPID_ACC_ROLE MSAAPROPID
+guid PROPID_ACC_ROLEMAP MSAAPROPID
+guid PROPID_ACC_STATE MSAAPROPID
+guid PROPID_ACC_STATEMAP MSAAPROPID
+guid PROPID_ACC_VALUEMAP MSAAPROPID
+
+# COM interfaces
+
+interface DWebBrowserEvents2
+interface IAccPropServer
+interface IAccPropServices
+interface IClassFactory
+interface IConnectionPoint
+interface IConnectionPointContainer
+interface IDispatch
+interface IDocHostUIHandler
+interface IOleClientSite
+interface IOleInPlaceActiveObject
+interface IOleInPlaceFrame
+interface IOleInPlaceObject
+interface IOleInPlaceSite
+interface IOleObject
+interface ITaskbarList3
+interface IUnknown
+interface IWebBrowser2

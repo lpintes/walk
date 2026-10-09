@@ -11,6 +11,10 @@ Changes against the original:
 - `// +build` lines replaced with `//go:build` lines.
 - Formatted with current `gofmt` (hexadecimal literal prefixes `0X` written
   as `0x`, doc comment indentation). No functional changes.
+- Declarations walk does not use were removed with
+  `tools/winmigrate/prune`, and most of the rest is generated (see below).
+  To use another Win32 symbol, add it to `winmd.txt` and run
+  `go generate ./internal/win` rather than writing it by hand.
 
 ## Generated declarations
 
@@ -33,19 +37,30 @@ cover:
 - the constants walk uses whose value is the same in the metadata,
 - the plain syscall wrappers walk uses, including their `windows.LazyProc`
   variables, and the `windows.LazyDLL` variables, which the remaining
-  hand-written code also uses,
+  hand-written code also uses. `GetWindowLongPtr` and `SetWindowLongPtr`
+  call `GetWindowLongW` and `SetWindowLongW` on 386, where the `Ptr`
+  functions do not exist; their `windows.LazyProc` variables are in
+  `zwinmd_functions_386.go`, `zwinmd_functions_amd64.go` and
+  `zwinmd_functions_arm64.go`,
 - the structs walk uses whose fields and layout are the same as in the
   metadata (`zwinmd_structs.go`). Field names and types follow
   `github.com/lxn/win`; where they differ from the metadata, `winmd.txt`
   overrides them. The files `zwinmd_layout_386.go`,
   `zwinmd_layout_amd64.go` and `zwinmd_layout_arm64.go` make the build
   fail if the size, alignment or a field offset of a generated struct
-  differs from the metadata on that architecture.
+  differs from the metadata on that architecture,
+- the GUID variables walk uses (`IID_*`, `CLSID_*`, `PROPID_ACC_*`;
+  `zwinmd_guids.go`),
+- the vtable structs of the COM interfaces walk uses, with the structs
+  standing for interface pointers (`zwinmd_interfaces.go`). The methods
+  calling through the vtables stay hand-written.
 
 Everything else is still hand-written: structs that are unions, contain
 anonymous unions, are declared with `#pragma pack`, differ between
-architectures or differ from the metadata, COM interfaces, GUIDs,
-macros such as `LOWORD`, functions that take or return structs or
-floating-point values by value, functions that exist only on some
-architectures (`GetWindowLongPtr`), functions with a fallback for older
-Windows versions, and declarations walk does not use.
+architectures or differ from the metadata, COM interface methods,
+macros such as `LOWORD`, functions that take or return structs larger
+than 4 bytes or floating-point values by value, functions returning
+pointers (`GlobalLock`), functions with a fallback for older Windows
+versions, functions whose hand-written signature or body differs from the
+metadata (see "Known issues" in `CLAUDE.md`), and helpers such as
+`BoolToBOOL` or `UTF16PtrToString`.

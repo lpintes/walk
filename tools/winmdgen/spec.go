@@ -17,10 +17,12 @@ type spec struct {
 	metaVersion string // NuGet package version
 	metaSHA256  string // SHA-256 of the .nupkg file
 
-	dlls      []*dllSpec
-	constants []*constSpec
-	functions []*funcSpec
-	structs   []*structSpec
+	dlls       []*dllSpec
+	constants  []*constSpec
+	functions  []*funcSpec
+	structs    []*structSpec
+	guids      []*guidSpec
+	interfaces []*interfaceSpec
 }
 
 type dllSpec struct {
@@ -41,6 +43,10 @@ type funcSpec struct {
 	result  string            // Go result type overriding the metadata type
 	params  map[string]string // metadata parameter name -> Go type
 	rawBool bool              // keep BOOL instead of translating it to bool
+
+	// fallback is the metadata function to call on the architectures
+	// where the function does not exist, empty for none.
+	fallback string
 }
 
 type structSpec struct {
@@ -49,6 +55,26 @@ type structSpec struct {
 	entry string            // metadata struct name, empty means name+"W" or name
 	names map[string]string // metadata field name -> Go field name
 	types map[string]string // metadata field name -> Go type
+}
+
+type guidSpec struct {
+	line   int
+	name   string
+	goType string // empty for the default type, see guidType
+}
+
+type interfaceSpec struct {
+	line  int
+	name  string            // Go type name
+	entry string            // metadata interface name, empty means name
+	names map[string]string // metadata method name -> Go vtable field name
+}
+
+func (s *interfaceSpec) metaName() string {
+	if s.entry != "" {
+		return s.entry
+	}
+	return s.name
 }
 
 // metaNames returns the names to look up in the metadata, in order.
@@ -121,6 +147,8 @@ func parseSpec(path string) (*spec, error) {
 					fs.entry = strings.TrimPrefix(opt, "entry=")
 				case strings.HasPrefix(opt, "result="):
 					fs.result = strings.TrimPrefix(opt, "result=")
+				case strings.HasPrefix(opt, "fallback="):
+					fs.fallback = strings.TrimPrefix(opt, "fallback=")
 				case strings.Contains(opt, ":"):
 					i := strings.IndexByte(opt, ':')
 					fs.params[opt[:i]] = opt[i+1:]
@@ -149,6 +177,32 @@ func parseSpec(path string) (*spec, error) {
 				}
 			}
 			s.structs = append(s.structs, ss)
+		case "guid":
+			if len(fields) != 2 && len(fields) != 3 {
+				return nil, errorf("want: guid NAME [TYPE]")
+			}
+			gs := &guidSpec{line: line, name: fields[1]}
+			if len(fields) == 3 {
+				gs.goType = fields[2]
+			}
+			s.guids = append(s.guids, gs)
+		case "interface":
+			if len(fields) < 2 {
+				return nil, errorf("want: interface NAME [OPTION...]")
+			}
+			is := &interfaceSpec{line: line, name: fields[1], names: make(map[string]string)}
+			for _, opt := range fields[2:] {
+				switch {
+				case strings.HasPrefix(opt, "entry="):
+					is.entry = strings.TrimPrefix(opt, "entry=")
+				case strings.Contains(opt, "="):
+					i := strings.IndexByte(opt, '=')
+					is.names[opt[:i]] = opt[i+1:]
+				default:
+					return nil, errorf("unknown option %q", opt)
+				}
+			}
+			s.interfaces = append(s.interfaces, is)
 		default:
 			return nil, errorf("unknown directive %q", fields[0])
 		}
