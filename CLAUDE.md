@@ -87,9 +87,8 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     value, every signature and type, and for every plain syscall wrapper the
     DLL, entry point and argument and result conversions, before and
     after).
-  - Part 2: structs, pull request opened from branch
-    `claude/zen-dirac-qwf061` on top of part 1 (number to be recorded).
-    New `struct` directive in `winmd.txt`, generated
+  - Part 2: structs, pull request lpintes/walk#5 (based on the branch of
+    part 1). New `struct` directive in `winmd.txt`, generated
     `internal/win/zwinmd_structs.go` with 62 structs and
     `zwinmd_layout_{386,amd64,arm64}.go`, which make the build fail if a
     generated struct's size, alignment or field offsets differ from the
