@@ -117,6 +117,12 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   works); the `HDN_*` and `ODA_*`/`ODS_*` bugs are visual only and hard to
   test with a screen reader, so they stay recorded until someone can check
   the appearance. No GitHub issues were created for them.
+- `TESTING_ON_WINDOWS.md` describes tasks for an agent on a Windows
+  machine: a smoke test of step 3 part 1 and tests for these bugs. Finding
+  while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
+  change of behavior (walk effectively reacts to `HDN_ITEMCHANGEDW` and
+  tests the real `ODS_SELECTED` bit; the `ODA_FOCUS` check is dead code).
+  Only the `DragFinish` fix changes behavior.
 - Steps 4 to 9: not started.
 
 ## Candidate next steps (analysis for steps 4 to 9)
