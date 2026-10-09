@@ -76,7 +76,8 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
   `README.md`.
 - Step 3: in progress, done in parts.
-  - Part 1 done: generator `tools/winmdgen` (see its package documentation
+  - Part 1: pull request lpintes/walk#4.
+  - Part 1 contents: generator `tools/winmdgen` (see its package documentation
     and `internal/win/README.md`), specification `internal/win/winmd.txt`,
     generated `internal/win/zwinmd_constants.go` and
     `zwinmd_functions.go`. Metadata version 71.0.26-preview. Replaced 1035
