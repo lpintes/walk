@@ -110,7 +110,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     versions); `BITMAPINFO` (see "Known issues"); `BITMAPV4HEADER`,
     `BITMAPV5HEADER`, `VARIANTARG` (embedded fields); `ENHMETAHEADER`
     (refers to `RECTL`, which the package does not define).
-  - Part 3: pull request lpintes/walk#6 (draft). New directives `guid`
+  - Part 3: pull request lpintes/walk#6. New directives `guid`
     (26 GUID variables in `zwinmd_guids.go`) and `interface` (17 COM
     vtable structs and interface pointer structs in
     `zwinmd_interfaces.go`; the methods calling through the vtables stay
