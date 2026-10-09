@@ -56,7 +56,7 @@ The `LICENSE` and `AUTHORS` files must be preserved.
 ## Status
 
 - Step 1: done, pull request lpintes/walk#1.
-- Step 2: done. `github.com/lxn/win` (version
+- Step 2: done, pull request lpintes/walk#2. `github.com/lxn/win` (version
   v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
   `README.md`.
 - Step 3: not started.
