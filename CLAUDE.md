@@ -34,8 +34,13 @@ The `LICENSE` and `AUTHORS` files must be preserved.
     objects)
   - `gofmt -l .` must print nothing
   - `GOOS=windows go vet ./...` (has known warnings; do not add new ones)
+  - `go test ./tools/...`
+  - after changing `internal/win/winmd.txt` or the generator:
+    `go generate ./internal/win` and commit the regenerated files
 - If a newer dependency requires Go newer than 1.23, pick an older compatible
-  version (e.g. `golang.org/x/sys` v0.35.0).
+  version (e.g. `golang.org/x/sys` v0.35.0, `github.com/microsoft/go-winmd`
+  v0.0.0-20260113112744-dbc8a42468d0, the last one for Go 1.18; later
+  versions need Go 1.24 or newer).
 - Workflow: one logical step = one session = one pull request into `master`.
 
 ## Modernization plan
@@ -70,7 +75,24 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
 - Step 2: done, pull request lpintes/walk#2. `github.com/lxn/win` (version
   v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
   `README.md`.
-- Step 3: not started.
+- Step 3: in progress, done in parts.
+  - Part 1 done: generator `tools/winmdgen` (see its package documentation
+    and `internal/win/README.md`), specification `internal/win/winmd.txt`,
+    generated `internal/win/zwinmd_constants.go` and
+    `zwinmd_functions.go`. Metadata version 71.0.26-preview. Replaced 1035
+    constants, 189 functions with their `LazyProc` variables and the 12
+    `LazyDLL` variables. The Go API of `internal/win` stayed identical on
+    386, amd64 and arm64 (checked by dumping every constant with type and
+    value, every signature and type, and for every plain syscall wrapper the
+    DLL, entry point and argument and result conversions, before and
+    after).
+  - Next parts: structs (check field offsets and sizes against the
+    metadata for each architecture; field names differ from lxn/win, for
+    example `MSG.HWnd`), GUID variables (`IID_*`, `CLSID_*`), COM interface
+    vtables, functions the generator rejects today (structs or floats by
+    value, 64-bit parameters on 386, architecture-specific functions such
+    as `GetWindowLongPtr`), then removal of hand-written declarations walk
+    does not use.
 - Steps 4 to 9: not started.
 
 ## Candidate next steps (analysis for steps 4 to 9)
@@ -183,6 +205,28 @@ and real dialogs all need new Win32/COM declarations.
 
 - `go vet` reports 72 "possible misuse of unsafe.Pointer" warnings: 69 in
   walk, mostly `lParam` to struct pointer conversions in window procedures,
-  and 3 in `internal/win` (`kernel32.go`, `oleaut32.go`, `win.go`). Review
-  them in step 3.
+  and 3 in `internal/win` (`GlobalLock`, `SysAllocString`,
+  `MAKEINTRESOURCE`). The 3 in `internal/win` were reviewed in step 3: they
+  convert memory allocated by Windows or integer resource IDs, not Go
+  memory, and stay as they are.
+- Bugs inherited from lxn/win, found by comparing with the metadata in
+  step 3 and kept hand-written so that behavior does not change. Fixing
+  them changes behavior and needs GUI testing:
+  - `HDN_FIRST` is `^uint32(300)` (that is -301) instead of -300, so every
+    `HDN_*` value is off by one. `HDN_ITEMCHANGING` is really
+    `HDN_ITEMCHANGEDW`; `TableView` relies on it.
+  - `ODA_FOCUS` is 2 (really `ODA_SELECT`, `ODA_FOCUS` is 4) and
+    `ODS_CHECKED` is 1 (really `ODS_SELECTED`, `ODS_CHECKED` is 8); used by
+    `ListBox` owner drawing and `models.go`.
+  - `DragFinish` calls the `DragAcceptFiles` entry point, so the `HDROP` of
+    dropped files is never freed.
+  - `SetViewportOrgEx` returns `COLORREF` and `PostMessage` returns
+    `uintptr` instead of a BOOL; `DragAcceptFiles` returns a result although
+    the function has none.
+- Constants whose value differs from the metadata only in representation
+  (for example `E_NOTIMPL` as a positive untyped constant, `HWND_TOPMOST`,
+  `TVI_ROOT`, `CB_ERR`) or that the metadata does not have
+  (`LPSTR_TEXTCALLBACK`, `SB_SETTIPTEXT`, `TBM_GETPOS`) stay hand-written.
+  `STATE_SYSTEM_VALID` is 0x7fffffff as in the current SDK headers; the
+  metadata has the older value 0x3fffffff.
 - The examples have no `rsrc.syso` for arm64.
