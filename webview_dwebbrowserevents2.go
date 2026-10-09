@@ -14,7 +14,7 @@ import (
 import (
 	"time"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 var webViewDWebBrowserEvents2Vtbl *win.DWebBrowserEvents2Vtbl

@@ -6,7 +6,7 @@
 
 package walk
 
-import "github.com/lxn/win"
+import "github.com/lpintes/walk/internal/win"
 
 // Size defines width and height in 1/96" units or native pixels, or dialog base units.
 //

@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 var (

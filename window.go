@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 // App-specific message ids for internal use in Walk.

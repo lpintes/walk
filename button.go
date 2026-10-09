@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 type clickable interface {

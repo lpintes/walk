@@ -56,12 +56,15 @@ The `LICENSE` and `AUTHORS` files must be preserved.
 ## Status
 
 - Step 1: done, pull request lpintes/walk#1.
-- Step 2: not started.
+- Step 2: done. `github.com/lxn/win` (version
+  v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
+  `README.md`.
 - Step 3: not started.
 
 ## Known issues
 
-- `go vet` reports 69 "possible misuse of unsafe.Pointer" warnings, mostly
-  `lParam` to struct pointer conversions in window procedures. Review them
-  in step 2 or 3.
+- `go vet` reports 72 "possible misuse of unsafe.Pointer" warnings: 69 in
+  walk, mostly `lParam` to struct pointer conversions in window procedures,
+  and 3 in `internal/win` (`kernel32.go`, `oleaut32.go`, `win.go`). Review
+  them in step 3.
 - The examples have no `rsrc.syso` for arm64.

@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 const numberEditWindowClass = `\o/ Walk_NumberEdit_Class \o/`

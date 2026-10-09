@@ -12,7 +12,7 @@ import (
 
 	"github.com/lpintes/walk"
 	. "github.com/lpintes/walk/declarative"
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 func main() {
