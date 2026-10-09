@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
-import "github.com/lxn/walk"
+import "github.com/lpintes/walk"
 
 type MainWindow struct {
 	// Window
@@ -51,7 +51,7 @@ type MainWindow struct {
 	AssignTo          **walk.MainWindow
 	Bounds            Rectangle
 	Expressions       func() map[string]walk.Expression
-	Functions         map[string]func(args ...interface{}) (interface{}, error)
+	Functions         map[string]func(args ...any) (any, error)
 	MenuItems         []MenuItem
 	OnDropFiles       walk.DropFilesEventHandler
 	StatusBarItems    []StatusBarItem

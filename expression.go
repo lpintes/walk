@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -14,7 +14,7 @@ import (
 import _ "gopkg.in/Knetic/govaluate.v3"
 
 type Expression interface {
-	Value() interface{}
+	Value() any
 	Changed() *Event
 }
 
@@ -27,7 +27,7 @@ func NewReflectExpression(root Expression, path string) Expression {
 	return &reflectExpression{root: root, path: path}
 }
 
-func (re *reflectExpression) Value() interface{} {
+func (re *reflectExpression) Value() any {
 	rootVal := re.root.Value()
 	if rootVal == nil {
 		return nil

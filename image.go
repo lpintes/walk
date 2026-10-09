@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -26,7 +26,7 @@ type Image interface {
 	Size() Size
 }
 
-func ImageFrom(src interface{}) (img Image, err error) {
+func ImageFrom(src any) (img Image, err error) {
 	switch src := src.(type) {
 	case nil:
 		// nop

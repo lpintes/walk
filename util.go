@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -110,7 +110,7 @@ func uint16RemoveUint16(s []uint16, v uint16) []uint16 {
 	return ret
 }
 
-func assertFloat64Or(value interface{}, defaultValue float64) float64 {
+func assertFloat64Or(value any, defaultValue float64) float64 {
 	if f, ok := value.(float64); ok {
 		return f
 	}
@@ -118,7 +118,7 @@ func assertFloat64Or(value interface{}, defaultValue float64) float64 {
 	return defaultValue
 }
 
-func assertIntOr(value interface{}, defaultValue int) int {
+func assertIntOr(value any, defaultValue int) int {
 	if n, ok := value.(int); ok {
 		return n
 	}
@@ -126,7 +126,7 @@ func assertIntOr(value interface{}, defaultValue int) int {
 	return defaultValue
 }
 
-func assertStringOr(value interface{}, defaultValue string) string {
+func assertStringOr(value any, defaultValue string) string {
 	if s, ok := value.(string); ok {
 		return s
 	}
@@ -134,7 +134,7 @@ func assertStringOr(value interface{}, defaultValue string) string {
 	return defaultValue
 }
 
-func assertTimeOr(value interface{}, defaultValue time.Time) time.Time {
+func assertTimeOr(value any, defaultValue time.Time) time.Time {
 	if t, ok := value.(time.Time); ok {
 		return t
 	}
@@ -348,7 +348,7 @@ func walkDescendants(window Window, f func(w Window) bool) {
 	}
 }
 
-func less(a, b interface{}, order SortOrder) bool {
+func less(a, b any, order SortOrder) bool {
 	if _, ok := a.(error); ok {
 		_, bIsErr := b.(error)
 

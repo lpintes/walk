@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -90,10 +90,10 @@ func NewGroupBox(parent Container) (*GroupBox, error) {
 	gb.SetBackground(NullBrush())
 
 	gb.MustRegisterProperty("Title", NewProperty(
-		func() interface{} {
+		func() any {
 			return gb.Title()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return gb.SetTitle(assertStringOr(v, ""))
 		},
 		gb.titleChangedPublisher.Event()))

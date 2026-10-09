@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
 import (
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 	"github.com/lxn/win"
 )
 
@@ -60,7 +60,7 @@ type GradientComposite struct {
 	Color1      Property
 	Color2      Property
 	Expressions func() map[string]walk.Expression
-	Functions   map[string]func(args ...interface{}) (interface{}, error)
+	Functions   map[string]func(args ...any) (any, error)
 	Vertical    Property
 }
 

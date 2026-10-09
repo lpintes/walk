@@ -13,8 +13,8 @@ import (
 )
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 type Foo struct {
@@ -46,7 +46,7 @@ func (m *FooModel) RowCount() int {
 }
 
 // Called by the TableView when it needs the text to display for a given cell.
-func (m *FooModel) Value(row, col int) interface{} {
+func (m *FooModel) Value(row, col int) any {
 	item := m.items[row]
 
 	switch col {

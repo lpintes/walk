@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
 import (
 	"strconv"
 
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 )
 
 type TransparentBrush struct {
@@ -36,7 +36,7 @@ func (scb SystemColorBrush) Create() (walk.Brush, error) {
 }
 
 type BitmapBrush struct {
-	Image interface{}
+	Image any
 }
 
 func (bb BitmapBrush) Create() (walk.Brush, error) {

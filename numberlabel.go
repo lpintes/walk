@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -33,28 +33,28 @@ func NewNumberLabel(parent Container) (*NumberLabel, error) {
 	}
 
 	nl.MustRegisterProperty("Decimals", NewProperty(
-		func() interface{} {
+		func() any {
 			return nl.Decimals()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return nl.SetDecimals(assertIntOr(v, 0))
 		},
 		nl.decimalsChangedPublisher.Event()))
 
 	nl.MustRegisterProperty("Suffix", NewProperty(
-		func() interface{} {
+		func() any {
 			return nl.Suffix()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return nl.SetSuffix(assertStringOr(v, ""))
 		},
 		nl.suffixChangedPublisher.Event()))
 
 	nl.MustRegisterProperty("Value", NewProperty(
-		func() interface{} {
+		func() any {
 			return nl.Value()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return nl.SetValue(assertFloat64Or(v, 0.0))
 		},
 		nl.valueChangedPublisher.Event()))

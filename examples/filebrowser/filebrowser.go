@@ -12,8 +12,8 @@ import (
 )
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 type Directory struct {
@@ -58,7 +58,7 @@ func (d *Directory) ChildAt(index int) walk.TreeItem {
 	return d.children[index]
 }
 
-func (d *Directory) Image() interface{} {
+func (d *Directory) Image() any {
 	return d.Path()
 }
 
@@ -161,7 +161,7 @@ func NewFileInfoModel() *FileInfoModel {
 	return new(FileInfoModel)
 }
 
-func (m *FileInfoModel) Items() interface{} {
+func (m *FileInfoModel) Items() any {
 	return m.items
 }
 
@@ -204,7 +204,7 @@ func (m *FileInfoModel) SetDirPath(dirPath string) error {
 	return nil
 }
 
-func (m *FileInfoModel) Image(row int) interface{} {
+func (m *FileInfoModel) Image(row int) any {
 	return filepath.Join(m.dirPath, m.items[row].Name)
 }
 

@@ -5,8 +5,8 @@
 package main
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 func main() {

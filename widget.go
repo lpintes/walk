@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -139,10 +139,10 @@ func (wb *WidgetBase) init(widget Widget) error {
 	}
 
 	wb.toolTipTextProperty = NewProperty(
-		func() interface{} {
+		func() any {
 			return wb.window.(Widget).ToolTipText()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			wb.window.(Widget).SetToolTipText(assertStringOr(v, ""))
 			return nil
 		},

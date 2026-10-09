@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -62,10 +62,10 @@ func NewSliderWithCfg(parent Container, cfg *SliderCfg) (*Slider, error) {
 	sl.GraphicsEffects().Add(FocusEffect)
 
 	sl.MustRegisterProperty("Value", NewProperty(
-		func() interface{} {
+		func() any {
 			return sl.Value()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			sl.SetValue(assertIntOr(v, 0))
 			return nil
 		},

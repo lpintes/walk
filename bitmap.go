@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -35,7 +35,7 @@ const (
 	transparencyTransparent
 )
 
-func BitmapFrom(src interface{}, dpi int) (*Bitmap, error) {
+func BitmapFrom(src any, dpi int) (*Bitmap, error) {
 	if src == nil {
 		return nil, nil
 	}
