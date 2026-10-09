@@ -16,15 +16,6 @@ var (
 	IID_ITaskbarList3 = IID{0xea1afb91, 0x9e28, 0x4b86, [8]byte{0x90, 0xe9, 0x9e, 0x9f, 0x8a, 0x5e, 0xef, 0xaf}}
 )
 
-// TBPFLAG
-const (
-	TBPF_NOPROGRESS    = 0
-	TBPF_INDETERMINATE = 0x1
-	TBPF_NORMAL        = 0x2
-	TBPF_ERROR         = 0x4
-	TBPF_PAUSED        = 0x8
-)
-
 type ITaskbarList3Vtbl struct {
 	QueryInterface        uintptr
 	AddRef                uintptr

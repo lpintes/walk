@@ -21,7 +21,6 @@ const (
 	CSIDL_PROGRAMS                = 0x02
 	CSIDL_CONTROLS                = 0x03
 	CSIDL_PRINTERS                = 0x04
-	CSIDL_PERSONAL                = 0x05
 	CSIDL_FAVORITES               = 0x06
 	CSIDL_STARTUP                 = 0x07
 	CSIDL_RECENT                  = 0x08
@@ -41,18 +40,14 @@ const (
 	CSIDL_COMMON_PROGRAMS         = 0x17
 	CSIDL_COMMON_STARTUP          = 0x18
 	CSIDL_COMMON_DESKTOPDIRECTORY = 0x19
-	CSIDL_APPDATA                 = 0x1A
 	CSIDL_PRINTHOOD               = 0x1B
-	CSIDL_LOCAL_APPDATA           = 0x1C
 	CSIDL_ALTSTARTUP              = 0x1D
 	CSIDL_COMMON_ALTSTARTUP       = 0x1E
 	CSIDL_COMMON_FAVORITES        = 0x1F
 	CSIDL_INTERNET_CACHE          = 0x20
 	CSIDL_COOKIES                 = 0x21
 	CSIDL_HISTORY                 = 0x22
-	CSIDL_COMMON_APPDATA          = 0x23
 	CSIDL_WINDOWS                 = 0x24
-	CSIDL_SYSTEM                  = 0x25
 	CSIDL_PROGRAM_FILES           = 0x26
 	CSIDL_MYPICTURES              = 0x27
 	CSIDL_PROFILE                 = 0x28
@@ -82,11 +77,6 @@ const (
 
 // NotifyIcon flags
 const (
-	NIF_MESSAGE  = 0x00000001
-	NIF_ICON     = 0x00000002
-	NIF_TIP      = 0x00000004
-	NIF_STATE    = 0x00000008
-	NIF_INFO     = 0x00000010
 	NIF_GUID     = 0x00000020
 	NIF_REALTIME = 0x00000040
 	NIF_SHOWTIP  = 0x00000080
@@ -94,26 +84,16 @@ const (
 
 // NotifyIcon messages
 const (
-	NIM_ADD        = 0x00000000
-	NIM_MODIFY     = 0x00000001
-	NIM_DELETE     = 0x00000002
-	NIM_SETFOCUS   = 0x00000003
-	NIM_SETVERSION = 0x00000004
+	NIM_SETFOCUS = 0x00000003
 )
 
 // NotifyIcon states
 const (
-	NIS_HIDDEN     = 0x00000001
 	NIS_SHAREDICON = 0x00000002
 )
 
 // NotifyIcon info flags
 const (
-	NIIF_NONE               = 0x00000000
-	NIIF_INFO               = 0x00000001
-	NIIF_WARNING            = 0x00000002
-	NIIF_ERROR              = 0x00000003
-	NIIF_USER               = 0x00000004
 	NIIF_NOSOUND            = 0x00000010
 	NIIF_LARGE_ICON         = 0x00000020
 	NIIF_RESPECT_QUIET_TIME = 0x00000080
@@ -121,26 +101,23 @@ const (
 
 // NotifyIcon notifications
 const (
-	NIN_SELECT           = WM_USER + 0
-	NIN_KEYSELECT        = WM_USER + 1
-	NIN_BALLOONSHOW      = WM_USER + 2
-	NIN_BALLOONHIDE      = WM_USER + 3
-	NIN_BALLOONTIMEOUT   = WM_USER + 4
-	NIN_BALLOONUSERCLICK = WM_USER + 5
-	NIN_POPUPOPEN        = WM_USER + 6
-	NIN_POPUPCLOSE       = WM_USER + 7
+	NIN_SELECT         = WM_USER + 0
+	NIN_KEYSELECT      = WM_USER + 1
+	NIN_BALLOONSHOW    = WM_USER + 2
+	NIN_BALLOONHIDE    = WM_USER + 3
+	NIN_BALLOONTIMEOUT = WM_USER + 4
+	NIN_POPUPOPEN      = WM_USER + 6
+	NIN_POPUPCLOSE     = WM_USER + 7
 )
 
 // NotifyIcon versions
 const (
-	NOTIFYICON_VERSION   = 3
 	NOTIFYICON_VERSION_4 = 4
 )
 
 // SHGetFileInfo flags
 const (
 	SHGFI_LARGEICON         = 0x000000000
-	SHGFI_SMALLICON         = 0x000000001
 	SHGFI_OPENICON          = 0x000000002
 	SHGFI_SHELLICONSIZE     = 0x000000004
 	SHGFI_PIDL              = 0x000000008
@@ -153,7 +130,6 @@ const (
 	SHGFI_ATTRIBUTES        = 0x000000800
 	SHGFI_ICONLOCATION      = 0x000001000
 	SHGFI_EXETYPE           = 0x000002000
-	SHGFI_SYSICONINDEX      = 0x000004000
 	SHGFI_LINKOVERLAY       = 0x000008000
 	SHGFI_SELECTED          = 0x000010000
 	SHGFI_ATTR_SPECIFIED    = 0x000020000
@@ -315,42 +291,27 @@ type SHSTOCKICONINFO struct {
 }
 
 var (
-	// Library
-	libshell32 *windows.LazyDLL
 
 	// Functions
-	dragAcceptFiles        *windows.LazyProc
-	dragFinish             *windows.LazyProc
-	dragQueryFile          *windows.LazyProc
-	extractIcon            *windows.LazyProc
-	shBrowseForFolder      *windows.LazyProc
-	shDefExtractIcon       *windows.LazyProc
-	shGetFileInfo          *windows.LazyProc
-	shGetPathFromIDList    *windows.LazyProc
-	shGetSpecialFolderPath *windows.LazyProc
-	shParseDisplayName     *windows.LazyProc
-	shGetStockIconInfo     *windows.LazyProc
-	shellExecute           *windows.LazyProc
-	shell_NotifyIcon       *windows.LazyProc
+	dragAcceptFiles     *windows.LazyProc
+	dragFinish          *windows.LazyProc
+	extractIcon         *windows.LazyProc
+	shBrowseForFolder   *windows.LazyProc
+	shGetPathFromIDList *windows.LazyProc
+	shParseDisplayName  *windows.LazyProc
+	shGetStockIconInfo  *windows.LazyProc
+	shellExecute        *windows.LazyProc
 )
 
 func init() {
-	// Library
-	libshell32 = windows.NewLazySystemDLL("shell32.dll")
-
 	// Functions
 	dragAcceptFiles = libshell32.NewProc("DragAcceptFiles")
 	dragFinish = libshell32.NewProc("DragFinish")
-	dragQueryFile = libshell32.NewProc("DragQueryFileW")
 	extractIcon = libshell32.NewProc("ExtractIconW")
 	shBrowseForFolder = libshell32.NewProc("SHBrowseForFolderW")
-	shDefExtractIcon = libshell32.NewProc("SHDefExtractIconW")
-	shGetFileInfo = libshell32.NewProc("SHGetFileInfoW")
 	shGetPathFromIDList = libshell32.NewProc("SHGetPathFromIDListW")
-	shGetSpecialFolderPath = libshell32.NewProc("SHGetSpecialFolderPathW")
 	shGetStockIconInfo = libshell32.NewProc("SHGetStockIconInfo")
 	shellExecute = libshell32.NewProc("ShellExecuteW")
-	shell_NotifyIcon = libshell32.NewProc("Shell_NotifyIconW")
 	shParseDisplayName = libshell32.NewProc("SHParseDisplayName")
 }
 
@@ -361,18 +322,6 @@ func DragAcceptFiles(hWnd HWND, fAccept bool) bool {
 		0)
 
 	return ret != 0
-}
-
-func DragQueryFile(hDrop HDROP, iFile uint, lpszFile *uint16, cch uint) uint {
-	ret, _, _ := syscall.Syscall6(dragQueryFile.Addr(), 4,
-		uintptr(hDrop),
-		uintptr(iFile),
-		uintptr(unsafe.Pointer(lpszFile)),
-		uintptr(cch),
-		0,
-		0)
-
-	return uint(ret)
 }
 
 func DragFinish(hDrop HDROP) {
@@ -400,46 +349,10 @@ func SHBrowseForFolder(lpbi *BROWSEINFO) uintptr {
 	return ret
 }
 
-func SHDefExtractIcon(pszIconFile *uint16, iIndex int32, uFlags uint32, phiconLarge, phiconSmall *HICON, nIconSize uint32) HRESULT {
-	ret, _, _ := syscall.Syscall6(shDefExtractIcon.Addr(), 6,
-		uintptr(unsafe.Pointer(pszIconFile)),
-		uintptr(iIndex),
-		uintptr(uFlags),
-		uintptr(unsafe.Pointer(phiconLarge)),
-		uintptr(unsafe.Pointer(phiconSmall)),
-		uintptr(nIconSize))
-
-	return HRESULT(ret)
-}
-
-func SHGetFileInfo(pszPath *uint16, dwFileAttributes uint32, psfi *SHFILEINFO, cbFileInfo, uFlags uint32) uintptr {
-	ret, _, _ := syscall.Syscall6(shGetFileInfo.Addr(), 5,
-		uintptr(unsafe.Pointer(pszPath)),
-		uintptr(dwFileAttributes),
-		uintptr(unsafe.Pointer(psfi)),
-		uintptr(cbFileInfo),
-		uintptr(uFlags),
-		0)
-
-	return ret
-}
-
 func SHGetPathFromIDList(pidl uintptr, pszPath *uint16) bool {
 	ret, _, _ := syscall.Syscall(shGetPathFromIDList.Addr(), 2,
 		pidl,
 		uintptr(unsafe.Pointer(pszPath)),
-		0)
-
-	return ret != 0
-}
-
-func SHGetSpecialFolderPath(hwndOwner HWND, lpszPath *uint16, csidl CSIDL, fCreate bool) bool {
-	ret, _, _ := syscall.Syscall6(shGetSpecialFolderPath.Addr(), 4,
-		uintptr(hwndOwner),
-		uintptr(unsafe.Pointer(lpszPath)),
-		uintptr(csidl),
-		uintptr(BoolToBOOL(fCreate)),
-		0,
 		0)
 
 	return ret != 0
@@ -481,14 +394,5 @@ func ShellExecute(hWnd HWND, verb *uint16, file *uint16, args *uint16, cwd *uint
 		uintptr(unsafe.Pointer(cwd)),
 		uintptr(showCmd),
 	)
-	return ret != 0
-}
-
-func Shell_NotifyIcon(dwMessage uint32, lpdata *NOTIFYICONDATA) bool {
-	ret, _, _ := syscall.Syscall(shell_NotifyIcon.Addr(), 2,
-		uintptr(dwMessage),
-		uintptr(unsafe.Pointer(lpdata)),
-		0)
-
 	return ret != 0
 }

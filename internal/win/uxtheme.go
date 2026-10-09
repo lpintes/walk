@@ -221,8 +221,6 @@ const (
 	TMT_CONTENTMARGINS          = 3602
 	TMT_CAPTIONMARGINS          = 3603
 	TMT_BORDERCOLOR             = 3801
-	TMT_FILLCOLOR               = 3802
-	TMT_TEXTCOLOR               = 3803
 	TMT_EDGELIGHTCOLOR          = 3804
 	TMT_EDGEHIGHLIGHTCOLOR      = 3805
 	TMT_EDGESHADOWCOLOR         = 3806
@@ -277,7 +275,6 @@ const (
 
 // Button parts
 const (
-	BP_PUSHBUTTON       = 1
 	BP_RADIOBUTTON      = 2
 	BP_CHECKBOX         = 3
 	BP_GROUPBOX         = 4
@@ -288,7 +285,6 @@ const (
 
 // Push-button states
 const (
-	PBS_NORMAL              = 1
 	PBS_HOT                 = 2
 	PBS_PRESSED             = 3
 	PBS_DISABLED            = 4
@@ -335,7 +331,6 @@ const (
 
 // LISTVIEW parts
 const (
-	LVP_LISTITEM         = 1
 	LVP_LISTGROUP        = 2
 	LVP_LISTDETAIL       = 3
 	LVP_LISTSORTEDDETAIL = 4
@@ -349,12 +344,7 @@ const (
 
 // LVP_LISTITEM states
 const (
-	LISS_NORMAL           = 1
-	LISS_HOT              = 2
-	LISS_SELECTED         = 3
-	LISS_DISABLED         = 4
-	LISS_SELECTEDNOTFOCUS = 5
-	LISS_HOTSELECTED      = 6
+	LISS_DISABLED = 4
 )
 
 // PROGRESS parts
@@ -398,7 +388,6 @@ const (
 const (
 	TIS_NORMAL   = 1
 	TIS_HOT      = 2
-	TIS_SELECTED = 3
 	TIS_DISABLED = 4
 	TIS_FOCUSED  = 5
 )
@@ -434,7 +423,6 @@ const (
 	DTT_STATEID      = 1 << 8
 	DTT_CALCRECT     = 1 << 9
 	DTT_APPLYOVERLAY = 1 << 10
-	DTT_GLOWSIZE     = 1 << 11
 	DTT_CALLBACK     = 1 << 12
 	DTT_COMPOSITED   = 1 << 13
 	DTT_VALIDBITS    = DTT_TEXTCOLOR |
@@ -481,56 +469,16 @@ type DTTOPTS struct {
 }
 
 var (
-	// Library
-	libuxtheme *windows.LazyDLL
-
-	// Functions
-	closeThemeData      *windows.LazyProc
-	drawThemeBackground *windows.LazyProc
-	drawThemeTextEx     *windows.LazyProc
-	getThemeColor       *windows.LazyProc
-	getThemePartSize    *windows.LazyProc
-	getThemeTextExtent  *windows.LazyProc
-	isAppThemed         *windows.LazyProc
-	openThemeData       *windows.LazyProc
-	setWindowTheme      *windows.LazyProc
+	drawThemeTextEx    *windows.LazyProc
+	getThemePartSize   *windows.LazyProc
+	getThemeTextExtent *windows.LazyProc
 )
 
 func init() {
-	// Library
-	libuxtheme = windows.NewLazySystemDLL("uxtheme.dll")
-
 	// Functions
-	closeThemeData = libuxtheme.NewProc("CloseThemeData")
-	drawThemeBackground = libuxtheme.NewProc("DrawThemeBackground")
 	drawThemeTextEx = libuxtheme.NewProc("DrawThemeTextEx")
-	getThemeColor = libuxtheme.NewProc("GetThemeColor")
 	getThemePartSize = libuxtheme.NewProc("GetThemePartSize")
 	getThemeTextExtent = libuxtheme.NewProc("GetThemeTextExtent")
-	isAppThemed = libuxtheme.NewProc("IsAppThemed")
-	openThemeData = libuxtheme.NewProc("OpenThemeData")
-	setWindowTheme = libuxtheme.NewProc("SetWindowTheme")
-}
-
-func CloseThemeData(hTheme HTHEME) HRESULT {
-	ret, _, _ := syscall.Syscall(closeThemeData.Addr(), 1,
-		uintptr(hTheme),
-		0,
-		0)
-
-	return HRESULT(ret)
-}
-
-func DrawThemeBackground(hTheme HTHEME, hdc HDC, iPartId, iStateId int32, pRect, pClipRect *RECT) HRESULT {
-	ret, _, _ := syscall.Syscall6(drawThemeBackground.Addr(), 6,
-		uintptr(hTheme),
-		uintptr(hdc),
-		uintptr(iPartId),
-		uintptr(iStateId),
-		uintptr(unsafe.Pointer(pRect)),
-		uintptr(unsafe.Pointer(pClipRect)))
-
-	return HRESULT(ret)
 }
 
 func DrawThemeTextEx(hTheme HTHEME, hdc HDC, iPartId, iStateId int32, pszText *uint16, iCharCount int32, dwFlags uint32, pRect *RECT, pOptions *DTTOPTS) HRESULT {
@@ -547,18 +495,6 @@ func DrawThemeTextEx(hTheme HTHEME, hdc HDC, iPartId, iStateId int32, pszText *u
 		uintptr(dwFlags),
 		uintptr(unsafe.Pointer(pRect)),
 		uintptr(unsafe.Pointer(pOptions)))
-
-	return HRESULT(ret)
-}
-
-func GetThemeColor(hTheme HTHEME, iPartId, iStateId, iPropId int32, pColor *COLORREF) HRESULT {
-	ret, _, _ := syscall.Syscall6(getThemeColor.Addr(), 5,
-		uintptr(hTheme),
-		uintptr(iPartId),
-		uintptr(iStateId),
-		uintptr(iPropId),
-		uintptr(unsafe.Pointer(pColor)),
-		0)
 
 	return HRESULT(ret)
 }
@@ -589,33 +525,6 @@ func GetThemeTextExtent(hTheme HTHEME, hdc HDC, iPartId, iStateId int32, pszText
 		uintptr(dwTextFlags),
 		uintptr(unsafe.Pointer(pBoundingRect)),
 		uintptr(unsafe.Pointer(pExtentRect)))
-
-	return HRESULT(ret)
-}
-
-func IsAppThemed() bool {
-	ret, _, _ := syscall.Syscall(isAppThemed.Addr(), 0,
-		0,
-		0,
-		0)
-
-	return ret != 0
-}
-
-func OpenThemeData(hwnd HWND, pszClassList *uint16) HTHEME {
-	ret, _, _ := syscall.Syscall(openThemeData.Addr(), 2,
-		uintptr(hwnd),
-		uintptr(unsafe.Pointer(pszClassList)),
-		0)
-
-	return HTHEME(ret)
-}
-
-func SetWindowTheme(hwnd HWND, pszSubAppName, pszSubIdList *uint16) HRESULT {
-	ret, _, _ := syscall.Syscall(setWindowTheme.Addr(), 3,
-		uintptr(hwnd),
-		uintptr(unsafe.Pointer(pszSubAppName)),
-		uintptr(unsafe.Pointer(pszSubIdList)))
 
 	return HRESULT(ret)
 }

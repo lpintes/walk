@@ -15,7 +15,6 @@ import (
 type GpStatus int32
 
 const (
-	Ok                        GpStatus = 0
 	GenericError              GpStatus = 1
 	InvalidParameter          GpStatus = 2
 	OutOfMemory               GpStatus = 3
@@ -130,14 +129,9 @@ type GpBitmap GpImage
 type ARGB uint32
 
 var (
-	// Library
-	libgdiplus *windows.LazyDLL
 
 	// Functions
-	gdipCreateBitmapFromFile    *windows.LazyProc
 	gdipCreateBitmapFromHBITMAP *windows.LazyProc
-	gdipCreateHBITMAPFromBitmap *windows.LazyProc
-	gdipDisposeImage            *windows.LazyProc
 	gdiplusShutdown             *windows.LazyProc
 	gdiplusStartup              *windows.LazyProc
 )
@@ -147,25 +141,10 @@ var (
 )
 
 func init() {
-	// Library
-	libgdiplus = windows.NewLazySystemDLL("gdiplus.dll")
-
 	// Functions
-	gdipCreateBitmapFromFile = libgdiplus.NewProc("GdipCreateBitmapFromFile")
 	gdipCreateBitmapFromHBITMAP = libgdiplus.NewProc("GdipCreateBitmapFromHBITMAP")
-	gdipCreateHBITMAPFromBitmap = libgdiplus.NewProc("GdipCreateHBITMAPFromBitmap")
-	gdipDisposeImage = libgdiplus.NewProc("GdipDisposeImage")
 	gdiplusShutdown = libgdiplus.NewProc("GdiplusShutdown")
 	gdiplusStartup = libgdiplus.NewProc("GdiplusStartup")
-}
-
-func GdipCreateBitmapFromFile(filename *uint16, bitmap **GpBitmap) GpStatus {
-	ret, _, _ := syscall.Syscall(gdipCreateBitmapFromFile.Addr(), 2,
-		uintptr(unsafe.Pointer(filename)),
-		uintptr(unsafe.Pointer(bitmap)),
-		0)
-
-	return GpStatus(ret)
 }
 
 func GdipCreateBitmapFromHBITMAP(hbm HBITMAP, hpal HPALETTE, bitmap **GpBitmap) GpStatus {
@@ -173,24 +152,6 @@ func GdipCreateBitmapFromHBITMAP(hbm HBITMAP, hpal HPALETTE, bitmap **GpBitmap) 
 		uintptr(hbm),
 		uintptr(hpal),
 		uintptr(unsafe.Pointer(bitmap)))
-
-	return GpStatus(ret)
-}
-
-func GdipCreateHBITMAPFromBitmap(bitmap *GpBitmap, hbmReturn *HBITMAP, background ARGB) GpStatus {
-	ret, _, _ := syscall.Syscall(gdipCreateHBITMAPFromBitmap.Addr(), 3,
-		uintptr(unsafe.Pointer(bitmap)),
-		uintptr(unsafe.Pointer(hbmReturn)),
-		uintptr(background))
-
-	return GpStatus(ret)
-}
-
-func GdipDisposeImage(image *GpImage) GpStatus {
-	ret, _, _ := syscall.Syscall(gdipDisposeImage.Addr(), 1,
-		uintptr(unsafe.Pointer(image)),
-		0,
-		0)
 
 	return GpStatus(ret)
 }
