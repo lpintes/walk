@@ -94,6 +94,29 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     value, 64-bit parameters on 386, architecture-specific functions such
     as `GetWindowLongPtr`), then removal of hand-written declarations walk
     does not use.
+  - Procedure used for part 1, repeat it for later parts (all from the
+    repository root):
+    1. `go run ./tools/winmigrate/apidump internal/win ARCH > before_ARCH.txt`
+       for 386, amd64 and arm64 (keep the files outside the repository).
+    2. `go run ./tools/winmdgen -spec internal/win/winmd.txt -suggest .`
+       prints spec lines for used symbols that can be generated without
+       any change; skipped symbols and reasons go to standard error. Add
+       the lines to `internal/win/winmd.txt`. The generator itself must be
+       extended first for new kinds of symbols (structs, GUIDs, ...), and
+       `-suggest` together with it.
+    3. `go generate ./internal/win`.
+    4. `go run ./tools/winmigrate/removedecl internal/win/winmd.txt internal/win`
+       removes the replaced hand-written declarations; then look for
+       orphaned comments (part 1 left `// Library` comments, removed by
+       hand).
+    5. Dump again and `diff` against step 1: there must be no difference
+       on any architecture. Then run the checks above.
+- Bugs found in part 1 (see "Known issues"): the user decided to record
+  them; fixing is optional. Proposed: fix `DragFinish` in a separate small
+  pull request (a memory leak, low risk, test that dropping files still
+  works); the `HDN_*` and `ODA_*`/`ODS_*` bugs are visual only and hard to
+  test with a screen reader, so they stay recorded until someone can check
+  the appearance. No GitHub issues were created for them.
 - Steps 4 to 9: not started.
 
 ## Candidate next steps (analysis for steps 4 to 9)
