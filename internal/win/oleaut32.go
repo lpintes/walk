@@ -380,13 +380,6 @@ func (v *VARIANT) SetPSafeArray(value *SAFEARRAY, elementVt VARTYPE) {
 	p.parray = value
 }
 
-type DISPPARAMS struct {
-	Rgvarg            *VARIANTARG
-	RgdispidNamedArgs *DISPID
-	CArgs             int32
-	CNamedArgs        int32
-}
-
 var (
 
 	// Functions

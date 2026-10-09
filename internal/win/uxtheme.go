@@ -450,24 +450,6 @@ const (
 	TS_DRAW
 )
 
-type DTTOPTS struct {
-	DwSize              uint32
-	DwFlags             uint32
-	CrText              COLORREF
-	CrBorder            COLORREF
-	CrShadow            COLORREF
-	ITextShadowType     int32
-	PtShadowOffset      POINT
-	IBorderSize         int32
-	IFontPropId         int32
-	IColorPropId        int32
-	IStateId            int32
-	FApplyOverlay       BOOL
-	IGlowSize           int32
-	PfnDrawTextCallback uintptr
-	LParam              uintptr
-}
-
 var (
 	drawThemeTextEx    *windows.LazyProc
 	getThemePartSize   *windows.LazyProc

@@ -142,19 +142,6 @@ const (
 
 type HTREEITEM HANDLE
 
-type TVITEM struct {
-	Mask           uint32
-	HItem          HTREEITEM
-	State          uint32
-	StateMask      uint32
-	PszText        uintptr
-	CchTextMax     int32
-	IImage         int32
-	ISelectedImage int32
-	CChildren      int32
-	LParam         uintptr
-}
-
 /*type TVITEMEX struct {
 	mask           UINT
 	hItem          HTREEITEM
@@ -179,27 +166,8 @@ type TVINSERTSTRUCT struct {
 	//	itemex       TVITEMEX
 }
 
-type NMTREEVIEW struct {
-	Hdr     NMHDR
-	Action  uint32
-	ItemOld TVITEM
-	ItemNew TVITEM
-	PtDrag  POINT
-}
-
-type NMTVDISPINFO struct {
-	Hdr  NMHDR
-	Item TVITEM
-}
-
 type NMTVKEYDOWN struct {
 	Hdr   NMHDR
 	WVKey uint16
 	Flags uint32
-}
-
-type TVHITTESTINFO struct {
-	Pt    POINT
-	Flags uint32
-	HItem HTREEITEM
 }

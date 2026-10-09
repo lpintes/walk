@@ -87,9 +87,30 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     value, every signature and type, and for every plain syscall wrapper the
     DLL, entry point and argument and result conversions, before and
     after).
-  - Next parts: structs (check field offsets and sizes against the
-    metadata for each architecture; field names differ from lxn/win, for
-    example `MSG.HWnd`), GUID variables (`IID_*`, `CLSID_*`), COM interface
+  - Part 2: structs, pull request opened from branch
+    `claude/zen-dirac-qwf061` on top of part 1 (number to be recorded).
+    New `struct` directive in `winmd.txt`, generated
+    `internal/win/zwinmd_structs.go` with 62 structs and
+    `zwinmd_layout_{386,amd64,arm64}.go`, which make the build fail if a
+    generated struct's size, alignment or field offsets differ from the
+    metadata. Field names and types follow lxn/win through overrides
+    (for example `MSG` `hwnd=HWnd`, `SIZE` `cx=CX`). The generator computes
+    the C layout from the metadata (including `#pragma pack`) and rejects
+    structs Go would lay out differently. `-suggest` also proposes
+    structs and checks the hand-written layout on every architecture;
+    `removedecl` removes struct types. The Go API of `internal/win` stayed
+    identical on 386, amd64 and arm64.
+  - Structs still hand-written, with the reason: COM interfaces and
+    vtables (not structs in the metadata); `NOTIFYICONDATA`,
+    `TVINSERTSTRUCT`, `VARIANT` (anonymous unions); `OPENFILENAME`,
+    `SHFILEINFO`, `NMTVKEYDOWN` (`#pragma pack(1)`, which Go cannot
+    express); `TBBUTTON` (differs between architectures); `HDITEM`,
+    `LVITEM`, `LVCOLUMN`, `NMLVDISPINFO` (lxn/win has older, shorter
+    versions); `BITMAPINFO` (see "Known issues"); `BITMAPV4HEADER`,
+    `BITMAPV5HEADER`, `VARIANTARG` (embedded fields); `BROWSEINFO`,
+    `ENHMETAHEADER` (refer to `ITEMIDLIST` and `RECTL`, which the package
+    does not define); `TOOLINFO` (not in the metadata under that name).
+  - Next parts: GUID variables (`IID_*`, `CLSID_*`), COM interface
     vtables, functions the generator rejects today (structs or floats by
     value, 64-bit parameters on 386, architecture-specific functions such
     as `GetWindowLongPtr`), then removal of hand-written declarations walk
@@ -111,6 +132,9 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
        hand).
     5. Dump again and `diff` against step 1: there must be no difference
        on any architecture. Then run the checks above.
+    `apidump` uses the sizes of the target architecture since part 2;
+    dumps made by the older version differ on 386 for constants such as
+    `^uintptr(0)`, so make both dumps with the same version.
 - Bugs found in part 1 (see "Known issues"): the user decided to record
   them; fixing is optional. Proposed: fix `DragFinish` in a separate small
   pull request (a memory leak, low risk, test that dropping files still
@@ -118,8 +142,8 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   test with a screen reader, so they stay recorded until someone can check
   the appearance. No GitHub issues were created for them.
 - `TESTING_ON_WINDOWS.md` describes tasks for an agent on a Windows
-  machine: a smoke test of step 3 part 1 and tests for these bugs. Finding
-  while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
+  machine: a smoke test of step 3 parts 1 and 2 and tests for these
+  bugs. Finding while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
   change of behavior (walk effectively reacts to `HDN_ITEMCHANGEDW` and
   tests the real `ODS_SELECTED` bit; the `ODA_FOCUS` check is dead code).
   Only the `DragFinish` fix changes behavior.
@@ -253,6 +277,26 @@ and real dialogs all need new Win32/COM declarations.
   - `SetViewportOrgEx` returns `COLORREF` and `PostMessage` returns
     `uintptr` instead of a BOOL; `DragAcceptFiles` returns a result although
     the function has none.
+- Hand-written structs whose layout differs from the metadata, found in
+  step 3 part 2. None of them breaks walk today:
+  - `NMTVKEYDOWN` and `NMTCKEYDOWN` are declared with `#pragma pack(1)`,
+    so `Flags` is at offset 14 (386) or 26 (64-bit), not 16 or 28 as in
+    Go. Walk reads only `WVKey`, which is at the right offset.
+  - `BITMAPINFO.BmiColors` is a pointer in Go but an inline array of one
+    `RGBQUAD` in C, so the struct is 4 bytes larger on 64-bit. Walk uses
+    it with `GetDIBits` for 32-bit bitmaps without a color table; for a
+    bitmap with a color table, `GetDIBits` would write past the struct.
+  - `HDITEM`, `LVITEM`, `LVCOLUMN` and `NMLVDISPINFO` lack the fields of
+    newer Windows versions. This is safe as long as walk does not set
+    masks for the missing fields.
+  - The RichEdit structs in `richedit.go` (for example `ENLINK`,
+    `EDITSTREAM`, `GETTEXTEX`, `MSGFILTER`, `SELCHANGE`) are wrong on
+    64-bit: `richedit.h` uses `#pragma pack(4)` there, so pointer-sized
+    fields can sit at offsets that are not a multiple of 8, which Go
+    cannot express with plain fields. Walk does not use them yet; step 5
+    (RichEdit) must handle this, for example with byte arrays and
+    accessors. `TABLEROWPARMS` and `TABLECELLPARMS` are wrong on every
+    architecture.
 - Constants whose value differs from the metadata only in representation
   (for example `E_NOTIMPL` as a positive untyped constant, `HWND_TOPMOST`,
   `TVI_ROOT`, `CB_ERR`) or that the metadata does not have

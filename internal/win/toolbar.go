@@ -144,23 +144,6 @@ const (
 	TBMF_BUTTONSPACING = 0x00000004
 )
 
-type NMMOUSE struct {
-	Hdr        NMHDR
-	DwItemSpec uintptr
-	DwItemData uintptr
-	Pt         POINT
-	DwHitInfo  uintptr
-}
-
-type NMTOOLBAR struct {
-	Hdr      NMHDR
-	IItem    int32
-	TbButton TBBUTTON
-	CchText  int32
-	PszText  *uint16
-	RcButton RECT
-}
-
 type TBBUTTON struct {
 	IBitmap   int32
 	IdCommand int32
@@ -173,19 +156,6 @@ type TBBUTTON struct {
 	//#endif
 	DwData  uintptr
 	IString uintptr
-}
-
-type TBBUTTONINFO struct {
-	CbSize    uint32
-	DwMask    uint32
-	IdCommand int32
-	IImage    int32
-	FsState   byte
-	FsStyle   byte
-	Cx        uint16
-	LParam    uintptr
-	PszText   uintptr
-	CchText   int32
 }
 
 type TBMETRICS struct {

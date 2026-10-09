@@ -44,9 +44,3 @@ type UDACCEL struct {
 	NSec uint32
 	NInc uint32
 }
-
-type NMUPDOWN struct {
-	Hdr    NMHDR
-	IPos   int32
-	IDelta int32
-}

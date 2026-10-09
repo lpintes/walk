@@ -388,14 +388,6 @@ type IUnknown struct {
 	LpVtbl *IUnknownVtbl
 }
 
-type OLEINPLACEFRAMEINFO struct {
-	Cb            uint32
-	FMDIApp       BOOL
-	HwndFrame     HWND
-	Haccel        HACCEL
-	CAccelEntries uint32
-}
-
 type COAUTHIDENTITY struct {
 	User           *uint16
 	UserLength     uint32

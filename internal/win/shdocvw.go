@@ -272,14 +272,6 @@ type IDocHostUIHandler struct {
 	LpVtbl *IDocHostUIHandlerVtbl
 }
 
-type DOCHOSTUIINFO struct {
-	CbSize        uint32
-	DwFlags       uint32
-	DwDoubleClick uint32
-	PchHostCss    *uint16
-	PchHostNS     *uint16
-}
-
 type IOleInPlaceActiveObjectVtbl struct {
 	QueryInterface        uintptr
 	AddRef                uintptr

@@ -33,9 +33,18 @@ cover:
 - the constants walk uses whose value is the same in the metadata,
 - the plain syscall wrappers walk uses, including their `windows.LazyProc`
   variables, and the `windows.LazyDLL` variables, which the remaining
-  hand-written code also uses.
+  hand-written code also uses,
+- the structs walk uses whose fields and layout are the same as in the
+  metadata (`zwinmd_structs.go`). Field names and types follow
+  `github.com/lxn/win`; where they differ from the metadata, `winmd.txt`
+  overrides them. The files `zwinmd_layout_386.go`,
+  `zwinmd_layout_amd64.go` and `zwinmd_layout_arm64.go` make the build
+  fail if the size, alignment or a field offset of a generated struct
+  differs from the metadata on that architecture.
 
-Everything else is still hand-written: structs, COM interfaces, GUIDs,
+Everything else is still hand-written: structs that are unions, contain
+anonymous unions, are declared with `#pragma pack`, differ between
+architectures or differ from the metadata, COM interfaces, GUIDs,
 macros such as `LOWORD`, functions that take or return structs or
 floating-point values by value, functions that exist only on some
 architectures (`GetWindowLongPtr`), functions with a fallback for older
