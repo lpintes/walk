@@ -9,7 +9,7 @@ package walk
 import (
 	"math"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 type ImageViewMode int

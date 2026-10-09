@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 const tabWidgetWindowClass = `\o/ Walk_TabWidget_Class \o/`

@@ -8,7 +8,7 @@ package declarative
 
 import (
 	"github.com/lpintes/walk"
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 type Composite struct {

@@ -11,7 +11,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 type Container interface {

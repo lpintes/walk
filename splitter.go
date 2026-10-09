@@ -13,7 +13,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 const splitterWindowClass = `\o/ Walk_Splitter_Class \o/`

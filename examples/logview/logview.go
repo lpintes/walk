@@ -11,7 +11,7 @@ import (
 
 import (
 	"github.com/lpintes/walk"
-	"github.com/lxn/win"
+	"github.com/lpintes/walk/internal/win"
 )
 
 type LogView struct {
