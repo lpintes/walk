@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -54,10 +54,10 @@ func NewImageView(parent Container) (*ImageView, error) {
 	iv.SetBackground(NullBrush())
 
 	iv.MustRegisterProperty("Image", NewProperty(
-		func() interface{} {
+		func() any {
 			return iv.Image()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			img, err := ImageFrom(v)
 			if err != nil {
 				return err
@@ -68,10 +68,10 @@ func NewImageView(parent Container) (*ImageView, error) {
 		iv.imageChangedPublisher.Event()))
 
 	iv.MustRegisterProperty("Margin", NewProperty(
-		func() interface{} {
+		func() any {
 			return iv.Margin()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return iv.SetMargin(assertIntOr(v, 0))
 		},
 		iv.MarginChanged()))

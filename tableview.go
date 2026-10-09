@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -65,7 +65,7 @@ type TableView struct {
 	state                              *tableViewState
 	columns                            *TableViewColumnList
 	model                              TableModel
-	providedModel                      interface{}
+	providedModel                      any
 	itemChecker                        ItemChecker
 	imageProvider                      ImageProvider
 	styler                             CellStyler
@@ -125,7 +125,7 @@ type TableView struct {
 	updateLVSizesNeedsSpecialCare      bool
 	scrollbarOrientation               Orientation
 	currentItemChangedPublisher        EventPublisher
-	currentItemID                      interface{}
+	currentItemID                      any
 	restoringCurrentItemOnReset        bool
 }
 
@@ -283,16 +283,16 @@ func NewTableViewWithCfg(parent Container, cfg *TableViewCfg) (*TableView, error
 		tv.columnsSizableChangedPublisher.Event()))
 
 	tv.MustRegisterProperty("CurrentIndex", NewProperty(
-		func() interface{} {
+		func() any {
 			return tv.CurrentIndex()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return tv.SetCurrentIndex(assertIntOr(v, -1))
 		},
 		tv.CurrentIndexChanged()))
 
 	tv.MustRegisterProperty("CurrentItem", NewReadOnlyProperty(
-		func() interface{} {
+		func() any {
 			if i := tv.CurrentIndex(); i > -1 {
 				if rm, ok := tv.providedModel.(reflectModel); ok {
 					return reflect.ValueOf(rm.Items()).Index(i).Interface()
@@ -310,7 +310,7 @@ func NewTableViewWithCfg(parent Container, cfg *TableViewCfg) (*TableView, error
 		tv.CurrentIndexChanged()))
 
 	tv.MustRegisterProperty("ItemCount", NewReadOnlyProperty(
-		func() interface{} {
+		func() any {
 			if tv.model == nil {
 				return 0
 			}
@@ -319,7 +319,7 @@ func NewTableViewWithCfg(parent Container, cfg *TableViewCfg) (*TableView, error
 		tv.itemCountChangedPublisher.Event()))
 
 	tv.MustRegisterProperty("SelectedCount", NewReadOnlyProperty(
-		func() interface{} {
+		func() any {
 			return len(tv.selectedIndexes)
 		},
 		tv.SelectedIndexesChanged()))
@@ -814,7 +814,7 @@ func (tv *TableView) ItemCountChanged() *Event {
 }
 
 // Model returns the model of the TableView.
-func (tv *TableView) Model() interface{} {
+func (tv *TableView) Model() any {
 	return tv.providedModel
 }
 
@@ -828,7 +828,7 @@ func (tv *TableView) Model() interface{} {
 // walk.ItemChecker and walk.ImageProvider, respectively. On-demand model
 // population for a walk.ReflectTableModel or slice requires mdl to implement
 // walk.Populator.
-func (tv *TableView) SetModel(mdl interface{}) error {
+func (tv *TableView) SetModel(mdl any) error {
 	model, ok := mdl.(TableModel)
 	if !ok && mdl != nil {
 		var err error
@@ -1851,7 +1851,7 @@ func (tv *TableView) toggleItemChecked(index int) error {
 	return nil
 }
 
-func (tv *TableView) applyImageListForImage(image interface{}) {
+func (tv *TableView) applyImageListForImage(image any) {
 	tv.hIml, tv.usingSysIml, _ = imageListForImage(image, tv.DPI())
 
 	tv.applyImageList()
@@ -2125,7 +2125,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 			}
 
 			if (tv.imageProvider != nil || tv.styler != nil) && di.Item.Mask&win.LVIF_IMAGE > 0 {
-				var image interface{}
+				var image any
 				if di.Item.ISubItem == 0 {
 					if ip := tv.imageProvider; ip != nil && image == nil {
 						image = ip.Image(row)

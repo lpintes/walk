@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
 import (
 	"fmt"
 
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 )
 
 type Shortcut struct {
@@ -20,7 +20,7 @@ type Shortcut struct {
 type Action struct {
 	AssignTo    **walk.Action
 	Text        string
-	Image       interface{}
+	Image       any
 	Checked     Property
 	Enabled     Property
 	Visible     Property
@@ -93,7 +93,7 @@ type Menu struct {
 	AssignTo       **walk.Menu
 	AssignActionTo **walk.Action
 	Text           string
-	Image          interface{}
+	Image          any
 	Enabled        Property
 	Visible        Property
 	Items          []MenuItem
@@ -172,7 +172,7 @@ func addToActionList(list *walk.ActionList, actions []*walk.Action) error {
 	return nil
 }
 
-func setActionImage(action *walk.Action, image interface{}, dpi int) (err error) {
+func setActionImage(action *walk.Action, image any, dpi int) (err error) {
 	var img walk.Image
 
 	switch image.(type) {

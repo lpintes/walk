@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
 import (
 	"path/filepath"
 
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 )
 
 func tr(source string, context ...string) string {
@@ -20,7 +20,7 @@ func tr(source string, context ...string) string {
 	return source
 }
 
-type Property interface{}
+type Property any
 
 type bindData struct {
 	expression string

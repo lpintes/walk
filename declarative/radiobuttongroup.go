@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
@@ -12,7 +12,7 @@ import (
 )
 
 import (
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 )
 
 type RadioButtonGroup struct {
@@ -95,7 +95,7 @@ func newRadioButtonGroupValidator(group *walk.RadioButtonGroup, parent walk.Cont
 	return &radioButtonGroupValidator{group: group, err: errors.New(b.String())}
 }
 
-func (rbgv *radioButtonGroupValidator) Validate(v interface{}) error {
+func (rbgv *radioButtonGroupValidator) Validate(v any) error {
 	if rbgv.group.CheckedButton() == nil {
 		return rbgv.err
 	}

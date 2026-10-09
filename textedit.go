@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -47,19 +47,19 @@ func NewTextEditWithStyle(parent Container, style uint32) (*TextEdit, error) {
 	te.GraphicsEffects().Add(FocusEffect)
 
 	te.MustRegisterProperty("ReadOnly", NewProperty(
-		func() interface{} {
+		func() any {
 			return te.ReadOnly()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return te.SetReadOnly(v.(bool))
 		},
 		te.readOnlyChangedPublisher.Event()))
 
 	te.MustRegisterProperty("Text", NewProperty(
-		func() interface{} {
+		func() any {
 			return te.Text()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return te.SetText(assertStringOr(v, ""))
 		},
 		te.textChangedPublisher.Event()))

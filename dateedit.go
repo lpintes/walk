@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -41,10 +41,10 @@ func newDateEdit(parent Container, style uint32) (*DateEdit, error) {
 	de.GraphicsEffects().Add(FocusEffect)
 
 	de.MustRegisterProperty("Date", NewProperty(
-		func() interface{} {
+		func() any {
 			return de.Date()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return de.SetDate(assertTimeOr(v, time.Time{}))
 		},
 		de.dateChangedPublisher.Event()))

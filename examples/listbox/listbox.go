@@ -12,8 +12,8 @@ import (
 )
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 func main() {
@@ -29,8 +29,8 @@ func main() {
 			HSplitter{
 				Children: []Widget{
 					ListBox{
-						AssignTo: &mw.lb,
-						Model:    mw.model,
+						AssignTo:              &mw.lb,
+						Model:                 mw.model,
 						OnCurrentIndexChanged: mw.lb_CurrentIndexChanged,
 						OnItemActivated:       mw.lb_ItemActivated,
 					},
@@ -103,6 +103,6 @@ func (m *EnvModel) ItemCount() int {
 	return len(m.items)
 }
 
-func (m *EnvModel) Value(index int) interface{} {
+func (m *EnvModel) Value(index int) any {
 	return m.items[index].name
 }

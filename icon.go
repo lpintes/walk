@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -35,7 +35,7 @@ type ExtractableIcon interface {
 	Size_() int
 }
 
-func IconFrom(src interface{}, dpi int) (*Icon, error) {
+func IconFrom(src any, dpi int) (*Icon, error) {
 	if src == nil {
 		return nil, nil
 	}

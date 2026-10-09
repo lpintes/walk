@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -34,10 +34,10 @@ func NewLinkLabel(parent Container) (*LinkLabel, error) {
 	ll.SetBackground(nullBrushSingleton)
 
 	ll.MustRegisterProperty("Text", NewProperty(
-		func() interface{} {
+		func() any {
 			return ll.Text()
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			return ll.SetText(assertStringOr(v, ""))
 		},
 		ll.textChangedPublisher.Event()))

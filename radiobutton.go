@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -32,7 +32,7 @@ type radioButtonish interface {
 type RadioButton struct {
 	Button
 	group *RadioButtonGroup
-	value interface{}
+	value any
 }
 
 func NewRadioButton(parent Container) (*RadioButton, error) {
@@ -66,14 +66,14 @@ func NewRadioButton(parent Container) (*RadioButton, error) {
 	rb.GraphicsEffects().Add(FocusEffect)
 
 	rb.MustRegisterProperty("CheckedValue", NewProperty(
-		func() interface{} {
+		func() any {
 			if rb.Checked() {
 				return rb.value
 			}
 
 			return nil
 		},
-		func(v interface{}) error {
+		func(v any) error {
 			checked := v == rb.value
 			if checked {
 				rb.group.checkedButton = rb
@@ -105,11 +105,11 @@ func (rb *RadioButton) Group() *RadioButtonGroup {
 	return rb.group
 }
 
-func (rb *RadioButton) Value() interface{} {
+func (rb *RadioButton) Value() any {
 	return rb.value
 }
 
-func (rb *RadioButton) SetValue(value interface{}) {
+func (rb *RadioButton) SetValue(value any) {
 	rb.value = value
 }
 

@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
 import (
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 	"github.com/lxn/win"
 )
 
@@ -61,7 +61,7 @@ type TableView struct {
 	ItemStateChangedEventDelay  int
 	HeaderHidden                bool
 	LastColumnStretched         bool
-	Model                       interface{}
+	Model                       any
 	MultiSelection              bool
 	NotSortableByHeaderClick    bool
 	OnCurrentIndexChanged       walk.EventHandler

@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
 import (
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 )
 
 type ValidatorRef struct {
@@ -64,7 +64,7 @@ type wMultiValidator struct {
 	validators []walk.Validator
 }
 
-func (av *wMultiValidator) Validate(v interface{}) error {
+func (av *wMultiValidator) Validate(v any) error {
 	for _, validator := range av.validators {
 		if err := validator.Validate(v); err != nil {
 			return err

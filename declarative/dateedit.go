@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package declarative
 
@@ -11,7 +11,7 @@ import (
 )
 
 import (
-	"github.com/lxn/walk"
+	"github.com/lpintes/walk"
 )
 
 type DateEdit struct {

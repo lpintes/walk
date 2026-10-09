@@ -7,8 +7,8 @@ package main
 import (
 	"strings"
 
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 func main() {
@@ -36,8 +36,8 @@ func main() {
 				URL:      "https://github.com/lxn/walk",
 			},
 		},
-		Functions: map[string]func(args ...interface{}) (interface{}, error){
-			"icon": func(args ...interface{}) (interface{}, error) {
+		Functions: map[string]func(args ...any) (any, error){
+			"icon": func(args ...any) (any, error) {
 				if strings.HasPrefix(args[0].(string), "https") {
 					return "check", nil
 				}

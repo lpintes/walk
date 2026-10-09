@@ -12,10 +12,10 @@ Make sure you have a working Go installation.
 See [Getting Started](http://golang.org/doc/install.html)
 
 ##### Note
-Walk currently requires Go 1.11.x or later.
+Walk currently requires Go 1.23 or later.
 
 ##### To Install
-Now run `go get github.com/lxn/walk`
+Inside your module, run `go get github.com/lpintes/walk`
 
 Using Walk
 ==========
@@ -29,8 +29,8 @@ as illustrated in this small example:
 package main
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 	"strings"
 )
 
@@ -81,7 +81,7 @@ func main() {
 
 Then either compile the manifest using the [rsrc tool](https://github.com/akavel/rsrc), like this:
 
-	go get github.com/akavel/rsrc
+	go install github.com/akavel/rsrc@latest
 	rsrc -manifest test.manifest -o rsrc.syso
 
 or rename the `test.manifest` file to `test.exe.manifest` and distribute it with the application instead.

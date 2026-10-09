@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build windows
+//go:build windows
 
 package walk
 
@@ -117,7 +117,7 @@ func wrapError(err error) error {
 	return processError(wrapErr(err))
 }
 
-func toErrorNoPanic(x interface{}) error {
+func toErrorNoPanic(x any) error {
 	switch x := x.(type) {
 	case *Error:
 		return x
@@ -132,7 +132,7 @@ func toErrorNoPanic(x interface{}) error {
 	return newErrorNoPanic(fmt.Sprintf("Error: %v", x))
 }
 
-func toError(x interface{}) error {
+func toError(x any) error {
 	err := toErrorNoPanic(x)
 
 	if panicOnError {

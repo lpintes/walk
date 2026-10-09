@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 	"github.com/lxn/win"
 )
 
@@ -94,7 +94,7 @@ type logModel struct {
 	items []logEntry
 }
 
-func (m *logModel) Items() interface{} {
+func (m *logModel) Items() any {
 	return m.items
 }
 

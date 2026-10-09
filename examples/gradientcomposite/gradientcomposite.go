@@ -5,8 +5,8 @@
 package main
 
 import (
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 func main() {
@@ -71,8 +71,8 @@ func main() {
 				},
 			},
 		},
-		Functions: map[string]func(args ...interface{}) (interface{}, error){
-			"rgb": func(args ...interface{}) (interface{}, error) {
+		Functions: map[string]func(args ...any) (any, error){
+			"rgb": func(args ...any) (any, error) {
 				return walk.RGB(byte(args[0].(float64)), byte(args[1].(float64)), byte(args[2].(float64))), nil
 			},
 		},
