@@ -123,6 +123,13 @@ and real dialogs all need new Win32/COM declarations.
   handlers), where go-ole offers little. Its types would also duplicate the
   ones in `internal/win` and the generator, and the project is barely
   maintained.
+- `github.com/AndyBalholm/com-and-go` (last change 2018) was reviewed too.
+  Version 1 generates client call wrappers from COM interfaces written as Go
+  interfaces in comments (tool `mkcomcall`); version 2 relies on C files
+  compiled into the Go runtime, which stopped working with Go 1.5. It is
+  client-only as well, so nothing to reuse except the idea of generated
+  wrappers that return `error` instead of a raw `HRESULT`, worth considering
+  for the generator in step 3.
 - Recommendation: do not depend on go-ole. Instead add a small internal
   helper (for example `internal/com`) for implementing COM objects: building
   vtables with `syscall.NewCallback`, reference counting, `QueryInterface`
