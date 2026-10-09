@@ -87,8 +87,10 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     value, every signature and type, and for every plain syscall wrapper the
     DLL, entry point and argument and result conversions, before and
     after).
-  - Part 2: structs, pull request lpintes/walk#5 (based on the branch of
-    part 1). New `struct` directive in `winmd.txt`, generated
+  - Part 2: structs, pull request lpintes/walk#5. It targets the branch
+    of part 1, so merge lpintes/walk#4 first (with a merge commit, not
+    squash), delete its branch so that GitHub retargets lpintes/walk#5 to
+    `master`, then merge lpintes/walk#5. New `struct` directive in `winmd.txt`, generated
     `internal/win/zwinmd_structs.go` with 62 structs and
     `zwinmd_layout_{386,amd64,arm64}.go`, which make the build fail if a
     generated struct's size, alignment or field offsets differ from the
@@ -108,7 +110,8 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     versions); `BITMAPINFO` (see "Known issues"); `BITMAPV4HEADER`,
     `BITMAPV5HEADER`, `VARIANTARG` (embedded fields); `BROWSEINFO`,
     `ENHMETAHEADER` (refer to `ITEMIDLIST` and `RECTL`, which the package
-    does not define); `TOOLINFO` (not in the metadata under that name).
+    does not define); `TOOLINFO` (the metadata calls it `TTTOOLINFOW`;
+    try `struct TOOLINFO entry=TTTOOLINFOW` in a later part).
   - Next parts: GUID variables (`IID_*`, `CLSID_*`), COM interface
     vtables, functions the generator rejects today (structs or floats by
     value, 64-bit parameters on 386, architecture-specific functions such
@@ -261,7 +264,9 @@ and real dialogs all need new Win32/COM declarations.
   and 3 in `internal/win` (`GlobalLock`, `SysAllocString`,
   `MAKEINTRESOURCE`). The 3 in `internal/win` were reviewed in step 3: they
   convert memory allocated by Windows or integer resource IDs, not Go
-  memory, and stay as they are.
+  memory, and stay as they are. `go vet` also reports "struct literal
+  uses unkeyed fields" for walk and the examples (for example unkeyed
+  `win.RECT` and `win.POINT` literals); these are known too.
 - Bugs inherited from lxn/win, found by comparing with the metadata in
   step 3 and kept hand-written so that behavior does not change. Fixing
   them changes behavior and needs GUI testing:
