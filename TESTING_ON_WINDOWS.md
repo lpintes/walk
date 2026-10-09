@@ -24,12 +24,50 @@ Read `CLAUDE.md` first. In particular:
   manifest (common controls version 6, DPI awareness); build and run them
   with `GOARCH=386` if a 64-bit build of an example fails to link or looks
   unthemed, and say which architecture was used.
+- A 64-bit build of an example fails to link with "unknown relocation
+  type 7" because of the 386 `rsrc.syso`. Build it with
+  `go build -overlay overlay.json`, where `overlay.json` is
+  `{"Replace":{"C:/full/path/examples/NAME/rsrc.syso":""}}` (an empty
+  replacement removes the file; use forward slashes), and copy the
+  example's `NAME.exe.manifest` next to the exe under the exe's name, so
+  that Windows still applies the manifest.
 - Run an example: `go run ./examples/tableview`, or build it with
   `go build -o tableview.exe ./examples/tableview` and start the exe.
+  Examples load images from `../img`, so start them with the working
+  directory in a sibling directory of a copy of `examples/img`.
+- Do not send global keyboard input (`SendInput`, `keybd_event`, Alt
+  tricks to take the foreground, Alt+F4) on the user's machine: if the
+  example does not have the foreground, the keys go to whatever window
+  does, and this once closed the user's own application. Close windows
+  with `WM_CLOSE` posted to their handle, and post key messages only to a
+  window of the tested process. Keyboard tests go through the screen
+  reader (see below), after checking where focus is.
 - Useful for programmatic checks:
   - PowerShell with UI Automation
     (`Add-Type -AssemblyName UIAutomationClient`) to find windows and
-    controls, read names, states and bounds, and invoke them.
+    controls, read names, states and bounds, and invoke them. On the test
+    machine the managed UI Automation client (PowerShell 7 and 5.1)
+    reported every Win32 control, also in `charmap.exe`, as `Pane` and not
+    keyboard focusable, so it is useless for roles there. MSAA works:
+    `AccessibleObjectFromWindow(hwnd, OBJID_CLIENT, IID_IAccessible)` from
+    C# in Windows PowerShell 5.1 (`Add-Type -ReferencedAssemblies
+    Accessibility`, cast to `Accessibility.IAccessible`) gives role, name,
+    value, state and help, and `GetGUIThreadInfo` gives the focused window
+    of the tested thread.
+  - NVDA through the `screenreader` MCP server, if it is configured. Use
+    `connect_reader` with reader `nvda`, mode `silent` (the user hears
+    nothing but `announce` texts, so announce longer runs) and persona
+    `validator`, and `disconnect_reader` at the end. Before every key,
+    check with `get_focus_info` (and `nvda+t`, which reads the window
+    title) that focus is in the tested example; keys land wherever system
+    focus is. Build the examples for this with `-ldflags=-H=windowsgui`:
+    a console build opens a terminal window, which may take the focus.
+    `run_sequence` with `press_gesture`, `type_text`, `delay` and
+    `read: ["focus"]` steps returns what NVDA said for each key. The
+    keys are the ordinary user's: `tab`, `shift+tab`, arrows, `space`,
+    `enter`, `escape`, `alt+f`, `control+o`, `shift+f10`, `windows+b`
+    for the notification area, and `nvda+b`, which reads the whole
+    foreground window.
   - Temporary `log.Printf` calls in walk to record the notification codes
     and structures a window procedure receives.
   - Small Go test programs that use walk and `internal/win` (they must live
