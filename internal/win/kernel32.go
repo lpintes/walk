@@ -90,17 +90,6 @@ type NUMBERFMT struct {
 	NegativeOrder uint32
 }
 
-type SYSTEMTIME struct {
-	WYear         uint16
-	WMonth        uint16
-	WDayOfWeek    uint16
-	WDay          uint16
-	WHour         uint16
-	WMinute       uint16
-	WSecond       uint16
-	WMilliseconds uint16
-}
-
 type ACTCTX struct {
 	size                  uint32
 	Flags                 uint32

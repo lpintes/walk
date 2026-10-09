@@ -36,12 +36,16 @@ Read `CLAUDE.md` first. In particular:
     inside this module, for example under a temporary directory of
     `examples/`, because `internal/win` is internal).
 
-## Task 1: smoke test of step 3 part 1 (pull request lpintes/walk#4)
+## Task 1: smoke test of step 3 parts 1 and 2
 
-Part 1 of step 3 replaced 1035 hand-written constants and 189 hand-written
-syscall wrappers in `internal/win` with code generated from the Win32
-metadata (`internal/win/zwinmd_*.go`). The Go API was checked to be
-identical, but nothing was run on Windows.
+Part 1 of step 3 (pull request lpintes/walk#4) replaced 1035 hand-written
+constants and 189 hand-written syscall wrappers in `internal/win` with
+code generated from the Win32 metadata (`internal/win/zwinmd_*.go`).
+Part 2 replaced 62 hand-written structs (for example `MSG`, `RECT`,
+`WNDCLASSEX`, `NMHDR`, `NMLISTVIEW`, `TVITEM`, `LOGFONT`, `MENUITEMINFO`,
+`SCROLLINFO`) with generated ones; their layout is checked against the
+metadata at compile time. The Go API was checked to be identical, but
+nothing was run on Windows.
 
 Run every example in `examples/` (except where it needs something missing,
 such as a network for `webview`; say so) and check:

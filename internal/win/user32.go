@@ -975,18 +975,6 @@ const (
 	HCF_HOTKEYAVAILABLE = 0x00000040
 )
 
-type NMBCDROPDOWN struct {
-	Hdr      NMHDR
-	RcButton RECT
-}
-
-type MONITORINFO struct {
-	CbSize    uint32
-	RcMonitor RECT
-	RcWork    RECT
-	DwFlags   uint32
-}
-
 type (
 	HACCEL    HANDLE
 	HCURSOR   HANDLE
@@ -997,15 +985,6 @@ type (
 	HRAWINPUT HANDLE
 	HWND      HANDLE
 )
-
-type MSG struct {
-	HWnd    HWND
-	Message uint32
-	WParam  uintptr
-	LParam  uintptr
-	Time    uint32
-	Pt      POINT
-}
 
 type RAWINPUTDEVICE struct {
 	UsUsagePage uint16
@@ -1062,12 +1041,6 @@ type RAWHID struct {
 	BRawData  [1]byte
 }
 
-type NMHDR struct {
-	HwndFrom HWND
-	IdFrom   uintptr
-	Code     uint32
-}
-
 type CREATESTRUCT struct {
 	CreateParams    uintptr
 	Instance        HINSTANCE
@@ -1087,58 +1060,9 @@ type CHANGEFILTERSTRUCT struct {
 	extStatus uint32
 }
 
-type WNDCLASSEX struct {
-	CbSize        uint32
-	Style         uint32
-	LpfnWndProc   uintptr
-	CbClsExtra    int32
-	CbWndExtra    int32
-	HInstance     HINSTANCE
-	HIcon         HICON
-	HCursor       HCURSOR
-	HbrBackground HBRUSH
-	LpszMenuName  *uint16
-	LpszClassName *uint16
-	HIconSm       HICON
-}
-
 type TPMPARAMS struct {
 	CbSize    uint32
 	RcExclude RECT
-}
-
-type WINDOWPLACEMENT struct {
-	Length           uint32
-	Flags            uint32
-	ShowCmd          uint32
-	PtMinPosition    POINT
-	PtMaxPosition    POINT
-	RcNormalPosition RECT
-}
-
-type DRAWTEXTPARAMS struct {
-	CbSize        uint32
-	ITabLength    int32
-	ILeftMargin   int32
-	IRightMargin  int32
-	UiLengthDrawn uint32
-}
-
-type PAINTSTRUCT struct {
-	Hdc         HDC
-	FErase      BOOL
-	RcPaint     RECT
-	FRestore    BOOL
-	FIncUpdate  BOOL
-	RgbReserved [32]byte
-}
-
-type MINMAXINFO struct {
-	PtReserved     POINT
-	PtMaxSize      POINT
-	PtMaxPosition  POINT
-	PtMinTrackSize POINT
-	PtMaxTrackSize POINT
 }
 
 type NONCLIENTMETRICS struct {
@@ -1157,35 +1081,6 @@ type NONCLIENTMETRICS struct {
 	LfMenuFont       LOGFONT
 	LfStatusFont     LOGFONT
 	LfMessageFont    LOGFONT
-}
-
-type MEASUREITEMSTRUCT struct {
-	CtlType    uint32
-	CtlID      uint32
-	ItemID     int32
-	ItemWidth  uint32
-	ItemHeight uint32
-	ItemData   uintptr
-}
-
-type DRAWITEMSTRUCT struct {
-	CtlType    uint32
-	CtlID      uint32
-	ItemID     int32
-	ItemAction uint32
-	ItemState  uint32
-	HwndItem   HWND
-	HDC        HDC
-	RcItem     RECT
-	ItemData   uintptr
-}
-
-type ICONINFO struct {
-	FIcon    BOOL
-	XHotspot uint32
-	YHotspot uint32
-	HbmMask  HBITMAP
-	HbmColor HBITMAP
 }
 
 type MOUSE_INPUT struct {
@@ -1226,39 +1121,6 @@ type HARDWAREINPUT struct {
 	WParamL uint16
 	WParamH uint16
 	Unused  [16]byte
-}
-
-type SCROLLINFO struct {
-	CbSize    uint32
-	FMask     uint32
-	NMin      int32
-	NMax      int32
-	NPage     uint32
-	NPos      int32
-	NTrackPos int32
-}
-
-type WINDOWPOS struct {
-	Hwnd            HWND
-	HwndInsertAfter HWND
-	X               int32
-	Y               int32
-	Cx              int32
-	Cy              int32
-	Flags           uint32
-}
-
-type TRACKMOUSEEVENT struct {
-	CbSize      uint32
-	DwFlags     uint32
-	HwndTrack   HWND
-	DwHoverTime uint32
-}
-
-type HIGHCONTRAST struct {
-	CbSize            uint32
-	DwFlags           uint32
-	LpszDefaultScheme *uint16
 }
 
 func GET_X_LPARAM(lp uintptr) int32 {

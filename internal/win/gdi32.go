@@ -745,46 +745,6 @@ type PIXELFORMATDESCRIPTOR struct {
 	DwDamageMask    uint32
 }
 
-type LOGFONT struct {
-	LfHeight         int32
-	LfWidth          int32
-	LfEscapement     int32
-	LfOrientation    int32
-	LfWeight         int32
-	LfItalic         byte
-	LfUnderline      byte
-	LfStrikeOut      byte
-	LfCharSet        byte
-	LfOutPrecision   byte
-	LfClipPrecision  byte
-	LfQuality        byte
-	LfPitchAndFamily byte
-	LfFaceName       [LF_FACESIZE]uint16
-}
-
-type TEXTMETRIC struct {
-	TmHeight           int32
-	TmAscent           int32
-	TmDescent          int32
-	TmInternalLeading  int32
-	TmExternalLeading  int32
-	TmAveCharWidth     int32
-	TmMaxCharWidth     int32
-	TmWeight           int32
-	TmOverhang         int32
-	TmDigitizedAspectX int32
-	TmDigitizedAspectY int32
-	TmFirstChar        uint16
-	TmLastChar         uint16
-	TmDefaultChar      uint16
-	TmBreakChar        uint16
-	TmItalic           byte
-	TmUnderlined       byte
-	TmStruckOut        byte
-	TmPitchAndFamily   byte
-	TmCharSet          byte
-}
-
 type DEVMODE struct {
 	DmDeviceName       [CCHDEVICENAME]uint16
 	DmSpecVersion      uint16
@@ -822,52 +782,12 @@ type DEVMODE struct {
 	DmPanningHeight    uint32
 }
 
-type POINT struct {
-	X, Y int32
-}
-
-type RECT struct {
-	Left, Top, Right, Bottom int32
-}
-
-type SIZE struct {
-	CX, CY int32
-}
-
 type DOCINFO struct {
 	CbSize       int32
 	LpszDocName  *uint16
 	LpszOutput   *uint16
 	LpszDatatype *uint16
 	FwType       uint32
-}
-
-type LOGBRUSH struct {
-	LbStyle uint32
-	LbColor COLORREF
-	LbHatch uintptr
-}
-
-type CIEXYZ struct {
-	CiexyzX, CiexyzY, CiexyzZ int32 // FXPT2DOT30
-}
-
-type CIEXYZTRIPLE struct {
-	CiexyzRed, CiexyzGreen, CiexyzBlue CIEXYZ
-}
-
-type BITMAPINFOHEADER struct {
-	BiSize          uint32
-	BiWidth         int32
-	BiHeight        int32
-	BiPlanes        uint16
-	BiBitCount      uint16
-	BiCompression   uint32
-	BiSizeImage     uint32
-	BiXPelsPerMeter int32
-	BiYPelsPerMeter int32
-	BiClrUsed       uint32
-	BiClrImportant  uint32
 }
 
 type BITMAPV4HEADER struct {
@@ -903,24 +823,6 @@ type BITMAPINFO struct {
 	BmiColors *RGBQUAD
 }
 
-type BITMAP struct {
-	BmType       int32
-	BmWidth      int32
-	BmHeight     int32
-	BmWidthBytes int32
-	BmPlanes     uint16
-	BmBitsPixel  uint16
-	BmBits       unsafe.Pointer
-}
-
-type DIBSECTION struct {
-	DsBm        BITMAP
-	DsBmih      BITMAPINFOHEADER
-	DsBitfields [3]uint32
-	DshSection  HANDLE
-	DsOffset    uint32
-}
-
 type ENHMETAHEADER struct {
 	IType          uint32
 	NSize          uint32
@@ -941,33 +843,6 @@ type ENHMETAHEADER struct {
 	OffPixelFormat uint32
 	BOpenGL        uint32
 	SzlMicrometers SIZE
-}
-
-type TRIVERTEX struct {
-	X     int32
-	Y     int32
-	Red   uint16
-	Green uint16
-	Blue  uint16
-	Alpha uint16
-}
-
-type GRADIENT_RECT struct {
-	UpperLeft  uint32
-	LowerRight uint32
-}
-
-type GRADIENT_TRIANGLE struct {
-	Vertex1 uint32
-	Vertex2 uint32
-	Vertex3 uint32
-}
-
-type BLENDFUNCTION struct {
-	BlendOp             byte
-	BlendFlags          byte
-	SourceConstantAlpha byte
-	AlphaFormat         byte
 }
 
 var (

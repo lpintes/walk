@@ -37,21 +37,7 @@ const (
 	LM_GETIDEALHEIGHT = WM_USER + 0x301
 )
 
-type LITEM struct {
-	Mask      uint32
-	ILink     int32
-	State     uint32
-	StateMask uint32
-	SzID      [MAX_LINKID_TEXT]uint16
-	SzUrl     [L_MAX_URL_LENGTH]uint16
-}
-
 type LHITTESTINFO struct {
 	Pt   POINT
-	Item LITEM
-}
-
-type NMLINK struct {
-	Hdr  NMHDR
 	Item LITEM
 }

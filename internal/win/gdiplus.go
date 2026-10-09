@@ -110,21 +110,10 @@ func (s GpStatus) String() string {
 	return "Unknown Status Value"
 }
 
-type GdiplusStartupInput struct {
-	GdiplusVersion           uint32
-	DebugEventCallback       uintptr
-	SuppressBackgroundThread BOOL
-	SuppressExternalCodecs   BOOL
-}
-
 type GdiplusStartupOutput struct {
 	NotificationHook   uintptr
 	NotificationUnhook uintptr
 }
-
-type GpImage struct{}
-
-type GpBitmap GpImage
 
 type ARGB uint32
 

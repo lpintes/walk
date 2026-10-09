@@ -187,20 +187,6 @@ const (
 
 type HIMAGELIST HANDLE
 
-type INITCOMMONCONTROLSEX struct {
-	DwSize, DwICC uint32
-}
-
-type NMCUSTOMDRAW struct {
-	Hdr         NMHDR
-	DwDrawStage uint32
-	Hdc         HDC
-	Rc          RECT
-	DwItemSpec  uintptr
-	UItemState  uint32
-	LItemlParam uintptr
-}
-
 var (
 	loadIconMetric        *windows.LazyProc
 	loadIconWithScaleDown *windows.LazyProc

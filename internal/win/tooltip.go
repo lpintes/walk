@@ -64,10 +64,3 @@ type TOOLINFO struct {
 	LParam     uintptr
 	LpReserved unsafe.Pointer
 }
-
-type TTGETTITLE struct {
-	DwSize       uint32
-	UTitleBitmap uint32
-	Cch          uint32
-	PszTitle     *uint16
-}

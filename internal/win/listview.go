@@ -250,59 +250,7 @@ type LVITEM struct {
 	PuColumns  uint32
 }
 
-type LVHITTESTINFO struct {
-	Pt       POINT
-	Flags    uint32
-	IItem    int32
-	ISubItem int32
-	IGroup   int32
-}
-
-type NMITEMACTIVATE struct {
-	Hdr       NMHDR
-	IItem     int32
-	ISubItem  int32
-	UNewState uint32
-	UOldState uint32
-	UChanged  uint32
-	PtAction  POINT
-	LParam    uintptr
-	UKeyFlags uint32
-}
-
-type NMLISTVIEW struct {
-	Hdr       NMHDR
-	IItem     int32
-	ISubItem  int32
-	UNewState uint32
-	UOldState uint32
-	UChanged  uint32
-	PtAction  POINT
-	LParam    uintptr
-}
-
-type NMLVCUSTOMDRAW struct {
-	Nmcd        NMCUSTOMDRAW
-	ClrText     COLORREF
-	ClrTextBk   COLORREF
-	ISubItem    int32
-	DwItemType  uint32
-	ClrFace     COLORREF
-	IIconEffect int32
-	IIconPhase  int32
-	IPartId     int32
-	IStateId    int32
-	RcText      RECT
-	UAlign      uint32
-}
-
 type NMLVDISPINFO struct {
 	Hdr  NMHDR
 	Item LVITEM
-}
-
-type NMLVSCROLL struct {
-	Hdr NMHDR
-	Dx  int32
-	Dy  int32
 }

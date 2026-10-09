@@ -95,16 +95,6 @@ type TCITEMHEADER struct {
 	IImage      int32
 }
 
-type TCITEM struct {
-	Mask        uint32
-	DwState     uint32
-	DwStateMask uint32
-	PszText     *uint16
-	CchTextMax  int32
-	IImage      int32
-	LParam      uintptr
-}
-
 type TCHITTESTINFO struct {
 	Pt    POINT
 	flags uint32

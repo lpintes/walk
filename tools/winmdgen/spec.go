@@ -20,6 +20,7 @@ type spec struct {
 	dlls      []*dllSpec
 	constants []*constSpec
 	functions []*funcSpec
+	structs   []*structSpec
 }
 
 type dllSpec struct {
@@ -40,6 +41,22 @@ type funcSpec struct {
 	result  string            // Go result type overriding the metadata type
 	params  map[string]string // metadata parameter name -> Go type
 	rawBool bool              // keep BOOL instead of translating it to bool
+}
+
+type structSpec struct {
+	line  int
+	name  string            // Go type name
+	entry string            // metadata struct name, empty means name+"W" or name
+	names map[string]string // metadata field name -> Go field name
+	types map[string]string // metadata field name -> Go type
+}
+
+// metaNames returns the names to look up in the metadata, in order.
+func (s *structSpec) metaNames() []string {
+	if s.entry != "" {
+		return []string{s.entry}
+	}
+	return []string{s.name + "W", s.name}
 }
 
 func parseSpec(path string) (*spec, error) {
@@ -112,6 +129,26 @@ func parseSpec(path string) (*spec, error) {
 				}
 			}
 			s.functions = append(s.functions, fs)
+		case "struct":
+			if len(fields) < 2 {
+				return nil, errorf("want: struct NAME [OPTION...]")
+			}
+			ss := &structSpec{line: line, name: fields[1], names: make(map[string]string), types: make(map[string]string)}
+			for _, opt := range fields[2:] {
+				switch {
+				case strings.HasPrefix(opt, "entry="):
+					ss.entry = strings.TrimPrefix(opt, "entry=")
+				case strings.Contains(opt, "="):
+					i := strings.IndexByte(opt, '=')
+					ss.names[opt[:i]] = opt[i+1:]
+				case strings.Contains(opt, ":"):
+					i := strings.IndexByte(opt, ':')
+					ss.types[opt[:i]] = opt[i+1:]
+				default:
+					return nil, errorf("unknown option %q", opt)
+				}
+			}
+			s.structs = append(s.structs, ss)
 		default:
 			return nil, errorf("unknown directive %q", fields[0])
 		}

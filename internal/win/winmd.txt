@@ -1255,3 +1255,68 @@ func TranslateMessage
 func TransparentBlt
 func UpdateWindow
 func WindowFromDC
+
+# Structs
+
+struct BITMAP
+struct BITMAPINFOHEADER
+struct BLENDFUNCTION
+struct CIEXYZ
+struct CIEXYZTRIPLE
+struct DIBSECTION
+struct DISPPARAMS cArgs:int32 cNamedArgs:int32 rgdispidNamedArgs:*DISPID rgvarg:*VARIANTARG
+struct DOCHOSTUIINFO
+struct DRAWITEMSTRUCT itemID:int32
+struct DRAWTEXTPARAMS
+struct DTTOPTS
+struct GRADIENT_RECT
+struct GRADIENT_TRIANGLE
+struct GdiplusStartupInput
+struct GpBitmap
+struct GpImage
+struct HDHITTESTINFO
+struct HDLAYOUT
+struct HIGHCONTRAST
+struct ICONINFO
+struct INITCOMMONCONTROLSEX
+struct LITEM szUrl:[2083]uint16
+struct LOGBRUSH
+struct LOGFONT
+struct LVHITTESTINFO
+struct MEASUREITEMSTRUCT itemID:int32
+struct MENUINFO
+struct MENUITEMINFO
+struct MINMAXINFO
+struct MONITORINFO
+struct MSG hwnd=HWnd
+struct NMBCDROPDOWN
+struct NMCUSTOMDRAW
+struct NMHDR
+struct NMITEMACTIVATE
+struct NMLINK
+struct NMLISTVIEW
+struct NMLVCUSTOMDRAW
+struct NMLVSCROLL
+struct NMMOUSE
+struct NMTOOLBAR
+struct NMTREEVIEW
+struct NMTVDISPINFO
+struct NMUPDOWN
+struct OLEINPLACEFRAMEINFO
+struct PAINTSTRUCT
+struct POINT
+struct RECT
+struct SCROLLINFO
+struct SIZE cx=CX cy=CY
+struct SYSTEMTIME
+struct TBBUTTONINFO pszText:uintptr
+struct TCITEM
+struct TEXTMETRIC
+struct TRACKMOUSEEVENT
+struct TRIVERTEX
+struct TTGETTITLE
+struct TVHITTESTINFO
+struct TVITEM pszText:uintptr
+struct WINDOWPLACEMENT
+struct WINDOWPOS
+struct WNDCLASSEX

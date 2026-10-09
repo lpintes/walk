@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,6 +33,8 @@ const WS_CHILD
 const LOCALE_USER_DEFAULT LCID # typed
 func GetMessage rawbool
 func GetLocaleInfo Locale:LCID result=int32 entry=GetLocaleInfoW
+struct MSG hwnd=HWnd lParam:LPARAM
+struct NMHDR2 entry=NMHDR
 `)
 	s, err := parseSpec(path)
 	if err != nil {
@@ -54,6 +57,18 @@ func GetLocaleInfo Locale:LCID result=int32 entry=GetLocaleInfoW
 	}
 	if f := s.functions[1]; f.params["Locale"] != "LCID" || f.result != "int32" || f.entry != "GetLocaleInfoW" {
 		t.Errorf("GetLocaleInfo = %+v", f)
+	}
+	if len(s.structs) != 2 {
+		t.Fatalf("structs = %+v", s.structs)
+	}
+	if st := s.structs[0]; st.names["hwnd"] != "HWnd" || st.types["lParam"] != "LPARAM" || len(st.names) != 1 || len(st.types) != 1 {
+		t.Errorf("MSG = %+v", st)
+	}
+	if got := s.structs[0].metaNames(); strings.Join(got, " ") != "MSGW MSG" {
+		t.Errorf("MSG metadata names = %q", got)
+	}
+	if got := s.structs[1].metaNames(); strings.Join(got, " ") != "NMHDR" {
+		t.Errorf("NMHDR2 metadata names = %q", got)
 	}
 }
 
@@ -175,8 +190,12 @@ func TestWriteFunc(t *testing.T) {
 // TestGenerated checks that the generated files in internal/win are up to
 // date. It needs the metadata package in the cache directory, which go
 // generate downloads.
-func TestGenerated(t *testing.T) {
-	const winDir = "../../internal/win"
+const winDir = "../../internal/win"
+
+// skipWithoutMetadata skips a test if the metadata package of the
+// specification of internal/win has not been downloaded.
+func skipWithoutMetadata(t *testing.T) *spec {
+	t.Helper()
 	s, err := parseSpec(filepath.Join(winDir, "winmd.txt"))
 	if err != nil {
 		t.Fatal(err)
@@ -189,6 +208,54 @@ func TestGenerated(t *testing.T) {
 	if _, err := os.Stat(nupkg); err != nil {
 		t.Skipf("metadata not downloaded: %v", err)
 	}
+	return s
+}
+
+func TestStructLayout(t *testing.T) {
+	skipWithoutMetadata(t)
+	_, m, err := load(filepath.Join(winDir, "winmd.txt"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name    string
+		arch    arch
+		rules   layoutRules
+		size    int
+		align   int
+		offsets []int
+	}{
+		{"MSG", archAMD64, cRules, 48, 8, []int{0, 8, 16, 24, 32, 36}},
+		{"MSG", arch386, cRules, 28, 4, []int{0, 4, 8, 12, 16, 20}},
+		{"NMHDR", archARM64, cRules, 24, 8, []int{0, 8, 16}},
+		// Declared with #pragma pack(1).
+		{"NMTVKEYDOWN", arch386, cRules, 18, 1, []int{0, 12, 14}},
+		{"NMTVKEYDOWN", arch386, goRules, 20, 4, []int{0, 12, 16}},
+		{"NMTVKEYDOWN", archAMD64, cRules, 30, 1, []int{0, 24, 26}},
+		// 64-bit fields are aligned to 8 bytes in C but to 4 bytes in Go
+		// on 386.
+		{"MEMORYSTATUSEX", arch386, cRules, 64, 8, []int{0, 4, 8, 16, 24, 32, 40, 48, 56}},
+		{"MEMORYSTATUSEX", arch386, goRules, 64, 4, []int{0, 4, 8, 16, 24, 32, 40, 48, 56}},
+	} {
+		td, err := m.lookupStruct([]string{tc.name + "W", tc.name}, tc.arch)
+		if err != nil {
+			t.Errorf("%s: %v", tc.name, err)
+			continue
+		}
+		l, err := m.structLayout(td, tc.arch, tc.rules)
+		if err != nil {
+			t.Errorf("%s: %v", tc.name, err)
+			continue
+		}
+		if l.size != tc.size || l.align != tc.align || fmt.Sprint(l.offsets) != fmt.Sprint(tc.offsets) {
+			t.Errorf("%s on %v with rules %d: got size %d, align %d, offsets %v; want %d, %d, %v",
+				tc.name, tc.arch, tc.rules, l.size, l.align, l.offsets, tc.size, tc.align, tc.offsets)
+		}
+	}
+}
+
+func TestGenerated(t *testing.T) {
+	skipWithoutMetadata(t)
 
 	out := t.TempDir()
 	// The generator reads the hand-written types from the output
