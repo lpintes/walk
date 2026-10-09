@@ -75,7 +75,8 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
 - Step 2: done, pull request lpintes/walk#2. `github.com/lxn/win` (version
   v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
   `README.md`.
-- Step 3: in progress, done in parts.
+- Step 3: done in three parts, the last one waiting for review and
+  testing on Windows.
   - Part 1: pull request lpintes/walk#4.
   - Part 1 contents: generator `tools/winmdgen` (see its package documentation
     and `internal/win/README.md`), specification `internal/win/winmd.txt`,
@@ -101,24 +102,43 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     structs and checks the hand-written layout on every architecture;
     `removedecl` removes struct types. The Go API of `internal/win` stayed
     identical on 386, amd64 and arm64.
-  - Structs still hand-written, with the reason: COM interfaces and
-    vtables (not structs in the metadata); `NOTIFYICONDATA`,
+  - Structs still hand-written, with the reason: `NOTIFYICONDATA`,
     `TVINSERTSTRUCT`, `VARIANT` (anonymous unions); `OPENFILENAME`,
     `SHFILEINFO`, `NMTVKEYDOWN` (`#pragma pack(1)`, which Go cannot
     express); `TBBUTTON` (differs between architectures); `HDITEM`,
     `LVITEM`, `LVCOLUMN`, `NMLVDISPINFO` (lxn/win has older, shorter
     versions); `BITMAPINFO` (see "Known issues"); `BITMAPV4HEADER`,
-    `BITMAPV5HEADER`, `VARIANTARG` (embedded fields); `BROWSEINFO`,
-    `ENHMETAHEADER` (refer to `ITEMIDLIST` and `RECTL`, which the package
-    does not define); `TOOLINFO` (the metadata calls it `TTTOOLINFOW`;
-    try `struct TOOLINFO entry=TTTOOLINFOW` in a later part).
-  - Next parts: GUID variables (`IID_*`, `CLSID_*`), COM interface
-    vtables, functions the generator rejects today (structs or floats by
-    value, 64-bit parameters on 386, architecture-specific functions such
-    as `GetWindowLongPtr`), then removal of hand-written declarations walk
-    does not use.
-  - Procedure used for part 1, repeat it for later parts (all from the
-    repository root):
+    `BITMAPV5HEADER`, `VARIANTARG` (embedded fields); `ENHMETAHEADER`
+    (refers to `RECTL`, which the package does not define).
+  - Part 3: pull request lpintes/walk#6 (draft). New directives `guid`
+    (26 GUID variables in `zwinmd_guids.go`) and `interface` (17 COM
+    vtable structs and interface pointer structs in
+    `zwinmd_interfaces.go`; the methods calling through the vtables stay
+    hand-written). Functions may take generated structs of 1, 2 or 4
+    bytes by value (`AlphaBlend`) and may name a `fallback` function for
+    architectures where they do not exist (`GetWindowLongPtr` and
+    `SetWindowLongPtr` call `GetWindowLongW` and `SetWindowLongW` on 386;
+    their `LazyProc` variables are in `zwinmd_functions_GOARCH.go`).
+    Pointers to undefined structs such as `ITEMIDLIST` work with a type
+    override (`SHBrowseForFolder`, `SHGetPathFromIDList`, `BROWSEINFO`).
+    `TOOLINFO` is generated from `TTTOOLINFOW`. The Go API stayed
+    identical on 386, amd64 and arm64. Then `tools/winmigrate/prune`
+    removed the 4883 hand-written declarations no package of the module
+    uses on any architecture (16 files, among them `richedit.go`,
+    `richole.go` and `tom.go`); the hand-written code of `internal/win`
+    went from about 11300 to about 2000 lines, and `apidump` only lost
+    lines.
+  - Still hand-written by design: COM interface methods, macros and
+    helpers (`LOWORD`, `MAKEINTRESOURCE`, `BoolToBOOL`, ...), functions
+    with a fallback for older Windows versions (`GetDpiForWindow`, ...),
+    functions returning pointers (`GlobalLock`, `LockResource`), the
+    functions with known bugs (`DragAcceptFiles`, `DragFinish`) and
+    deliberately different bodies (`OleInitialize`, `GdiplusStartup`,
+    `SHParseDisplayName`, which passes 0 for `sfgaoIn`), and the
+    constants listed under "Known issues". New Win32 symbols go into
+    `winmd.txt`, not into hand-written code.
+  - Procedure used for parts 1 to 3, repeat it when replacing more
+    hand-written declarations (all from the repository root):
     1. `go run ./tools/winmigrate/apidump internal/win ARCH > before_ARCH.txt`
        for 386, amd64 and arm64 (keep the files outside the repository).
     2. `go run ./tools/winmdgen -spec internal/win/winmd.txt -suggest .`
@@ -134,9 +154,12 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
        hand).
     5. Dump again and `diff` against step 1: there must be no difference
        on any architecture. Then run the checks above.
-    `apidump` uses the sizes of the target architecture since part 2;
-    dumps made by the older version differ on 386 for constants such as
-    `^uintptr(0)`, so make both dumps with the same version.
+    `apidump` uses the sizes of the target architecture since part 2 and
+    prints GUID values and drops conversions that do not change a value
+    since part 3; make both dumps with the same version.
+    To remove declarations walk no longer uses:
+    `go run ./tools/winmigrate/prune internal/win`; the dump after it may
+    only lose lines.
 - Bugs found in part 1 (see "Known issues"): the user decided to record
   them; fixing is optional. Proposed: fix `DragFinish` in a separate small
   pull request (a memory leak, low risk, test that dropping files still
@@ -144,7 +167,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   test with a screen reader, so they stay recorded until someone can check
   the appearance. No GitHub issues were created for them.
 - `TESTING_ON_WINDOWS.md` describes tasks for an agent on a Windows
-  machine: a smoke test of step 3 parts 1 and 2 and tests for these
+  machine: a smoke test of step 3 (all three parts) and tests for these
   bugs. Finding while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
   change of behavior (walk effectively reacts to `HDN_ITEMCHANGEDW` and
   tests the real `ODS_SELECTED` bit; the `ODA_FOCUS` check is dead code).
@@ -160,8 +183,10 @@ and real dialogs all need new Win32/COM declarations.
 ### RichEdit widget
 
 - Today there is no RichEdit widget. `TextEdit` and `LineEdit` use the plain
-  `EDIT` class. `internal/win` already has `richedit.go` (messages, styles,
-  `CHARFORMAT`, `PARAFORMAT`) and `richole.go` (`IRichEditOle`), unused by walk.
+  `EDIT` class. The unused lxn/win declarations for RichEdit (`richedit.go`,
+  `richole.go`, `tom.go`) were removed in step 3 part 3; generate what the
+  widget needs with `tools/winmdgen` (constants, structs, `IRichEditOle`
+  and TOM interfaces with the `interface` directive).
 - Plan: new `RichEdit` widget (plus declarative counterpart) on the
   `RICHEDIT50W` class from `msftedit.dll` (load the DLL before creating the
   window). Start with plain/RTF text get and set, selection, character and
@@ -283,7 +308,8 @@ and real dialogs all need new Win32/COM declarations.
     the function has none.
 - Hand-written structs whose layout differs from the metadata, found in
   step 3 part 2. None of them breaks walk today:
-  - `NMTVKEYDOWN` and `NMTCKEYDOWN` are declared with `#pragma pack(1)`,
+  - `NMTVKEYDOWN` (and `NMTCKEYDOWN`, removed in part 3 as unused) are
+    declared with `#pragma pack(1)`,
     so `Flags` is at offset 14 (386) or 26 (64-bit), not 16 or 28 as in
     Go. Walk reads only `WVKey`, which is at the right offset.
   - `BITMAPINFO.BmiColors` is a pointer in Go but an inline array of one
@@ -293,7 +319,7 @@ and real dialogs all need new Win32/COM declarations.
   - `HDITEM`, `LVITEM`, `LVCOLUMN` and `NMLVDISPINFO` lack the fields of
     newer Windows versions. This is safe as long as walk does not set
     masks for the missing fields.
-  - The RichEdit structs in `richedit.go` (for example `ENLINK`,
+  - The RichEdit structs of lxn/win (removed in part 3; for example `ENLINK`,
     `EDITSTREAM`, `GETTEXTEX`, `MSGFILTER`, `SELCHANGE`) are wrong on
     64-bit: `richedit.h` uses `#pragma pack(4)` there, so pointer-sized
     fields can sit at offsets that are not a multiple of 8, which Go

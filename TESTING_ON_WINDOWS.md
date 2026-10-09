@@ -34,9 +34,12 @@ Read `CLAUDE.md` first. In particular:
     and structures a window procedure receives.
   - Small Go test programs that use walk and `internal/win` (they must live
     inside this module, for example under a temporary directory of
-    `examples/`, because `internal/win` is internal).
+    `examples/`, because `internal/win` is internal). Since step 3 part 3,
+    `internal/win` declares only what walk uses, so a test program may
+    have to declare other Win32 functions and constants itself, with
+    `windows.NewLazySystemDLL` and plain constants.
 
-## Task 1: smoke test of step 3 parts 1 and 2
+## Task 1: smoke test of step 3
 
 Part 1 of step 3 (pull request lpintes/walk#4) replaced 1035 hand-written
 constants and 189 hand-written syscall wrappers in `internal/win` with
@@ -44,8 +47,12 @@ code generated from the Win32 metadata (`internal/win/zwinmd_*.go`).
 Part 2 replaced 62 hand-written structs (for example `MSG`, `RECT`,
 `WNDCLASSEX`, `NMHDR`, `NMLISTVIEW`, `TVITEM`, `LOGFONT`, `MENUITEMINFO`,
 `SCROLLINFO`) with generated ones; their layout is checked against the
-metadata at compile time. The Go API was checked to be identical, but
-nothing was run on Windows.
+metadata at compile time. Part 3 (pull request lpintes/walk#6) generated
+the GUID variables and COM interface vtables and a few more functions
+(`AlphaBlend`, `GetObject`, `GetWindowLongPtr`, `SetWindowLongPtr`,
+`SHBrowseForFolder`, `SHGetPathFromIDList`), and removed every
+declaration walk does not use. The Go API was checked to be identical
+(apart from the removed declarations), but nothing was run on Windows.
 
 Run every example in `examples/` (except where it needs something missing,
 such as a network for `webview`; say so) and check:
@@ -60,6 +67,23 @@ such as a network for `webview`; say so) and check:
 - Accessibility: with UI Automation, controls have names and the focused
   element follows keyboard focus. If possible, check with Narrator or NVDA
   that focus changes are announced.
+- Part 3 in particular:
+  - `GetWindowLongPtr` and `SetWindowLongPtr` call `GetWindowLongW` and
+    `SetWindowLongW` on 386 and the `Ptr` functions on amd64 and arm64.
+    walk uses them for every widget (subclassing and window styles), so
+    any example that starts and reacts to input exercises them; do run a
+    386 build.
+  - `AlphaBlend` (bitmaps with transparency, for example
+    `examples/imageviewer` and toolbar icons) and `GetObject` (bitmap and
+    icon sizes).
+  - `SHBrowseForFolder` and `SHGetPathFromIDList`: a folder dialog from
+    `FileDialog.ShowBrowseFolder`; check that the chosen path is returned.
+  - COM GUIDs and vtables: `examples/webview` (OLE hosting of the
+    `WebBrowser` control, its events), `examples/progressindicator`
+    (`ITaskbarList3`, progress on the taskbar button), and the
+    accessibility annotations of `Accessibility` in walk
+    (`IAccPropServices`; for example check with UI Automation that a name
+    or role set with `Accessibility().SetName` or `SetRole` is reported).
 
 Do this on both 386 and amd64 builds if possible (`GOARCH=386` and
 `GOARCH=amd64`), and arm64 if the machine is arm64. Report per example what
@@ -94,7 +118,8 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
   2. Check that the handler receives the paths.
   3. After the handler ran, `GlobalFlags(hDrop)` (kernel32; not declared in
      `internal/win`, load it with `windows.NewLazySystemDLL` in the test
-     program) returns
+     program, and declare `GMEM_ZEROINIT` and the `DROPFILES` struct there
+     too) returns
      `GMEM_INVALID_HANDLE` (0x8000) if the handle was freed. Before the fix
      the handle is still valid; after the fix it must be freed.
   4. Also do a real drag of a file from Explorer onto `examples/dropfiles`
@@ -138,7 +163,8 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
 ### Task 4: ODS_* and ODA_* values are wrong
 
 - `internal/win/user32.go`, "Owner drawing states": every `ODS_*` value is
-  wrong. Correct values: `ODS_SELECTED` 0x1, `ODS_GRAYED` 0x2,
+  wrong (since step 3 part 3 only `ODS_CHECKED` is left, because walk uses
+  no other). Correct values: `ODS_SELECTED` 0x1, `ODS_GRAYED` 0x2,
   `ODS_DISABLED` 0x4, `ODS_CHECKED` 0x8, `ODS_FOCUS` 0x10, `ODS_DEFAULT`
   0x20, `ODS_HOTLIGHT` 0x40, `ODS_COMBOBOXEDIT` 0x1000. lxn/win has
   `ODS_CHECKED` 0x1 and `ODS_SELECTED` 0x40, among others.

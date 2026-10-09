@@ -11,6 +11,10 @@ Changes against the original:
 - `// +build` lines replaced with `//go:build` lines.
 - Formatted with current `gofmt` (hexadecimal literal prefixes `0X` written
   as `0x`, doc comment indentation). No functional changes.
+- Declarations walk does not use were removed with
+  `tools/winmigrate/prune`, and most of the rest is generated (see below).
+  To use another Win32 symbol, add it to `winmd.txt` and run
+  `go generate ./internal/win` rather than writing it by hand.
 
 ## Generated declarations
 
@@ -58,5 +62,5 @@ macros such as `LOWORD`, functions that take or return structs larger
 than 4 bytes or floating-point values by value, functions returning
 pointers (`GlobalLock`), functions with a fallback for older Windows
 versions, functions whose hand-written signature or body differs from the
-metadata (see "Known issues" in `CLAUDE.md`), and declarations walk does
-not use.
+metadata (see "Known issues" in `CLAUDE.md`), and helpers such as
+`BoolToBOOL` or `UTF16PtrToString`.
