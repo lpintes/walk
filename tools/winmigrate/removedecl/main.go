@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Command removedecl removes the hand-written declarations of a package
-// that a winmdgen specification generates: constants, functions, the
+// that a winmdgen specification generates: constants, structs, functions, the
 // LazyProc variables only those functions use (with their assignments in
 // init functions) and the LazyDLL variables of the dll directives. It then
 // removes empty groups, empty init functions and unused imports and
@@ -38,6 +38,7 @@ func main() {
 	consts := map[string]bool{}
 	funcs := map[string]bool{}
 	libs := map[string]bool{}
+	structs := map[string]bool{}
 	f, _ := os.Open(specFile)
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
@@ -52,6 +53,8 @@ func main() {
 			funcs[fs[1]] = true
 		case "dll":
 			libs[fs[2]] = true
+		case "struct":
+			structs[fs[1]] = true
 		}
 	}
 
@@ -152,6 +155,27 @@ func main() {
 					}
 				}
 			case *ast.GenDecl:
+				if d.Tok == token.TYPE {
+					for _, s := range d.Specs {
+						ts := s.(*ast.TypeSpec)
+						if !structs[ts.Name.Name] {
+							continue
+						}
+						start, end := ts.Pos(), ts.End()
+						switch {
+						case !d.Lparen.IsValid():
+							start, end = d.Pos(), d.End()
+							if d.Doc != nil {
+								start = d.Doc.Pos()
+							}
+						case ts.Doc != nil:
+							start = ts.Doc.Pos()
+						}
+						del(start, end)
+						count["struct"]++
+					}
+					continue
+				}
 				if d.Tok != token.CONST && d.Tok != token.VAR {
 					continue
 				}
@@ -243,7 +267,7 @@ func main() {
 	fmt.Fprintln(os.Stderr, count)
 }
 
-// cleanup removes empty const and var groups, empty init functions and
+// cleanup removes empty const, var and type groups, empty init functions and
 // unused imports.
 func cleanup(src []byte) []byte {
 	for {
@@ -257,7 +281,7 @@ func cleanup(src []byte) []byte {
 		for _, d := range af.Decls {
 			switch d := d.(type) {
 			case *ast.GenDecl:
-				if (d.Tok == token.CONST || d.Tok == token.VAR) && len(d.Specs) == 0 {
+				if (d.Tok == token.CONST || d.Tok == token.VAR || d.Tok == token.TYPE) && len(d.Specs) == 0 {
 					start := d.Pos()
 					if d.Doc != nil {
 						start = d.Doc.Pos()

@@ -124,7 +124,8 @@ type metadata struct {
 	attrs      map[winmd.CodedIndex][]attribute // by HasCustomAttribute parent
 	fieldConst map[winmd.Index]*winmd.Constant
 	implMaps   map[winmd.Index]*winmd.ImplMap
-	nested     map[winmd.Index]bool // nested TypeDefs
+	nested     map[winmd.Index]bool   // nested TypeDefs
+	packing    map[winmd.Index]uint16 // #pragma pack of TypeDefs, 0 for the default
 }
 
 func loadMetadata(data []byte) (*metadata, error) {
@@ -145,6 +146,7 @@ func loadMetadata(data []byte) (*metadata, error) {
 		fieldConst: make(map[winmd.Index]*winmd.Constant),
 		implMaps:   make(map[winmd.Index]*winmd.ImplMap),
 		nested:     make(map[winmd.Index]bool),
+		packing:    make(map[winmd.Index]uint16),
 	}
 	if err := m.index(); err != nil {
 		return nil, err
@@ -183,6 +185,13 @@ func (m *metadata) index() error {
 		if im.MemberForwarded.Tag == coded.MemberForwarded_MethodDef {
 			m.implMaps[im.MemberForwarded.Index] = im
 		}
+	}
+	for i := uint32(0); i < t.ClassLayout.Len; i++ {
+		cl, err := t.ClassLayout.Record(winmd.Index(i))
+		if err != nil {
+			return err
+		}
+		m.packing[cl.Parent] = cl.PackingSize
 	}
 	for i := uint32(0); i < t.NestedClass.Len; i++ {
 		nc, err := t.NestedClass.Record(winmd.Index(i))

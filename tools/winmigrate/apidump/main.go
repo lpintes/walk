@@ -74,7 +74,7 @@ func main() {
 		}
 	}
 	lookup := func(path string) (io.ReadCloser, error) { return os.Open(exports[path]) }
-	conf := types.Config{Importer: importer.ForCompiler(fset, "gc", lookup)}
+	conf := types.Config{Importer: importer.ForCompiler(fset, "gc", lookup), Sizes: types.SizesFor("gc", goarch)}
 	pkg, err := conf.Check("win", fset, files, nil)
 	if err != nil {
 		panic(err)

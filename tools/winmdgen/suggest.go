@@ -106,7 +106,7 @@ func loadWin(dir, goarch string) (*winPkg, error) {
 	if err != nil {
 		return nil, err
 	}
-	conf := types.Config{Importer: imp}
+	conf := types.Config{Importer: imp, Sizes: types.SizesFor("gc", goarch)}
 	pkg, err := conf.Check("win", fset, files, nil)
 	if err != nil {
 		return nil, err
@@ -322,8 +322,16 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 	for _, f := range s.functions {
 		inSpec[f.name] = true
 	}
+	for _, st := range s.structs {
+		inSpec[st.name] = true
+	}
+	gp.addStructs(s.structs)
 
 	g := &generator{m: m, pkg: gp, s: &spec{}}
+	structLines, err := suggestStructs(g, dir, w, used, inSpec)
+	if err != nil {
+		return err
+	}
 	var constLines, funcLines []string
 	dllsUsed := map[string]string{}
 	for _, name := range used {
@@ -479,5 +487,176 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 	for _, l := range funcLines {
 		fmt.Println(l)
 	}
+	fmt.Println()
+	for _, l := range structLines {
+		fmt.Println(l)
+	}
 	return nil
+}
+
+// suggestStructs returns specification lines for the hand-written structs
+// used under root, directly or as the type of a field of another used
+// struct, whose generated form has the same Go fields on every
+// architecture. Field names and types the generator would choose
+// differently become overrides.
+func suggestStructs(g *generator, dir string, amd64 *winPkg, used []string, inSpec map[string]bool) ([]string, error) {
+	pkgs := map[arch]*types.Package{archAMD64: amd64.pkg}
+	for _, an := range archNames {
+		if pkgs[an.arch] == nil {
+			w, err := loadWin(dir, an.name)
+			if err != nil {
+				return nil, err
+			}
+			pkgs[an.arch] = w.pkg
+		}
+	}
+
+	// Collect the used structs and the structs their fields refer to.
+	candidates := make(map[string]bool)
+	var visit func(t types.Type)
+	visit = func(t types.Type) {
+		switch t := t.(type) {
+		case *types.Named:
+			if t.Obj().Pkg() != amd64.pkg || candidates[t.Obj().Name()] {
+				return
+			}
+			st, ok := t.Underlying().(*types.Struct)
+			if !ok {
+				return
+			}
+			candidates[t.Obj().Name()] = true
+			for i := 0; i < st.NumFields(); i++ {
+				visit(st.Field(i).Type())
+			}
+		case *types.Array:
+			visit(t.Elem())
+		}
+	}
+	for _, name := range used {
+		if tn, ok := amd64.pkg.Scope().Lookup(name).(*types.TypeName); ok {
+			visit(tn.Type())
+		}
+	}
+	var names []string
+	for n := range candidates {
+		if !inSpec[n] {
+			names = append(names, n)
+		}
+	}
+	sort.Strings(names)
+
+	var lines []string
+	for _, name := range names {
+		line, err := suggestStruct(g, name, pkgs)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "SKIP struct", name, err)
+			continue
+		}
+		lines = append(lines, line)
+	}
+	return lines, nil
+}
+
+type handField struct {
+	name, typ string
+}
+
+// handStruct returns the fields of a hand-written struct.
+func handStruct(pkg *types.Package, name string) ([]handField, *types.Struct, error) {
+	tn, ok := pkg.Scope().Lookup(name).(*types.TypeName)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a type")
+	}
+	st, ok := tn.Type().Underlying().(*types.Struct)
+	if !ok {
+		return nil, nil, fmt.Errorf("not a struct")
+	}
+	var fields []handField
+	for i := 0; i < st.NumFields(); i++ {
+		f := st.Field(i)
+		if f.Embedded() {
+			return nil, nil, fmt.Errorf("embedded field %s", f.Name())
+		}
+		if st.Tag(i) != "" {
+			return nil, nil, fmt.Errorf("field %s has a tag", f.Name())
+		}
+		fields = append(fields, handField{f.Name(), types.TypeString(f.Type(), types.RelativeTo(pkg))})
+	}
+	return fields, st, nil
+}
+
+func suggestStruct(g *generator, name string, pkgs map[arch]*types.Package) (string, error) {
+	hand := make(map[arch][]handField)
+	structs := make(map[arch]*types.Struct)
+	for _, an := range archNames {
+		fields, st, err := handStruct(pkgs[an.arch], name)
+		if err != nil {
+			return "", err
+		}
+		hand[an.arch], structs[an.arch] = fields, st
+	}
+
+	ss := &structSpec{name: name, names: make(map[string]string), types: make(map[string]string)}
+	gs, err := g.structDef(ss)
+	if err != nil {
+		return "", err
+	}
+	for _, an := range archNames {
+		h := hand[an.arch]
+		if len(h) != len(gs.fields) {
+			return "", fmt.Errorf("%s: %d fields, metadata has %d", an.name, len(h), len(gs.fields))
+		}
+		for i, f := range gs.fields {
+			if h[i].name != f.name {
+				if n, ok := ss.names[f.meta]; ok && n != h[i].name {
+					return "", fmt.Errorf("field %s differs between architectures", f.meta)
+				}
+				ss.names[f.meta] = h[i].name
+			}
+			if h[i].typ != f.typ {
+				if t, ok := ss.types[f.meta]; ok && t != h[i].typ {
+					return "", fmt.Errorf("field %s differs between architectures", f.meta)
+				}
+				ss.types[f.meta] = h[i].typ
+			}
+		}
+	}
+	if gs, err = g.structDef(ss); err != nil {
+		return "", err
+	}
+
+	// Check the layout of the hand-written struct, which the overrides
+	// may have changed, against the metadata.
+	for _, an := range archNames {
+		sizes := types.SizesFor("gc", an.name)
+		st := structs[an.arch]
+		vars := make([]*types.Var, st.NumFields())
+		for i := range vars {
+			vars[i] = st.Field(i)
+		}
+		offsets := sizes.Offsetsof(vars)
+		l := gs.layouts[an.arch]
+		for i, f := range gs.fields {
+			if int(offsets[i]) != l.offsets[i] {
+				return "", fmt.Errorf("%s: field %s is at offset %d, metadata has %d", an.name, f.meta, offsets[i], l.offsets[i])
+			}
+		}
+		if size, align := int(sizes.Sizeof(st)), int(sizes.Alignof(st)); size != l.size || align != l.align {
+			return "", fmt.Errorf("%s: size and alignment are %d and %d, metadata has %d and %d", an.name, size, align, l.size, l.align)
+		}
+	}
+
+	line := "struct " + name
+	var opts []string
+	for k, v := range ss.names {
+		opts = append(opts, k+"="+v)
+	}
+	for k, v := range ss.types {
+		opts = append(opts, k+":"+v)
+	}
+	sort.Strings(opts)
+	for _, o := range opts {
+		line += " " + o
+	}
+	return line, nil
 }

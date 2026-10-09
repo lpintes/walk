@@ -60,6 +60,14 @@ func parseGoPackage(dir string) (*goPackage, error) {
 	return p, nil
 }
 
+// addStructs adds the structs a specification generates, so that the
+// generated code can refer to them.
+func (p *goPackage) addStructs(structs []*structSpec) {
+	for _, s := range structs {
+		p.types[s.name] = &ast.StructType{}
+	}
+}
+
 func (p *goPackage) hasType(name string) bool {
 	_, ok := p.types[name]
 	return ok

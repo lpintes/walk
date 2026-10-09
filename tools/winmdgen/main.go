@@ -47,13 +47,34 @@
 //	PARAM:TYPE    use TYPE for the parameter named PARAM in the metadata
 //	rawbool       keep BOOL instead of translating it to bool
 //
+//	struct NAME [OPTION...]
+//
+// generates a struct type from the metadata struct NAME+"W", or NAME if
+// there is no such struct. Each field gets the metadata name with its
+// first letter in upper case and the Go type chosen as for function
+// parameters, except that BOOL stays BOOL. Options:
+//
+//	entry=NAME    use the metadata struct NAME
+//	FIELD=NAME    use NAME as the Go name of the metadata field FIELD
+//	FIELD:TYPE    use TYPE as the Go type of the metadata field FIELD
+//
+// Unions, structs with nested types (anonymous unions), structs the Go
+// compiler would lay out differently from the C compiler (#pragma pack,
+// 64-bit fields on 386) and structs whose Go fields differ between
+// architectures are rejected and stay hand-written. For every
+// architecture, a zwinmd_layout_GOARCH.go file checks at compile time
+// that the size, alignment and field offsets of each generated struct
+// match the metadata, which also covers the TYPE overrides.
+//
 // # Migration
 //
 // With -suggest, winmdgen does not generate anything. It prints
 // specification lines for the hand-written symbols of the package that the
 // Go files under the repository root use (as win.NAME) and that can be
 // generated without changing their Go type, value or behavior, together
-// with the required dll directives. Reasons for skipping the other symbols
+// with the required dll directives. Structs are considered if walk uses
+// them directly or as the type of a field of another such struct; their
+// layout is checked on every architecture. Reasons for skipping the other symbols
 // go to standard error. tools/winmigrate has the companion tools that
 // remove the replaced hand-written declarations and check that the API
 // did not change.
@@ -135,13 +156,23 @@ func run(specPath, winmdPath, dir string) error {
 		return err
 	}
 
+	pkg.addStructs(s.structs)
+
 	g := &generator{m: m, s: s, pkg: pkg}
+	structs, layouts := g.structs()
 	outputs := []struct {
 		name string
 		src  []byte
 	}{
 		{outputPrefix + "constants.go", g.constants()},
 		{outputPrefix + "functions.go", g.functions()},
+		{outputPrefix + "structs.go", structs},
+	}
+	for _, an := range archNames {
+		outputs = append(outputs, struct {
+			name string
+			src  []byte
+		}{outputPrefix + "layout_" + an.name + ".go", layouts[an.arch]})
 	}
 	if len(g.errs) > 0 {
 		return fmt.Errorf("%s:\n\t%s", specPath, strings.Join(g.errs, "\n\t"))
