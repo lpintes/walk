@@ -204,6 +204,48 @@ func (m *metadata) layoutOf(t winmd.SigType, a arch, rules layoutRules) (typeLay
 	return typeLayout{}, fmt.Errorf("unsupported element type %v", t.Kind)
 }
 
+// hasFloat reports whether a metadata type is or contains a
+// floating-point value.
+func (m *metadata) hasFloat(t winmd.SigType, a arch) (bool, error) {
+	switch t.Kind {
+	case flags.ElementType_R4, flags.ElementType_R8:
+		return true, nil
+	case flags.ElementType_ARRAY:
+		arr, ok := t.Value.(winmd.SigArray)
+		if !ok {
+			return false, fmt.Errorf("unsupported array %#v", t.Value)
+		}
+		return m.hasFloat(arr.Type, a)
+	case flags.ElementType_VALUETYPE:
+		ci, ok := t.Value.(winmd.CodedIndex)
+		if !ok {
+			return false, fmt.Errorf("unexpected type value %#v", t.Value)
+		}
+		td, err := m.resolve(ci, a)
+		if err != nil || td == nil {
+			return false, err
+		}
+		var fields []structField
+		switch {
+		case m.isStruct(td):
+			fields, err = m.structFields(td)
+		case m.isEnum(td), td.hasAttr("NativeTypedefAttribute"):
+			var u winmd.SigType
+			u, err = m.underlying(td)
+			fields = []structField{{"", u}}
+		}
+		if err != nil {
+			return false, err
+		}
+		for _, f := range fields {
+			if hf, err := m.hasFloat(f.typ, a); err != nil || hf {
+				return hf, err
+			}
+		}
+	}
+	return false, nil
+}
+
 // structLayout is the layout of a struct with the offsets of its fields.
 type structLayout struct {
 	typeLayout
@@ -312,6 +354,9 @@ func (g *generator) structDef(ss *structSpec) (*genStruct, error) {
 				gf.typ = t
 			} else {
 				t, err := tm.sigType(f.typ)
+				if err == nil && t.undefined {
+					err = fmt.Errorf("%s refers to a struct the Go package does not define", t.name)
+				}
 				if err != nil {
 					return nil, fmt.Errorf("%s: field %s: %w", an.name, f.name, err)
 				}

@@ -33,7 +33,11 @@ cover:
 - the constants walk uses whose value is the same in the metadata,
 - the plain syscall wrappers walk uses, including their `windows.LazyProc`
   variables, and the `windows.LazyDLL` variables, which the remaining
-  hand-written code also uses,
+  hand-written code also uses. `GetWindowLongPtr` and `SetWindowLongPtr`
+  call `GetWindowLongW` and `SetWindowLongW` on 386, where the `Ptr`
+  functions do not exist; their `windows.LazyProc` variables are in
+  `zwinmd_functions_386.go`, `zwinmd_functions_amd64.go` and
+  `zwinmd_functions_arm64.go`,
 - the structs walk uses whose fields and layout are the same as in the
   metadata (`zwinmd_structs.go`). Field names and types follow
   `github.com/lxn/win`; where they differ from the metadata, `winmd.txt`
@@ -50,7 +54,9 @@ cover:
 Everything else is still hand-written: structs that are unions, contain
 anonymous unions, are declared with `#pragma pack`, differ between
 architectures or differ from the metadata, COM interface methods,
-macros such as `LOWORD`, functions that take or return structs or
-floating-point values by value, functions that exist only on some
-architectures (`GetWindowLongPtr`), functions with a fallback for older
-Windows versions, and declarations walk does not use.
+macros such as `LOWORD`, functions that take or return structs larger
+than 4 bytes or floating-point values by value, functions returning
+pointers (`GlobalLock`), functions with a fallback for older Windows
+versions, functions whose hand-written signature or body differs from the
+metadata (see "Known issues" in `CLAUDE.md`), and declarations walk does
+not use.

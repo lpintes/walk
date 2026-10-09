@@ -271,17 +271,6 @@ type SHFILEINFO struct {
 	SzTypeName    [80]uint16
 }
 
-type BROWSEINFO struct {
-	HwndOwner      HWND
-	PidlRoot       uintptr
-	PszDisplayName *uint16
-	LpszTitle      *uint16
-	UlFlags        uint32
-	Lpfn           uintptr
-	LParam         uintptr
-	IImage         int32
-}
-
 type SHSTOCKICONINFO struct {
 	CbSize         uint32
 	HIcon          HICON
@@ -293,14 +282,12 @@ type SHSTOCKICONINFO struct {
 var (
 
 	// Functions
-	dragAcceptFiles     *windows.LazyProc
-	dragFinish          *windows.LazyProc
-	extractIcon         *windows.LazyProc
-	shBrowseForFolder   *windows.LazyProc
-	shGetPathFromIDList *windows.LazyProc
-	shParseDisplayName  *windows.LazyProc
-	shGetStockIconInfo  *windows.LazyProc
-	shellExecute        *windows.LazyProc
+	dragAcceptFiles    *windows.LazyProc
+	dragFinish         *windows.LazyProc
+	extractIcon        *windows.LazyProc
+	shParseDisplayName *windows.LazyProc
+	shGetStockIconInfo *windows.LazyProc
+	shellExecute       *windows.LazyProc
 )
 
 func init() {
@@ -308,8 +295,6 @@ func init() {
 	dragAcceptFiles = libshell32.NewProc("DragAcceptFiles")
 	dragFinish = libshell32.NewProc("DragFinish")
 	extractIcon = libshell32.NewProc("ExtractIconW")
-	shBrowseForFolder = libshell32.NewProc("SHBrowseForFolderW")
-	shGetPathFromIDList = libshell32.NewProc("SHGetPathFromIDListW")
 	shGetStockIconInfo = libshell32.NewProc("SHGetStockIconInfo")
 	shellExecute = libshell32.NewProc("ShellExecuteW")
 	shParseDisplayName = libshell32.NewProc("SHParseDisplayName")
@@ -338,24 +323,6 @@ func ExtractIcon(hInst HINSTANCE, exeFileName *uint16, iconIndex int32) HICON {
 		uintptr(iconIndex))
 
 	return HICON(ret)
-}
-
-func SHBrowseForFolder(lpbi *BROWSEINFO) uintptr {
-	ret, _, _ := syscall.Syscall(shBrowseForFolder.Addr(), 1,
-		uintptr(unsafe.Pointer(lpbi)),
-		0,
-		0)
-
-	return ret
-}
-
-func SHGetPathFromIDList(pidl uintptr, pszPath *uint16) bool {
-	ret, _, _ := syscall.Syscall(shGetPathFromIDList.Addr(), 2,
-		pidl,
-		uintptr(unsafe.Pointer(pszPath)),
-		0)
-
-	return ret != 0
 }
 
 func SHParseDisplayName(pszName *uint16, pbc uintptr, ppidl *uintptr, sfgaoIn uint32, psfgaoOut *uint32) HRESULT {

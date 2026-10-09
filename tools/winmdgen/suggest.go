@@ -58,47 +58,13 @@ func loadWin(dir, goarch string) (*winPkg, error) {
 		}
 		files = append(files, f)
 		w.files[n] = f
+		w.recordVars(f)
 		for _, d := range f.Decls {
 			fd, ok := d.(*ast.FuncDecl)
 			if !ok || fd.Recv != nil {
 				continue
 			}
 			if fd.Name.Name == "init" {
-				ast.Inspect(fd.Body, func(n ast.Node) bool {
-					as, ok := n.(*ast.AssignStmt)
-					if !ok || len(as.Lhs) != 1 || len(as.Rhs) != 1 {
-						return true
-					}
-					lhs, ok := as.Lhs[0].(*ast.Ident)
-					if !ok {
-						return true
-					}
-					call, ok := as.Rhs[0].(*ast.CallExpr)
-					if !ok || len(call.Args) != 1 {
-						return true
-					}
-					sel, ok := call.Fun.(*ast.SelectorExpr)
-					if !ok {
-						return true
-					}
-					lit, ok := call.Args[0].(*ast.BasicLit)
-					if !ok {
-						return true
-					}
-					s, _ := strconv.Unquote(lit.Value)
-					switch sel.Sel.Name {
-					case "NewProc":
-						lib := sel.X.(*ast.Ident).Name
-						if _, dup := w.procs[lhs.Name]; dup {
-							w.procs[lhs.Name] = [2]string{"", ""}
-						} else {
-							w.procs[lhs.Name] = [2]string{lib, s}
-						}
-					case "NewLazySystemDLL":
-						w.libs[lhs.Name] = strings.ToLower(s)
-					}
-					return true
-				})
 				continue
 			}
 			w.funcs[fd.Name.Name] = fd
@@ -116,6 +82,54 @@ func loadWin(dir, goarch string) (*winPkg, error) {
 	}
 	w.pkg = pkg
 	return w, nil
+}
+
+// recordVars records the LazyProc and LazyDLL variables a file assigns,
+// in init functions or in var declarations.
+func (w *winPkg) recordVars(f *ast.File) {
+	record := func(lhs string, rhs ast.Expr) {
+		call, ok := rhs.(*ast.CallExpr)
+		if !ok || len(call.Args) != 1 {
+			return
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return
+		}
+		lit, ok := call.Args[0].(*ast.BasicLit)
+		if !ok {
+			return
+		}
+		s, _ := strconv.Unquote(lit.Value)
+		switch sel.Sel.Name {
+		case "NewProc":
+			lib := sel.X.(*ast.Ident).Name
+			if _, dup := w.procs[lhs]; dup {
+				w.procs[lhs] = [2]string{"", ""}
+			} else {
+				w.procs[lhs] = [2]string{lib, s}
+			}
+		case "NewLazySystemDLL":
+			w.libs[lhs] = strings.ToLower(s)
+		}
+	}
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.AssignStmt:
+			if len(n.Lhs) == 1 && len(n.Rhs) == 1 {
+				if id, ok := n.Lhs[0].(*ast.Ident); ok {
+					record(id.Name, n.Rhs[0])
+				}
+			}
+		case *ast.ValueSpec:
+			for i, id := range n.Names {
+				if i < len(n.Values) {
+					record(id.Name, n.Values[i])
+				}
+			}
+		}
+		return true
+	})
 }
 
 // exportImporter imports the dependencies of the package from export data
@@ -251,21 +265,30 @@ func simpleWrapper(fd *ast.FuncDecl, f *genFunc) (string, string) {
 			continue
 		}
 		p := names[i]
-		var want string
+		// The generated argument comes first; the others are
+		// equivalent forms found in hand-written code.
+		var want []string
 		switch {
+		case f.byValue[i] > 0:
+			conv := fmt.Sprintf("uintptr(*(*uint%d)(unsafe.Pointer(", 8*f.byValue[i])
+			want = []string{conv + "&" + p + ")))", conv + "uintptr(unsafe.Pointer(&" + p + ")))))"}
 		case f.shapes[i] == shapeBool:
-			want = "uintptr(BoolToBOOL(" + p + "))"
+			want = []string{"uintptr(BoolToBOOL(" + p + "))"}
 		case f.params[i].typ.name == "uintptr":
-			want = p
+			want = []string{p, "uintptr(" + p + ")"}
 		case f.params[i].typ.name == "unsafe.Pointer":
-			want = "uintptr(" + p + ")"
+			want = []string{"uintptr(" + p + ")"}
 		case f.shapes[i] == shapePointer:
-			want = "uintptr(unsafe.Pointer(" + p + "))"
+			want = []string{"uintptr(unsafe.Pointer(" + p + "))"}
 		default:
-			want = "uintptr(" + p + ")"
+			want = []string{"uintptr(" + p + ")"}
 		}
-		if as != want {
-			return "", fmt.Sprintf("arg %d: %s want %s", i, as, want)
+		ok := false
+		for _, w := range want {
+			ok = ok || as == w
+		}
+		if !ok {
+			return "", fmt.Sprintf("arg %d: %s want %s", i, as, want[0])
 		}
 	}
 	if len(args) < len(names) {
@@ -338,7 +361,8 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 	gp.addStructs(s.structs)
 	gp.addInterfaces(s.interfaces)
 
-	g := &generator{m: m, pkg: gp, s: &spec{}}
+	// Structs passed by value must be generated.
+	g := &generator{m: m, pkg: gp, s: &spec{structs: s.structs}}
 	structLines, err := suggestStructs(g, dir, w, used, inSpec)
 	if err != nil {
 		return err
@@ -405,6 +429,21 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 			hsig := "(" + strings.Join(hp, ", ") + ") " + hr
 
 			fs := &funcSpec{name: name, params: map[string]string{}}
+			// Types referring to structs the package does not define
+			// need an override before the function can be checked.
+			if md, err := m.lookupMethod(name, false); err == nil {
+				tm := &typeMapper{m: m, arch: archAMD64, pkg: gp}
+				if msig, err := tm.signature(md); err == nil && len(msig.params) == len(hp) {
+					for i, p := range msig.params {
+						if p.typ.undefined {
+							fs.params[p.name] = hp[i]
+						}
+					}
+					if msig.result.undefined {
+						fs.result = hr
+					}
+				}
+			}
 			var gf *genFunc
 			var ferr error
 			for attempt := 0; attempt < 3; attempt++ {
@@ -861,6 +900,18 @@ func suggestStruct(g *generator, name string, pkgs map[arch]*types.Package) (str
 	}
 
 	ss := &structSpec{name: name, names: make(map[string]string), types: make(map[string]string)}
+	// Field types referring to structs the package does not define need
+	// an override before the struct can be checked.
+	if td, err := g.m.lookupStruct(ss.metaNames(), archAMD64); err == nil {
+		if fields, err := g.m.structFields(td); err == nil && len(fields) == len(hand[archAMD64]) {
+			tm := &typeMapper{m: g.m, arch: archAMD64, pkg: g.pkg, rawBool: true}
+			for i, f := range fields {
+				if t, err := tm.sigType(f.typ); err == nil && t.undefined {
+					ss.types[f.name] = hand[archAMD64][i].typ
+				}
+			}
+		}
+	}
 	gs, err := g.structDef(ss)
 	if err != nil {
 		return "", err

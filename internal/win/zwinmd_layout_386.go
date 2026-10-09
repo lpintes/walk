@@ -52,6 +52,19 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(BROWSEINFO{})-32]
+	_ = layoutCheck[unsafe.Alignof(BROWSEINFO{})-4]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.HwndOwner)-0]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.PidlRoot)-4]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.PszDisplayName)-8]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.LpszTitle)-12]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.UlFlags)-16]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.Lpfn)-20]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.LParam)-24]
+	_ = layoutCheck[unsafe.Offsetof(BROWSEINFO{}.IImage)-28]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(CIEXYZ{})-12]
 	_ = layoutCheck[unsafe.Alignof(CIEXYZ{})-4]
 	_ = layoutCheck[unsafe.Offsetof(CIEXYZ{}.CiexyzX)-0]

@@ -13,6 +13,7 @@ import (
 type param struct {
 	name string
 	typ  goType
+	meta winmd.SigType // metadata type
 }
 
 type signature struct {
@@ -49,6 +50,7 @@ func (tm *typeMapper) signature(md *method) (*signature, error) {
 			return nil, fmt.Errorf("parameter %s: %w", s.params[i].name, err)
 		}
 		s.params[i].typ = t
+		s.params[i].meta = p.Type
 		if s.params[i].name == "" {
 			s.params[i].name = fmt.Sprintf("p%d", i)
 		}

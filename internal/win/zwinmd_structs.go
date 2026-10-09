@@ -461,6 +461,19 @@ type TRACKMOUSEEVENT struct {
 	DwHoverTime uint32
 }
 
+// Windows.Win32.UI.Shell
+
+type BROWSEINFO struct {
+	HwndOwner      HWND
+	PidlRoot       uintptr
+	PszDisplayName *uint16
+	LpszTitle      *uint16
+	UlFlags        uint32
+	Lpfn           uintptr
+	LParam         uintptr
+	IImage         int32
+}
+
 // Windows.Win32.UI.WindowsAndMessaging
 
 type ICONINFO struct {

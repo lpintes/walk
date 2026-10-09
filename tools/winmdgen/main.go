@@ -46,6 +46,12 @@
 //	result=TYPE   use TYPE as the result type
 //	PARAM:TYPE    use TYPE for the parameter named PARAM in the metadata
 //	rawbool       keep BOOL instead of translating it to bool
+//	fallback=NAME call the metadata function NAME (or NAME+"W") on the
+//	              architectures where the function does not exist, for
+//	              example GetWindowLong for GetWindowLongPtr on 386
+//
+// A pointer to a struct the package does not define, such as ITEMIDLIST,
+// needs a type override; so does a struct field of such a type.
 //
 //	struct NAME [OPTION...]
 //
@@ -104,10 +110,15 @@
 // did not change.
 //
 // The generated wrappers ignore the error returned by syscall.SyscallN,
-// like the hand-written ones in the package. Functions taking or returning
-// floating-point values or structs by value, functions with parameters
-// larger than a pointer and functions that exist only on some
-// architectures are rejected and stay hand-written.
+// like the hand-written ones in the package. A struct parameter passed by
+// value must be a generated struct of 1, 2 or 4 bytes without
+// floating-point fields; the calling conventions of all architectures pass
+// it like an integer of that size. Functions taking or returning other
+// structs or floating-point values by value, returning a pointer, with
+// parameters larger than a pointer, or existing only on some architectures
+// without a fallback are rejected and stay hand-written. The procedure
+// variables of functions with a fallback go to the files
+// zwinmd_functions_GOARCH.go.
 package main
 
 import (
@@ -185,31 +196,40 @@ func run(specPath, winmdPath, dir string) error {
 
 	g := &generator{m: m, s: s, pkg: pkg}
 	structs, layouts := g.structs()
-	outputs := []struct {
+	functions, archFunctions := g.functions()
+	type output struct {
 		name string
-		src  []byte
-	}{
+		src  []byte // nil to remove the file
+	}
+	outputs := []output{
 		{outputPrefix + "constants.go", g.constants()},
-		{outputPrefix + "functions.go", g.functions()},
+		{outputPrefix + "functions.go", functions},
 		{outputPrefix + "guids.go", g.guids()},
 		{outputPrefix + "interfaces.go", g.interfaces()},
 		{outputPrefix + "structs.go", structs},
 	}
 	for _, an := range archNames {
-		outputs = append(outputs, struct {
-			name string
-			src  []byte
-		}{outputPrefix + "layout_" + an.name + ".go", layouts[an.arch]})
+		outputs = append(outputs,
+			output{outputPrefix + "layout_" + an.name + ".go", layouts[an.arch]},
+			// Only needed for functions with a fallback.
+			output{outputPrefix + "functions_" + an.name + ".go", archFunctions[an.arch]})
 	}
 	if len(g.errs) > 0 {
 		return fmt.Errorf("%s:\n\t%s", specPath, strings.Join(g.errs, "\n\t"))
 	}
 	for _, o := range outputs {
+		path := filepath.Join(dir, o.name)
+		if o.src == nil {
+			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+				return err
+			}
+			continue
+		}
 		src, err := formatSource(o.name, o.src)
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(dir, o.name), src, 0o644); err != nil {
+		if err := os.WriteFile(path, src, 0o644); err != nil {
 			return err
 		}
 	}

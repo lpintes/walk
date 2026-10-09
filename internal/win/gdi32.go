@@ -850,14 +850,12 @@ var (
 	// Functions
 	abortDoc             *windows.LazyProc
 	addFontResourceEx    *windows.LazyProc
-	alphaBlend           *windows.LazyProc
 	choosePixelFormat    *windows.LazyProc
 	createDC             *windows.LazyProc
 	createIC             *windows.LazyProc
 	endDoc               *windows.LazyProc
 	endPage              *windows.LazyProc
 	getBkColor           *windows.LazyProc
-	getObject            *windows.LazyProc
 	getPixel             *windows.LazyProc
 	getRgnBox            *windows.LazyProc
 	getStockObject       *windows.LazyProc
@@ -887,7 +885,6 @@ func init() {
 	endDoc = libgdi32.NewProc("EndDoc")
 	endPage = libgdi32.NewProc("EndPage")
 	getBkColor = libgdi32.NewProc("GetBkColor")
-	getObject = libgdi32.NewProc("GetObjectW")
 	getPixel = libgdi32.NewProc("GetPixel")
 	getRgnBox = libgdi32.NewProc("GetRgnBox")
 	getStockObject = libgdi32.NewProc("GetStockObject")
@@ -906,7 +903,6 @@ func init() {
 	swapBuffers = libgdi32.NewProc("SwapBuffers")
 	textOut = libgdi32.NewProc("TextOutW")
 
-	alphaBlend = libmsimg32.NewProc("AlphaBlend")
 }
 
 func AbortDoc(hdc HDC) int32 {
@@ -925,24 +921,6 @@ func AddFontResourceEx(lpszFilename *uint16, fl uint32, pdv unsafe.Pointer) int3
 		uintptr(pdv))
 
 	return int32(ret)
-}
-
-func AlphaBlend(hdcDest HDC, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest int32, hdcSrc HDC, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc int32, ftn BLENDFUNCTION) bool {
-	ret, _, _ := syscall.Syscall12(alphaBlend.Addr(), 11,
-		uintptr(hdcDest),
-		uintptr(nXOriginDest),
-		uintptr(nYOriginDest),
-		uintptr(nWidthDest),
-		uintptr(nHeightDest),
-		uintptr(hdcSrc),
-		uintptr(nXOriginSrc),
-		uintptr(nYOriginSrc),
-		uintptr(nWidthSrc),
-		uintptr(nHeightSrc),
-		uintptr(*(*uint32)(unsafe.Pointer(uintptr(unsafe.Pointer(&ftn))))),
-		0)
-
-	return ret != 0
 }
 
 func ChoosePixelFormat(hdc HDC, ppfd *PIXELFORMATDESCRIPTOR) int32 {
@@ -1003,15 +981,6 @@ func GetBkColor(hdc HDC) COLORREF {
 		0)
 
 	return COLORREF(ret)
-}
-
-func GetObject(hgdiobj HGDIOBJ, cbBuffer uintptr, lpvObject unsafe.Pointer) int32 {
-	ret, _, _ := syscall.Syscall(getObject.Addr(), 3,
-		uintptr(hgdiobj),
-		uintptr(cbBuffer),
-		uintptr(lpvObject))
-
-	return int32(ret)
 }
 
 func GetPixel(hdc HDC, nXPos, nYPos int32) COLORREF {

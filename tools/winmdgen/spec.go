@@ -43,6 +43,10 @@ type funcSpec struct {
 	result  string            // Go result type overriding the metadata type
 	params  map[string]string // metadata parameter name -> Go type
 	rawBool bool              // keep BOOL instead of translating it to bool
+
+	// fallback is the metadata function to call on the architectures
+	// where the function does not exist, empty for none.
+	fallback string
 }
 
 type structSpec struct {
@@ -143,6 +147,8 @@ func parseSpec(path string) (*spec, error) {
 					fs.entry = strings.TrimPrefix(opt, "entry=")
 				case strings.HasPrefix(opt, "result="):
 					fs.result = strings.TrimPrefix(opt, "result=")
+				case strings.HasPrefix(opt, "fallback="):
+					fs.fallback = strings.TrimPrefix(opt, "fallback=")
 				case strings.Contains(opt, ":"):
 					i := strings.IndexByte(opt, ':')
 					fs.params[opt[:i]] = opt[i+1:]

@@ -1158,7 +1158,6 @@ var (
 	getSystemMenu              *windows.LazyProc
 	getSystemMetrics           *windows.LazyProc
 	getSystemMetricsForDpi     *windows.LazyProc
-	getWindowLongPtr           *windows.LazyProc
 	getWindowThreadProcessId   *windows.LazyProc
 	isIconic                   *windows.LazyProc
 	isZoomed                   *windows.LazyProc
@@ -1175,15 +1174,12 @@ var (
 	setMenuItemBitmaps         *windows.LazyProc
 	setRect                    *windows.LazyProc
 	setWinEventHook            *windows.LazyProc
-	setWindowLongPtr           *windows.LazyProc
 	trackPopupMenu             *windows.LazyProc
 	unhookWinEvent             *windows.LazyProc
 	windowFromPoint            *windows.LazyProc
 )
 
 func init() {
-	is64bit := unsafe.Sizeof(uintptr(0)) == 8
-
 	// Functions
 	addClipboardFormatListener = libuser32.NewProc("AddClipboardFormatListener")
 	adjustWindowRect = libuser32.NewProc("AdjustWindowRect")
@@ -1209,12 +1205,6 @@ func init() {
 	getSystemMenu = libuser32.NewProc("GetSystemMenu")
 	getSystemMetrics = libuser32.NewProc("GetSystemMetrics")
 	getSystemMetricsForDpi = libuser32.NewProc("GetSystemMetricsForDpi")
-	// On 32 bit GetWindowLongPtrW is not available
-	if is64bit {
-		getWindowLongPtr = libuser32.NewProc("GetWindowLongPtrW")
-	} else {
-		getWindowLongPtr = libuser32.NewProc("GetWindowLongW")
-	}
 	getWindowThreadProcessId = libuser32.NewProc("GetWindowThreadProcessId")
 	isIconic = libuser32.NewProc("IsIconic")
 	isZoomed = libuser32.NewProc("IsZoomed")
@@ -1231,12 +1221,6 @@ func init() {
 	setMenuItemBitmaps = libuser32.NewProc("SetMenuItemBitmaps")
 	setRect = libuser32.NewProc("SetRect")
 	setWinEventHook = libuser32.NewProc("SetWinEventHook")
-	// On 32 bit SetWindowLongPtrW is not available
-	if is64bit {
-		setWindowLongPtr = libuser32.NewProc("SetWindowLongPtrW")
-	} else {
-		setWindowLongPtr = libuser32.NewProc("SetWindowLongW")
-	}
 	trackPopupMenu = libuser32.NewProc("TrackPopupMenu")
 	unhookWinEvent = libuser32.NewProc("UnhookWinEvent")
 	windowFromPoint = libuser32.NewProc("WindowFromPoint")
@@ -1495,15 +1479,6 @@ func GetSystemMetricsForDpi(nIndex int32, dpi uint32) int32 {
 	return int32(ret)
 }
 
-func GetWindowLongPtr(hWnd HWND, index int32) uintptr {
-	ret, _, _ := syscall.Syscall(getWindowLongPtr.Addr(), 2,
-		uintptr(hWnd),
-		uintptr(index),
-		0)
-
-	return ret
-}
-
 func IsIconic(hWnd HWND) bool {
 	ret, _, _ := syscall.Syscall(isIconic.Addr(), 1,
 		uintptr(hWnd),
@@ -1701,15 +1676,6 @@ func SetWinEventHook(eventMin uint32, eventMax uint32, hmodWinEventProc HMODULE,
 	}
 
 	return HWINEVENTHOOK(ret), nil
-}
-
-func SetWindowLongPtr(hWnd HWND, index int, value uintptr) uintptr {
-	ret, _, _ := syscall.Syscall(setWindowLongPtr.Addr(), 3,
-		uintptr(hWnd),
-		uintptr(index),
-		value)
-
-	return ret
 }
 
 func TrackPopupMenu(hMenu HMENU, uFlags uint32, x, y int32, nReserved int32, hWnd HWND, prcRect *RECT) uint32 {

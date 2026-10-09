@@ -34,7 +34,10 @@ import (
 	"strings"
 )
 
-var fset = token.NewFileSet()
+var (
+	fset = token.NewFileSet()
+	info *types.Info
+)
 
 func exprString(e ast.Expr) string {
 	var b strings.Builder
@@ -76,7 +79,7 @@ func main() {
 	}
 	lookup := func(path string) (io.ReadCloser, error) { return os.Open(exports[path]) }
 	conf := types.Config{Importer: importer.ForCompiler(fset, "gc", lookup), Sizes: types.SizesFor("gc", goarch)}
-	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
+	info = &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
 	pkg, err := conf.Check("win", fset, files, info)
 	if err != nil {
 		panic(err)
@@ -275,6 +278,7 @@ func normalize(fd *ast.FuncDecl, procs map[string][2]string, libs map[string]str
 		args = args[:cnt]
 	}
 	sub := func(e ast.Expr) string {
+		e = simplify(e)
 		ast.Inspect(e, func(n ast.Node) bool {
 			if id, ok := n.(*ast.Ident); ok {
 				if r, ok := rename[id.Name]; ok {
@@ -298,4 +302,40 @@ func normalize(fd *ast.FuncDecl, procs map[string][2]string, libs map[string]str
 		s += " return " + sub(rs.Results[0])
 	}
 	return s
+}
+
+// simplify removes conversions that do not change a value: uintptr(x) for
+// an x of type uintptr, and the round trip through uintptr in
+// unsafe.Pointer(uintptr(unsafe.Pointer(x))).
+func simplify(e ast.Expr) ast.Expr {
+	conv := func(e ast.Expr, to string) ast.Expr {
+		c, ok := e.(*ast.CallExpr)
+		if !ok || len(c.Args) != 1 || exprString(c.Fun) != to {
+			return nil
+		}
+		return c.Args[0]
+	}
+	switch x := e.(type) {
+	case *ast.CallExpr:
+		for i, a := range x.Args {
+			x.Args[i] = simplify(a)
+		}
+		if a := conv(x, "uintptr"); a != nil {
+			if t := info.TypeOf(a); t != nil && types.Identical(t, types.Typ[types.Uintptr]) {
+				return a
+			}
+		}
+		if a := conv(conv(conv(x, "unsafe.Pointer"), "uintptr"), "unsafe.Pointer"); a != nil {
+			x.Args[0] = a
+		}
+	case *ast.ParenExpr:
+		x.X = simplify(x.X)
+	case *ast.StarExpr:
+		x.X = simplify(x.X)
+	case *ast.UnaryExpr:
+		x.X = simplify(x.X)
+	case *ast.BinaryExpr:
+		x.X, x.Y = simplify(x.X), simplify(x.Y)
+	}
+	return e
 }
