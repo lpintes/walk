@@ -3,9 +3,10 @@
 // license that can be found in the LICENSE file.
 
 // Command removedecl removes the hand-written declarations of a package
-// that a winmdgen specification generates: constants, structs, functions, the
-// LazyProc variables only those functions use (with their assignments in
-// init functions) and the LazyDLL variables of the dll directives. It then
+// that a winmdgen specification generates: constants, structs, GUID
+// variables, COM interface and vtable structs, functions, the LazyProc
+// variables only those functions use (with their assignments in init
+// functions) and the LazyDLL variables of the dll directives. It then
 // removes empty groups, empty init functions and unused imports and
 // formats the changed files. Generated files (zwinmd_*.go) are not touched.
 //
@@ -39,6 +40,7 @@ func main() {
 	funcs := map[string]bool{}
 	libs := map[string]bool{}
 	structs := map[string]bool{}
+	guids := map[string]bool{}
 	f, _ := os.Open(specFile)
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
@@ -55,6 +57,11 @@ func main() {
 			libs[fs[2]] = true
 		case "struct":
 			structs[fs[1]] = true
+		case "interface":
+			structs[fs[1]] = true
+			structs[fs[1]+"Vtbl"] = true
+		case "guid":
+			guids[fs[1]] = true
 		}
 	}
 
@@ -116,6 +123,9 @@ func main() {
 	}
 	for l := range libs {
 		vars[l] = true
+	}
+	for g := range guids {
+		vars[g] = true
 	}
 
 	count := map[string]int{}

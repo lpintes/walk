@@ -66,16 +66,6 @@ type CLSID syscall.GUID
 type REFIID *IID
 type REFCLSID *CLSID
 
-var (
-	IID_IClassFactory             = IID{0x00000001, 0x0000, 0x0000, [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}
-	IID_IConnectionPointContainer = IID{0xB196B284, 0xBAB4, 0x101A, [8]byte{0xB6, 0x9C, 0x00, 0xAA, 0x00, 0x34, 0x1D, 0x07}}
-	IID_IOleClientSite            = IID{0x00000118, 0x0000, 0x0000, [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}
-	IID_IOleInPlaceObject         = IID{0x00000113, 0x0000, 0x0000, [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}
-	IID_IOleInPlaceSite           = IID{0x00000119, 0x0000, 0x0000, [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}
-	IID_IOleObject                = IID{0x00000112, 0x0000, 0x0000, [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}
-	IID_IUnknown                  = IID{0x00000000, 0x0000, 0x0000, [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}
-)
-
 func EqualREFIID(a, b REFIID) bool {
 	if a == b {
 		return true
@@ -95,18 +85,6 @@ func EqualREFIID(a, b REFIID) bool {
 	}
 
 	return true
-}
-
-type IClassFactoryVtbl struct {
-	QueryInterface uintptr
-	AddRef         uintptr
-	Release        uintptr
-	CreateInstance uintptr
-	LockServer     uintptr
-}
-
-type IClassFactory struct {
-	LpVtbl *IClassFactoryVtbl
 }
 
 func (cf *IClassFactory) Release() uint32 {
@@ -130,21 +108,6 @@ func (cf *IClassFactory) CreateInstance(pUnkOuter *IUnknown, riid REFIID, ppvObj
 	return HRESULT(ret)
 }
 
-type IConnectionPointVtbl struct {
-	QueryInterface              uintptr
-	AddRef                      uintptr
-	Release                     uintptr
-	GetConnectionInterface      uintptr
-	GetConnectionPointContainer uintptr
-	Advise                      uintptr
-	Unadvise                    uintptr
-	EnumConnections             uintptr
-}
-
-type IConnectionPoint struct {
-	LpVtbl *IConnectionPointVtbl
-}
-
 func (cp *IConnectionPoint) Release() uint32 {
 	ret, _, _ := syscall.Syscall(cp.LpVtbl.Release, 1,
 		uintptr(unsafe.Pointer(cp)),
@@ -161,18 +124,6 @@ func (cp *IConnectionPoint) Advise(pUnkSink unsafe.Pointer, pdwCookie *uint32) H
 		uintptr(unsafe.Pointer(pdwCookie)))
 
 	return HRESULT(ret)
-}
-
-type IConnectionPointContainerVtbl struct {
-	QueryInterface       uintptr
-	AddRef               uintptr
-	Release              uintptr
-	EnumConnectionPoints uintptr
-	FindConnectionPoint  uintptr
-}
-
-type IConnectionPointContainer struct {
-	LpVtbl *IConnectionPointContainerVtbl
 }
 
 func (cpc *IConnectionPointContainer) Release() uint32 {
@@ -193,60 +144,6 @@ func (cpc *IConnectionPointContainer) FindConnectionPoint(riid REFIID, ppCP **IC
 	return HRESULT(ret)
 }
 
-type IOleClientSiteVtbl struct {
-	QueryInterface         uintptr
-	AddRef                 uintptr
-	Release                uintptr
-	SaveObject             uintptr
-	GetMoniker             uintptr
-	GetContainer           uintptr
-	ShowObject             uintptr
-	OnShowWindow           uintptr
-	RequestNewObjectLayout uintptr
-}
-
-type IOleClientSite struct {
-	LpVtbl *IOleClientSiteVtbl
-}
-
-type IOleInPlaceFrameVtbl struct {
-	QueryInterface       uintptr
-	AddRef               uintptr
-	Release              uintptr
-	GetWindow            uintptr
-	ContextSensitiveHelp uintptr
-	GetBorder            uintptr
-	RequestBorderSpace   uintptr
-	SetBorderSpace       uintptr
-	SetActiveObject      uintptr
-	InsertMenus          uintptr
-	SetMenu              uintptr
-	RemoveMenus          uintptr
-	SetStatusText        uintptr
-	EnableModeless       uintptr
-	TranslateAccelerator uintptr
-}
-
-type IOleInPlaceFrame struct {
-	LpVtbl *IOleInPlaceFrameVtbl
-}
-
-type IOleInPlaceObjectVtbl struct {
-	QueryInterface       uintptr
-	AddRef               uintptr
-	Release              uintptr
-	GetWindow            uintptr
-	ContextSensitiveHelp uintptr
-	InPlaceDeactivate    uintptr
-	UIDeactivate         uintptr
-	SetObjectRects       uintptr
-	ReactivateAndUndo    uintptr
-}
-
-type IOleInPlaceObject struct {
-	LpVtbl *IOleInPlaceObjectVtbl
-}
-
 func (obj *IOleInPlaceObject) Release() uint32 {
 	ret, _, _ := syscall.Syscall(obj.LpVtbl.Release, 1,
 		uintptr(unsafe.Pointer(obj)),
@@ -263,59 +160,6 @@ func (obj *IOleInPlaceObject) SetObjectRects(lprcPosRect, lprcClipRect *RECT) HR
 		uintptr(unsafe.Pointer(lprcClipRect)))
 
 	return HRESULT(ret)
-}
-
-type IOleInPlaceSiteVtbl struct {
-	QueryInterface       uintptr
-	AddRef               uintptr
-	Release              uintptr
-	GetWindow            uintptr
-	ContextSensitiveHelp uintptr
-	CanInPlaceActivate   uintptr
-	OnInPlaceActivate    uintptr
-	OnUIActivate         uintptr
-	GetWindowContext     uintptr
-	Scroll               uintptr
-	OnUIDeactivate       uintptr
-	OnInPlaceDeactivate  uintptr
-	DiscardUndoState     uintptr
-	DeactivateAndUndo    uintptr
-	OnPosRectChange      uintptr
-}
-
-type IOleInPlaceSite struct {
-	LpVtbl *IOleInPlaceSiteVtbl
-}
-
-type IOleObjectVtbl struct {
-	QueryInterface   uintptr
-	AddRef           uintptr
-	Release          uintptr
-	SetClientSite    uintptr
-	GetClientSite    uintptr
-	SetHostNames     uintptr
-	Close            uintptr
-	SetMoniker       uintptr
-	GetMoniker       uintptr
-	InitFromData     uintptr
-	GetClipboardData uintptr
-	DoVerb           uintptr
-	EnumVerbs        uintptr
-	Update           uintptr
-	IsUpToDate       uintptr
-	GetUserClassID   uintptr
-	GetUserType      uintptr
-	SetExtent        uintptr
-	GetExtent        uintptr
-	Advise           uintptr
-	Unadvise         uintptr
-	EnumAdvise       uintptr
-	GetMiscStatus    uintptr
-	SetColorScheme   uintptr
-}
-
-type IOleObject struct {
-	LpVtbl *IOleObjectVtbl
 }
 
 func (obj *IOleObject) QueryInterface(riid REFIID, ppvObject *unsafe.Pointer) HRESULT {
@@ -376,16 +220,6 @@ func (obj *IOleObject) DoVerb(iVerb int32, lpmsg *MSG, pActiveSite *IOleClientSi
 		0)
 
 	return HRESULT(ret)
-}
-
-type IUnknownVtbl struct {
-	QueryInterface uintptr
-	AddRef         uintptr
-	Release        uintptr
-}
-
-type IUnknown struct {
-	LpVtbl *IUnknownVtbl
 }
 
 type COAUTHIDENTITY struct {

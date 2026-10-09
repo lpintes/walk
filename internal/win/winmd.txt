@@ -1320,3 +1320,52 @@ struct TVITEM pszText:uintptr
 struct WINDOWPLACEMENT
 struct WINDOWPOS
 struct WNDCLASSEX
+
+# GUIDs
+
+guid CLSID_AccPropServices
+guid CLSID_TaskbarList
+guid CLSID_WebBrowser
+guid DIID_DWebBrowserEvents2
+guid IID_IAccPropServices
+guid IID_IClassFactory
+guid IID_IConnectionPointContainer
+guid IID_IDocHostUIHandler
+guid IID_IOleClientSite
+guid IID_IOleInPlaceActiveObject
+guid IID_IOleInPlaceObject
+guid IID_IOleInPlaceSite
+guid IID_IOleObject
+guid IID_ITaskbarList3
+guid IID_IUnknown
+guid IID_IWebBrowser2
+guid PROPID_ACC_DEFAULTACTION MSAAPROPID
+guid PROPID_ACC_DESCRIPTION MSAAPROPID
+guid PROPID_ACC_HELP MSAAPROPID
+guid PROPID_ACC_KEYBOARDSHORTCUT MSAAPROPID
+guid PROPID_ACC_NAME MSAAPROPID
+guid PROPID_ACC_ROLE MSAAPROPID
+guid PROPID_ACC_ROLEMAP MSAAPROPID
+guid PROPID_ACC_STATE MSAAPROPID
+guid PROPID_ACC_STATEMAP MSAAPROPID
+guid PROPID_ACC_VALUEMAP MSAAPROPID
+
+# COM interfaces
+
+interface DWebBrowserEvents2
+interface IAccPropServer
+interface IAccPropServices
+interface IClassFactory
+interface IConnectionPoint
+interface IConnectionPointContainer
+interface IDispatch
+interface IDocHostUIHandler
+interface IOleClientSite
+interface IOleInPlaceActiveObject
+interface IOleInPlaceFrame
+interface IOleInPlaceObject
+interface IOleInPlaceSite
+interface IOleObject
+interface ITaskbarList3
+interface IUnknown
+interface IWebBrowser2

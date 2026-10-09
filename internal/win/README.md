@@ -40,11 +40,16 @@ cover:
   overrides them. The files `zwinmd_layout_386.go`,
   `zwinmd_layout_amd64.go` and `zwinmd_layout_arm64.go` make the build
   fail if the size, alignment or a field offset of a generated struct
-  differs from the metadata on that architecture.
+  differs from the metadata on that architecture,
+- the GUID variables walk uses (`IID_*`, `CLSID_*`, `PROPID_ACC_*`;
+  `zwinmd_guids.go`),
+- the vtable structs of the COM interfaces walk uses, with the structs
+  standing for interface pointers (`zwinmd_interfaces.go`). The methods
+  calling through the vtables stay hand-written.
 
 Everything else is still hand-written: structs that are unions, contain
 anonymous unions, are declared with `#pragma pack`, differ between
-architectures or differ from the metadata, COM interfaces, GUIDs,
+architectures or differ from the metadata, COM interface methods,
 macros such as `LOWORD`, functions that take or return structs or
 floating-point values by value, functions that exist only on some
 architectures (`GetWindowLongPtr`), functions with a fallback for older

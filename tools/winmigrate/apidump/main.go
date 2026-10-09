@@ -4,9 +4,10 @@
 
 // Command apidump prints the API of a Windows package such as internal/win
 // for one GOARCH: every package-level object with its type (and value for
-// constants), and a normalized form of every function that is a plain
-// syscall wrapper, with the DLL and entry point it calls and its argument
-// and result conversions. Parameter names do not appear in the output.
+// constants and for variables initialized with a composite literal, such as
+// GUIDs), and a normalized form of every function that is a plain syscall
+// wrapper, with the DLL and entry point it calls and its argument and
+// result conversions. Parameter names do not appear in the output.
 //
 // Usage, from the repository root:
 //
@@ -75,11 +76,51 @@ func main() {
 	}
 	lookup := func(path string) (io.ReadCloser, error) { return os.Open(exports[path]) }
 	conf := types.Config{Importer: importer.ForCompiler(fset, "gc", lookup), Sizes: types.SizesFor("gc", goarch)}
-	pkg, err := conf.Check("win", fset, files, nil)
+	info := &types.Info{Types: map[ast.Expr]types.TypeAndValue{}}
+	pkg, err := conf.Check("win", fset, files, info)
 	if err != nil {
 		panic(err)
 	}
 	q := types.RelativeTo(pkg)
+
+	// Initial values of package-level variables that are composite
+	// literals, such as GUIDs, with constants evaluated.
+	var canon func(e ast.Expr) string
+	canon = func(e ast.Expr) string {
+		switch e := e.(type) {
+		case *ast.CompositeLit:
+			var elts []string
+			for _, el := range e.Elts {
+				elts = append(elts, canon(el))
+			}
+			return types.TypeString(info.Types[e].Type, q) + "{" + strings.Join(elts, ", ") + "}"
+		case *ast.KeyValueExpr:
+			return exprString(e.Key) + ": " + canon(e.Value)
+		}
+		if tv, ok := info.Types[e]; ok && tv.Value != nil {
+			return tv.Value.ExactString()
+		}
+		return exprString(e)
+	}
+	values := map[string]string{}
+	for _, f := range files {
+		for _, d := range f.Decls {
+			gd, ok := d.(*ast.GenDecl)
+			if !ok || gd.Tok != token.VAR {
+				continue
+			}
+			for _, s := range gd.Specs {
+				vs := s.(*ast.ValueSpec)
+				for i, id := range vs.Names {
+					if i < len(vs.Values) {
+						if cl, ok := vs.Values[i].(*ast.CompositeLit); ok {
+							values[id.Name] = " = " + canon(cl)
+						}
+					}
+				}
+			}
+		}
+	}
 
 	var out []string
 	for _, n := range pkg.Scope().Names() {
@@ -89,7 +130,7 @@ func main() {
 			out = append(out, fmt.Sprintf("const %s %s = %s", n, types.TypeString(obj.Type(), q), obj.Val().ExactString()))
 		case *types.Var:
 			if obj.Exported() {
-				out = append(out, fmt.Sprintf("var %s %s", n, types.TypeString(obj.Type(), q)))
+				out = append(out, fmt.Sprintf("var %s %s%s", n, types.TypeString(obj.Type(), q), values[n]))
 			}
 		case *types.Func:
 			sig := obj.Type().(*types.Signature)

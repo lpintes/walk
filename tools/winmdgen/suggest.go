@@ -9,6 +9,7 @@ package main
 // value or behavior, and prints specification lines for them.
 
 import (
+	"encoding/binary"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -31,6 +32,7 @@ var fset = token.NewFileSet()
 
 type winPkg struct {
 	pkg   *types.Package
+	info  *types.Info
 	files map[string]*ast.File
 	funcs map[string]*ast.FuncDecl
 	// proc var -> (lib var, entry); "" entry if ambiguous
@@ -107,7 +109,8 @@ func loadWin(dir, goarch string) (*winPkg, error) {
 		return nil, err
 	}
 	conf := types.Config{Importer: imp, Sizes: types.SizesFor("gc", goarch)}
-	pkg, err := conf.Check("win", fset, files, nil)
+	w.info = &types.Info{Types: make(map[ast.Expr]types.TypeAndValue)}
+	pkg, err := conf.Check("win", fset, files, w.info)
 	if err != nil {
 		return nil, err
 	}
@@ -325,13 +328,23 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 	for _, st := range s.structs {
 		inSpec[st.name] = true
 	}
+	for _, gs := range s.guids {
+		inSpec[gs.name] = true
+	}
+	for _, is := range s.interfaces {
+		inSpec[is.name] = true
+		inSpec[is.name+"Vtbl"] = true
+	}
 	gp.addStructs(s.structs)
+	gp.addInterfaces(s.interfaces)
 
 	g := &generator{m: m, pkg: gp, s: &spec{}}
 	structLines, err := suggestStructs(g, dir, w, used, inSpec)
 	if err != nil {
 		return err
 	}
+	guidLines := suggestGUIDs(m, w, used, inSpec)
+	ifaceLines := suggestInterfaces(g, w, used, inSpec)
 	var constLines, funcLines []string
 	dllsUsed := map[string]string{}
 	for _, name := range used {
@@ -491,7 +504,258 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 	for _, l := range structLines {
 		fmt.Println(l)
 	}
+	fmt.Println()
+	for _, l := range guidLines {
+		fmt.Println(l)
+	}
+	fmt.Println()
+	for _, l := range ifaceLines {
+		fmt.Println(l)
+	}
 	return nil
+}
+
+// varValues returns the initial values of the package-level variables of
+// the package.
+func (w *winPkg) varValues() map[string]ast.Expr {
+	values := make(map[string]ast.Expr)
+	for _, f := range w.files {
+		for _, d := range f.Decls {
+			gd, ok := d.(*ast.GenDecl)
+			if !ok || gd.Tok != token.VAR {
+				continue
+			}
+			for _, sp := range gd.Specs {
+				vs := sp.(*ast.ValueSpec)
+				for i, id := range vs.Names {
+					if i < len(vs.Values) {
+						values[id.Name] = vs.Values[i]
+					}
+				}
+			}
+		}
+	}
+	return values
+}
+
+// guidBytes returns the value of a GUID composite literal with constant
+// elements in memory order.
+func (w *winPkg) guidBytes(e ast.Expr) (*[16]byte, error) {
+	cl, ok := e.(*ast.CompositeLit)
+	if !ok || len(cl.Elts) != 4 {
+		return nil, fmt.Errorf("not a GUID literal")
+	}
+	num := func(e ast.Expr) (uint64, error) {
+		if _, ok := e.(*ast.KeyValueExpr); ok {
+			return 0, fmt.Errorf("keyed element")
+		}
+		tv := w.info.Types[e]
+		if tv.Value == nil {
+			return 0, fmt.Errorf("element %s is not constant", exprString(e))
+		}
+		v, ok := gc.Uint64Val(tv.Value)
+		if !ok {
+			return 0, fmt.Errorf("element %s is not an unsigned integer", exprString(e))
+		}
+		return v, nil
+	}
+	var g [16]byte
+	d1, err := num(cl.Elts[0])
+	if err != nil {
+		return nil, err
+	}
+	d2, err := num(cl.Elts[1])
+	if err != nil {
+		return nil, err
+	}
+	d3, err := num(cl.Elts[2])
+	if err != nil {
+		return nil, err
+	}
+	binary.LittleEndian.PutUint32(g[0:], uint32(d1))
+	binary.LittleEndian.PutUint16(g[4:], uint16(d2))
+	binary.LittleEndian.PutUint16(g[6:], uint16(d3))
+	d4, ok := cl.Elts[3].(*ast.CompositeLit)
+	if !ok || len(d4.Elts) != 8 {
+		return nil, fmt.Errorf("Data4 is not an array literal of 8 elements")
+	}
+	for i, el := range d4.Elts {
+		v, err := num(el)
+		if err != nil {
+			return nil, err
+		}
+		g[8+i] = byte(v)
+	}
+	return &g, nil
+}
+
+// suggestGUIDs returns specification lines for the hand-written GUID
+// variables used under root whose value is the same in the metadata.
+func suggestGUIDs(m *metadata, w *winPkg, used []string, inSpec map[string]bool) []string {
+	q := types.RelativeTo(w.pkg)
+	values := w.varValues()
+	var lines []string
+	for _, name := range used {
+		v, ok := w.pkg.Scope().Lookup(name).(*types.Var)
+		if !ok || inSpec[name] {
+			continue
+		}
+		if types.TypeString(v.Type().Underlying(), nil) != types.TypeString(guidStruct(w.pkg), nil) {
+			continue
+		}
+		hand, err := w.guidBytes(values[name])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "SKIP guid", name, err)
+			continue
+		}
+		meta, _, err := m.lookupGUID(name)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "SKIP guid", name, err)
+			continue
+		}
+		if *meta != *hand {
+			fmt.Fprintf(os.Stderr, "SKIP guid %s differs: %x vs %x\n", name, hand, meta)
+			continue
+		}
+		line := "guid " + name
+		gs := &guidSpec{name: name}
+		if typ := types.TypeString(v.Type(), q); typ != gs.guidType() {
+			line += " " + typ
+		}
+		lines = append(lines, line)
+	}
+	return lines
+}
+
+// guidStruct returns the underlying type of syscall.GUID as imported by
+// the package.
+func guidStruct(pkg *types.Package) types.Type {
+	for _, imp := range pkg.Imports() {
+		if imp.Path() == "syscall" {
+			if tn, ok := imp.Scope().Lookup("GUID").(*types.TypeName); ok {
+				return tn.Type().Underlying()
+			}
+		}
+	}
+	return nil
+}
+
+// handInterface returns the vtable field names of a hand-written COM
+// interface: a struct NAME with the single field LpVtbl *NAMEVtbl, whose
+// fields are all uintptr.
+func handInterface(pkg *types.Package, name string) ([]string, error) {
+	tn, ok := pkg.Scope().Lookup(name).(*types.TypeName)
+	if !ok {
+		return nil, fmt.Errorf("not a type")
+	}
+	st, ok := tn.Type().Underlying().(*types.Struct)
+	if !ok || st.NumFields() != 1 || st.Field(0).Name() != "LpVtbl" {
+		return nil, fmt.Errorf("not a struct with the single field LpVtbl")
+	}
+	ptr, ok := st.Field(0).Type().(*types.Pointer)
+	if !ok {
+		return nil, fmt.Errorf("LpVtbl is not a pointer")
+	}
+	vt, ok := ptr.Elem().(*types.Named)
+	if !ok || vt.Obj().Name() != name+"Vtbl" || vt.Obj().Pkg() != pkg {
+		return nil, fmt.Errorf("LpVtbl is not a *%sVtbl", name)
+	}
+	vst, ok := vt.Underlying().(*types.Struct)
+	if !ok {
+		return nil, fmt.Errorf("%sVtbl is not a struct", name)
+	}
+	var fields []string
+	for i := 0; i < vst.NumFields(); i++ {
+		f := vst.Field(i)
+		if f.Embedded() || vst.Tag(i) != "" || !types.Identical(f.Type(), types.Typ[types.Uintptr]) {
+			return nil, fmt.Errorf("%sVtbl.%s is not a plain uintptr field", name, f.Name())
+		}
+		fields = append(fields, f.Name())
+	}
+	return fields, nil
+}
+
+// suggestInterfaces returns specification lines for the hand-written COM
+// interfaces whose vtable has the methods of the metadata interface in the
+// same order. An interface is considered if walk uses it or its vtable, or
+// if the type of a parameter or result of a method of another such
+// interface refers to it.
+func suggestInterfaces(g *generator, w *winPkg, used []string, inSpec map[string]bool) []string {
+	candidates := make(map[string]bool)
+	var queue []string
+	add := func(name string) {
+		name = strings.TrimSuffix(name, "Vtbl")
+		if candidates[name] {
+			return
+		}
+		if _, err := handInterface(w.pkg, name); err != nil {
+			return
+		}
+		candidates[name] = true
+		queue = append(queue, name)
+	}
+	for _, name := range used {
+		add(name)
+	}
+	for len(queue) > 0 {
+		name := queue[0]
+		queue = queue[1:]
+		tn := w.pkg.Scope().Lookup(name).(*types.TypeName)
+		ms := types.NewMethodSet(types.NewPointer(tn.Type()))
+		for i := 0; i < ms.Len(); i++ {
+			sig := ms.At(i).Type().(*types.Signature)
+			for _, tup := range []*types.Tuple{sig.Params(), sig.Results()} {
+				for j := 0; j < tup.Len(); j++ {
+					t := tup.At(j).Type()
+					for {
+						p, ok := t.(*types.Pointer)
+						if !ok {
+							break
+						}
+						t = p.Elem()
+					}
+					if n, ok := t.(*types.Named); ok && n.Obj().Pkg() == w.pkg {
+						add(n.Obj().Name())
+					}
+				}
+			}
+		}
+	}
+	var names []string
+	for n := range candidates {
+		if !inSpec[n] {
+			names = append(names, n)
+		}
+	}
+	sort.Strings(names)
+
+	var lines []string
+	for _, name := range names {
+		hand, _ := handInterface(w.pkg, name)
+		is := &interfaceSpec{name: name, names: make(map[string]string)}
+		gi, err := g.interfaceDef(is)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "SKIP interface", name, err)
+			continue
+		}
+		if len(hand) != len(gi.fields) {
+			fmt.Fprintf(os.Stderr, "SKIP interface %s: vtable has %d methods, metadata has %d\n", name, len(hand), len(gi.fields))
+			continue
+		}
+		line := "interface " + name
+		var opts []string
+		for i, f := range gi.fields {
+			if hand[i] != f.name {
+				opts = append(opts, f.meta+"="+hand[i])
+			}
+		}
+		sort.Strings(opts)
+		for _, o := range opts {
+			line += " " + o
+		}
+		lines = append(lines, line)
+	}
+	return lines
 }
 
 // suggestStructs returns specification lines for the hand-written structs

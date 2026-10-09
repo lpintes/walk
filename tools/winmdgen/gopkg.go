@@ -68,6 +68,15 @@ func (p *goPackage) addStructs(structs []*structSpec) {
 	}
 }
 
+// addInterfaces adds the interface and vtable structs a specification
+// generates.
+func (p *goPackage) addInterfaces(ifaces []*interfaceSpec) {
+	for _, s := range ifaces {
+		p.types[s.name] = &ast.StructType{}
+		p.types[s.name+"Vtbl"] = &ast.StructType{}
+	}
+}
+
 func (p *goPackage) hasType(name string) bool {
 	_, ok := p.types[name]
 	return ok

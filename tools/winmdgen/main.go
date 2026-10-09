@@ -66,6 +66,26 @@
 // that the size, alignment and field offsets of each generated struct
 // match the metadata, which also covers the TYPE overrides.
 //
+//	guid NAME [TYPE]
+//
+// generates a variable holding a GUID: the GUID constant NAME of the
+// metadata, or the GUID of the interface (for names starting with IID_ or
+// DIID_) or coclass (CLSID_) named by the rest of NAME. Without TYPE the
+// variable has the type IID, or CLSID for names starting with CLSID_.
+// TYPE must have the underlying type syscall.GUID.
+//
+//	interface NAME [OPTION...]
+//
+// generates the vtable struct NAMEVtbl of the metadata interface NAME, with
+// one uintptr field per method in vtable order, including the methods of
+// the base interfaces, and the struct NAME with the single field
+// LpVtbl *NAMEVtbl. Field names are the method names with the first letter
+// in upper case, so get_Name becomes Get_Name. Methods calling through the
+// vtable stay hand-written. Options:
+//
+//	entry=NAME    use the metadata interface NAME
+//	METHOD=NAME   use NAME as the Go name of the vtable field of METHOD
+//
 // # Migration
 //
 // With -suggest, winmdgen does not generate anything. It prints
@@ -74,7 +94,11 @@
 // generated without changing their Go type, value or behavior, together
 // with the required dll directives. Structs are considered if walk uses
 // them directly or as the type of a field of another such struct; their
-// layout is checked on every architecture. Reasons for skipping the other symbols
+// layout is checked on every architecture. GUID variables must have the
+// value of the metadata. COM interfaces are considered if walk uses them
+// or their vtable, or if a method of another such interface refers to
+// them; their vtable must list the methods of the metadata in the same
+// order. Reasons for skipping the other symbols
 // go to standard error. tools/winmigrate has the companion tools that
 // remove the replaced hand-written declarations and check that the API
 // did not change.
@@ -157,6 +181,7 @@ func run(specPath, winmdPath, dir string) error {
 	}
 
 	pkg.addStructs(s.structs)
+	pkg.addInterfaces(s.interfaces)
 
 	g := &generator{m: m, s: s, pkg: pkg}
 	structs, layouts := g.structs()
@@ -166,6 +191,8 @@ func run(specPath, winmdPath, dir string) error {
 	}{
 		{outputPrefix + "constants.go", g.constants()},
 		{outputPrefix + "functions.go", g.functions()},
+		{outputPrefix + "guids.go", g.guids()},
+		{outputPrefix + "interfaces.go", g.interfaces()},
 		{outputPrefix + "structs.go", structs},
 	}
 	for _, an := range archNames {

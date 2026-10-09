@@ -51,20 +51,6 @@ const (
 	DISP_E_MEMBERNOTFOUND = 0x80020003
 )
 
-type IDispatchVtbl struct {
-	QueryInterface   uintptr
-	AddRef           uintptr
-	Release          uintptr
-	GetTypeInfoCount uintptr
-	GetTypeInfo      uintptr
-	GetIDsOfNames    uintptr
-	Invoke           uintptr
-}
-
-type IDispatch struct {
-	LpVtbl *IDispatchVtbl
-}
-
 type VARTYPE uint16
 
 const (
