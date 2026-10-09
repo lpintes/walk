@@ -1319,6 +1319,7 @@ struct SYSTEMTIME
 struct TBBUTTONINFO pszText:uintptr
 struct TCITEM
 struct TEXTMETRIC
+struct TOOLINFO entry=TTTOOLINFOW
 struct TRACKMOUSEEVENT
 struct TRIVERTEX
 struct TTGETTITLE

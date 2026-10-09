@@ -599,6 +599,20 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(TOOLINFO{})-72]
+	_ = layoutCheck[unsafe.Alignof(TOOLINFO{})-8]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.CbSize)-0]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.UFlags)-4]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.Hwnd)-8]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.UId)-16]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.Rect)-24]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.Hinst)-40]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.LpszText)-48]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.LParam)-56]
+	_ = layoutCheck[unsafe.Offsetof(TOOLINFO{}.LpReserved)-64]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(TRACKMOUSEEVENT{})-24]
 	_ = layoutCheck[unsafe.Alignof(TRACKMOUSEEVENT{})-8]
 	_ = layoutCheck[unsafe.Offsetof(TRACKMOUSEEVENT{}.CbSize)-0]

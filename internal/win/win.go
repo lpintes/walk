@@ -13,17 +13,9 @@ import (
 )
 
 const (
-	E_UNEXPECTED   = 0x8000FFFF
-	E_NOTIMPL      = 0x80004001
-	E_OUTOFMEMORY  = 0x8007000E
-	E_INVALIDARG   = 0x80070057
-	E_NOINTERFACE  = 0x80004002
-	E_POINTER      = 0x80004003
-	E_HANDLE       = 0x80070006
-	E_ABORT        = 0x80004004
-	E_FAIL         = 0x80004005
-	E_ACCESSDENIED = 0x80070005
-	E_PENDING      = 0x8000000A
+	E_NOTIMPL     = 0x80004001
+	E_INVALIDARG  = 0x80070057
+	E_NOINTERFACE = 0x80004002
 )
 
 type (
@@ -41,14 +33,6 @@ func FAILED(hr HRESULT) bool {
 
 func MAKEWORD(lo, hi byte) uint16 {
 	return uint16(uint16(lo) | ((uint16(hi)) << 8))
-}
-
-func LOBYTE(w uint16) byte {
-	return byte(w)
-}
-
-func HIBYTE(w uint16) byte {
-	return byte(w >> 8 & 0xff)
 }
 
 func MAKELONG(lo, hi uint16) uint32 {

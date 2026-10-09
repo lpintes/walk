@@ -426,6 +426,18 @@ type TCITEM struct {
 	LParam      uintptr
 }
 
+type TOOLINFO struct {
+	CbSize     uint32
+	UFlags     uint32
+	Hwnd       HWND
+	UId        uintptr
+	Rect       RECT
+	Hinst      HINSTANCE
+	LpszText   *uint16
+	LParam     uintptr
+	LpReserved unsafe.Pointer
+}
+
 type TTGETTITLE struct {
 	DwSize       uint32
 	UTitleBitmap uint32
