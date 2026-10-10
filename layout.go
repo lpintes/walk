@@ -7,6 +7,7 @@
 package walk
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/lpintes/walk/internal/win"
@@ -84,7 +85,7 @@ func CreateLayoutItemsForContainerWithContext(container Container, ctx *LayoutCo
 		children := container.Children()
 		count := children.Len()
 
-		for i := 0; i < count; i++ {
+		for i := range count {
 			item := createLayoutItemForWidgetWithContext(children.At(i), ctx)
 			if item != nil {
 				lib := item.AsLayoutItemBase()
@@ -767,7 +768,7 @@ func shouldLayoutItem(item LayoutItem) bool {
 func itemsToLayout(allItems []LayoutItem) []LayoutItem {
 	filteredItems := make([]LayoutItem, 0, len(allItems))
 
-	for i := 0; i < cap(filteredItems); i++ {
+	for i := range cap(filteredItems) {
 		item := allItems[i]
 
 		if !shouldLayoutItem(item) {
@@ -796,10 +797,8 @@ func anyVisibleItemInHierarchy(item LayoutItem) bool {
 	}
 
 	if cli, ok := item.(ContainerLayoutItem); ok {
-		for _, child := range cli.AsContainerLayoutItemBase().children {
-			if anyVisibleItemInHierarchy(child) {
-				return true
-			}
+		if slices.ContainsFunc(cli.AsContainerLayoutItemBase().children, anyVisibleItemInHierarchy) {
+			return true
 		}
 	} else if _, ok := item.(*spacerLayoutItem); !ok {
 		return true

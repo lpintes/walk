@@ -138,10 +138,10 @@ func main() {
 		case *types.Func:
 			sig := obj.Type().(*types.Signature)
 			var ps, rs []string
-			for i := 0; i < sig.Params().Len(); i++ {
+			for i := range sig.Params().Len() {
 				ps = append(ps, types.TypeString(sig.Params().At(i).Type(), q))
 			}
-			for i := 0; i < sig.Results().Len(); i++ {
+			for i := range sig.Results().Len() {
 				rs = append(rs, types.TypeString(sig.Results().At(i).Type(), q))
 			}
 			out = append(out, fmt.Sprintf("func %s(%s) (%s)", n, strings.Join(ps, ", "), strings.Join(rs, ", ")))

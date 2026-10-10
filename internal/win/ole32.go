@@ -30,7 +30,7 @@ func EqualREFIID(a, b REFIID) bool {
 		return false
 	}
 
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if a.Data4[i] != b.Data4[i] {
 			return false
 		}

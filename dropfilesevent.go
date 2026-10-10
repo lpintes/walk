@@ -73,7 +73,7 @@ func (p *DropFilesEventPublisher) Publish(hDrop win.HDROP) {
 	var files []string
 
 	n := win.DragQueryFile(hDrop, 0xFFFFFFFF, nil, 0)
-	for i := 0; i < int(n); i++ {
+	for i := range int(n) {
 		bufSize := uint(512)
 		buf := make([]uint16, bufSize)
 		if win.DragQueryFile(hDrop, uint(i), &buf[0], bufSize) > 0 {

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"slices"
 	"syscall"
 	"time"
 	"unsafe"
@@ -706,7 +707,7 @@ func (tv *TableView) attachModel() {
 		}
 
 		count := tv.model.RowCount()
-		for i := 0; i < count; i++ {
+		for i := range count {
 			if ip.ID(i) == tv.currentItemID {
 				tv.SetCurrentIndex(i)
 				return
@@ -879,7 +880,7 @@ func (tv *TableView) SetModel(mdl any) error {
 
 		if sorter, ok := tv.model.(Sorter); ok {
 			if tv.sortedColumnIndex >= tv.visibleColumnCount() {
-				tv.sortedColumnIndex = maxi(-1, mini(0, tv.visibleColumnCount()-1))
+				tv.sortedColumnIndex = max(-1, min(0, tv.visibleColumnCount()-1))
 				tv.sortOrder = SortAscending
 			}
 
@@ -1384,14 +1385,14 @@ func (tv *TableView) updateSelectedIndexes() {
 	indexes := make([]int, count)
 
 	j := -1
-	for i := 0; i < count; i++ {
+	for i := range count {
 		j = int(win.SendMessage(tv.hwndNormalLV, win.LVM_GETNEXTITEM, uintptr(j), win.LVNI_SELECTED))
 		indexes[i] = j
 	}
 
 	changed := len(indexes) != len(tv.selectedIndexes)
 	if !changed {
-		for i := 0; i < len(indexes); i++ {
+		for i := range indexes {
 			if indexes[i] != tv.selectedIndexes[i] {
 				changed = true
 				break
@@ -1419,7 +1420,7 @@ func (tv *TableView) copySelectedIndexes(hwndTo, hwndFrom win.HWND) error {
 	lvi.State = win.LVIS_SELECTED
 
 	j := -1
-	for i := 0; i < count; i++ {
+	for range count {
 		j = int(win.SendMessage(hwndFrom, win.LVM_GETNEXTITEM, uintptr(j), win.LVNI_SELECTED))
 
 		if win.FALSE == win.SendMessage(hwndTo, win.LVM_SETITEMSTATE, uintptr(j), lp) {
@@ -1544,7 +1545,7 @@ func (tv *TableView) StretchLastColumn() error {
 			width -= int(win.GetSystemMetricsForDpi(win.SM_CXVSCROLL, uint32(tv.DPI())))
 		}
 
-		lp = uintptr(maxi(0, width))
+		lp = uintptr(max(0, width))
 	}
 
 	if lp > 0 {
@@ -1730,11 +1731,8 @@ func (tv *TableView) RestoreState() error {
 				return err
 			}
 			var visible bool
-			for _, name := range tvs.ColumnDisplayOrder {
-				if name == tvc.name {
-					visible = true
-					break
-				}
+			if slices.Contains(tvs.ColumnDisplayOrder, tvc.name) {
+				visible = true
 			}
 			if err := tvc.SetVisible(tvc.visible && (visible || tvcs.Visible)); err != nil {
 				return err
@@ -2108,7 +2106,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 
 				utf16 := syscall.StringToUTF16(text)
 				buf := (*[264]uint16)(unsafe.Pointer(di.Item.PszText))
-				max := mini(len(utf16), int(di.Item.CchTextMax))
+				max := min(len(utf16), int(di.Item.CchTextMax))
 				copy((*buf)[:], utf16[:max])
 				(*buf)[max-1] = 0
 			}

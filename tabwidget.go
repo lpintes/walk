@@ -401,7 +401,7 @@ func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 
 			adjustment := SizeFrom96DPI(Size{1, 1}, dpi).toSIZE()
 			count := tw.pages.Len()
-			for i := 0; i < count; i++ {
+			for i := range count {
 				if 0 == win.SendMessage(hwnd, win.TCM_GETITEMRECT, uintptr(i), uintptr(unsafe.Pointer(&rc))) {
 					break
 				}
@@ -736,8 +736,8 @@ func (li *tabWidgetLayoutItem) MinSize() Size {
 		if ms, ok := page.(MinSizer); ok {
 			s := ms.MinSize()
 
-			min.Width = maxi(min.Width, s.Width)
-			min.Height = maxi(min.Height, s.Height)
+			min.Width = max(min.Width, s.Width)
+			min.Height = max(min.Height, s.Height)
 		}
 	}
 
@@ -778,7 +778,7 @@ func (li *tabWidgetLayoutItem) HeightForWidth(width int) int {
 		if hfw, ok := page.(HeightForWidther); ok && hfw.HasHeightForWidth() {
 			h := hfw.HeightForWidth(width + margin.Width)
 
-			height = maxi(height, h)
+			height = max(height, h)
 		}
 	}
 

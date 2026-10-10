@@ -416,7 +416,7 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 			fd := w.funcs[name]
 			hs := obj.Type().(*types.Signature)
 			var hp []string
-			for i := 0; i < hs.Params().Len(); i++ {
+			for i := range hs.Params().Len() {
 				hp = append(hp, types.TypeString(hs.Params().At(i).Type(), q))
 			}
 			hr := ""
@@ -446,7 +446,7 @@ func suggest(m *metadata, s *spec, dir, root string) error {
 			}
 			var gf *genFunc
 			var ferr error
-			for attempt := 0; attempt < 3; attempt++ {
+			for range 3 {
 				gf, ferr = g.function(fs)
 				if ferr != nil {
 					break
@@ -704,7 +704,7 @@ func handInterface(pkg *types.Package, name string) ([]string, error) {
 		return nil, fmt.Errorf("%sVtbl is not a struct", name)
 	}
 	var fields []string
-	for i := 0; i < vst.NumFields(); i++ {
+	for i := range vst.NumFields() {
 		f := vst.Field(i)
 		if f.Embedded() || vst.Tag(i) != "" || !types.Identical(f.Type(), types.Typ[types.Uintptr]) {
 			return nil, fmt.Errorf("%sVtbl.%s is not a plain uintptr field", name, f.Name())
@@ -741,10 +741,10 @@ func suggestInterfaces(g *generator, w *winPkg, used []string, inSpec map[string
 		queue = queue[1:]
 		tn := w.pkg.Scope().Lookup(name).(*types.TypeName)
 		ms := types.NewMethodSet(types.NewPointer(tn.Type()))
-		for i := 0; i < ms.Len(); i++ {
+		for i := range ms.Len() {
 			sig := ms.At(i).Type().(*types.Signature)
 			for _, tup := range []*types.Tuple{sig.Params(), sig.Results()} {
-				for j := 0; j < tup.Len(); j++ {
+				for j := range tup.Len() {
 					t := tup.At(j).Type()
 					for {
 						p, ok := t.(*types.Pointer)
@@ -828,7 +828,7 @@ func suggestStructs(g *generator, dir string, amd64 *winPkg, used []string, inSp
 				return
 			}
 			candidates[t.Obj().Name()] = true
-			for i := 0; i < st.NumFields(); i++ {
+			for i := range st.NumFields() {
 				visit(st.Field(i).Type())
 			}
 		case *types.Array:
@@ -875,7 +875,7 @@ func handStruct(pkg *types.Package, name string) ([]handField, *types.Struct, er
 		return nil, nil, fmt.Errorf("not a struct")
 	}
 	var fields []handField
-	for i := 0; i < st.NumFields(); i++ {
+	for i := range st.NumFields() {
 		f := st.Field(i)
 		if f.Embedded() {
 			return nil, nil, fmt.Errorf("embedded field %s", f.Name())

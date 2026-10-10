@@ -36,7 +36,7 @@ func main() {
 	log.SetOutput(lv)
 
 	go func() {
-		for i := 0; i < 10000; i++ {
+		for range 10000 {
 			time.Sleep(100 * time.Millisecond)
 			log.Println("Text")
 		}

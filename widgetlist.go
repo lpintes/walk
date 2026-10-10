@@ -8,6 +8,7 @@ package walk
 
 import (
 	"github.com/lpintes/walk/internal/win"
+	"slices"
 )
 
 type widgetListObserver interface {
@@ -114,7 +115,7 @@ func (l *WidgetList) Insert(index int, item Widget) error {
 
 	if observer != nil {
 		if err := observer.onInsertedWidget(index, item); err != nil {
-			l.items = append(l.items[:index], l.items[index+1:]...)
+			l.items = slices.Delete(l.items, index, index+1)
 			return err
 		}
 	}
@@ -156,7 +157,7 @@ func (l *WidgetList) RemoveAt(index int) error {
 		}
 	}
 
-	l.items = append(l.items[:index], l.items[index+1:]...)
+	l.items = slices.Delete(l.items, index, index+1)
 
 	if observer != nil {
 		if err := observer.onRemovedWidget(index, widget); err != nil {

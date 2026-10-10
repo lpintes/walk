@@ -7,6 +7,7 @@
 package walk
 
 import (
+	"slices"
 	"sort"
 	"sync"
 )
@@ -49,7 +50,7 @@ func (l *GridLayout) sufficientStretchFactors(stretchFactors []int, required int
 	oldLen := len(stretchFactors)
 	if oldLen < required {
 		if cap(stretchFactors) < required {
-			temp := make([]int, required, maxi(required, len(stretchFactors)*2))
+			temp := make([]int, required, max(required, len(stretchFactors)*2))
 			copy(temp, stretchFactors)
 			stretchFactors = temp
 		} else {
@@ -78,7 +79,7 @@ func (l *GridLayout) ensureSufficientSize(rows, columns int) {
 		}
 	}
 
-	for i := 0; i < len(l.cells); i++ {
+	for i := range l.cells {
 		if len(l.cells[i]) < len(l.columnStretchFactors) {
 			if cap(l.cells[i]) < cap(l.columnStretchFactors) {
 				temp := make([]gridLayoutCell, len(l.columnStretchFactors))
@@ -300,8 +301,8 @@ func (l *GridLayout) CreateLayoutItem(ctx *LayoutContext) ContainerLayoutItem {
 			children: children,
 		},
 		size2MinSize:         make(map[Size]Size),
-		rowStretchFactors:    append([]int(nil), l.rowStretchFactors...),
-		columnStretchFactors: append([]int(nil), l.columnStretchFactors...),
+		rowStretchFactors:    slices.Clone(l.rowStretchFactors),
+		columnStretchFactors: slices.Clone(l.columnStretchFactors),
 		item2Info:            item2Info,
 		cells:                cells,
 	}
@@ -387,8 +388,8 @@ func (li *gridLayoutItem) MinSizeForSize(size Size) Size {
 
 	ws := make([]int, len(li.cells[0]))
 
-	for row := 0; row < len(li.cells); row++ {
-		for col := 0; col < len(ws); col++ {
+	for row := range li.cells {
+		for col := range ws {
 			item := li.cells[row][col].item
 			if item == nil {
 				continue
@@ -402,7 +403,7 @@ func (li *gridLayoutItem) MinSizeForSize(size Size) Size {
 			info := li.item2Info[item]
 
 			if info.spanHorz == 1 {
-				ws[col] = maxi(ws[col], min.Width)
+				ws[col] = max(ws[col], min.Width)
 			}
 		}
 	}
@@ -433,7 +434,7 @@ func (li *gridLayoutItem) MinSizeForSize(size Size) Size {
 						height := hfw.HeightForWidth(li.spannedWidth(info, widths))
 
 						mutex.Lock()
-						maxHeight = maxi(maxHeight, height)
+						maxHeight = max(maxHeight, height)
 						mutex.Unlock()
 
 						wg.Done()
@@ -442,7 +443,7 @@ func (li *gridLayoutItem) MinSizeForSize(size Size) Size {
 					height := li.MinSizeEffectiveForChild(item).Height
 
 					mutex.Lock()
-					maxHeight = maxi(maxHeight, height)
+					maxHeight = max(maxHeight, height)
 					mutex.Unlock()
 				}
 			}
@@ -571,14 +572,14 @@ func (li *gridLayoutItem) PerformLayout() []LayoutResultItem {
 		}
 
 		x := margins.HNear
-		for i := 0; i < info.cell.column; i++ {
+		for i := range info.cell.column {
 			if w := widths[i]; w > 0 {
 				x += w + spacing
 			}
 		}
 
 		y := margins.VNear
-		for i := 0; i < info.cell.row; i++ {
+		for i := range info.cell.row {
 			if h := heights[i]; h > 0 {
 				y += h + spacing
 			}
@@ -605,7 +606,7 @@ func (li *gridLayoutItem) PerformLayout() []LayoutResultItem {
 			if lf&GrowableHorz == 0 {
 				w = s.Width
 			}
-			w = mini(w, width)
+			w = min(w, width)
 
 			if hfw, ok := item.(HeightForWidther); ok && hfw.HasHeightForWidth() {
 				h = hfw.HeightForWidth(w)
@@ -617,7 +618,7 @@ func (li *gridLayoutItem) PerformLayout() []LayoutResultItem {
 					h = s.Height
 				}
 			}
-			h = mini(h, height)
+			h = min(h, height)
 		}
 
 		alignment := item.Geometry().Alignment
@@ -669,7 +670,7 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 	sizes := make([]int, len(stretchFactors))
 	sortedSections := gridLayoutSectionInfoList(make([]gridLayoutSectionInfo, len(stretchFactors)))
 
-	for i := 0; i < len(stretchFactors); i++ {
+	for i := range stretchFactors {
 		var otherAxisCount int
 		if orientation == Horizontal {
 			otherAxisCount = len(li.rowStretchFactors)
@@ -677,7 +678,7 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 			otherAxisCount = len(li.columnStretchFactors)
 		}
 
-		for j := 0; j < otherAxisCount; j++ {
+		for j := range otherAxisCount {
 			var item LayoutItem
 			if orientation == Horizontal {
 				item = li.cells[j][i].item
@@ -696,7 +697,7 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 			info := li.item2Info[item]
 			flags := item.LayoutFlags()
 
-			max := item.Geometry().MaxSize
+			maxSize := item.Geometry().MaxSize
 
 			var pref Size
 			if hfw, ok := item.(HeightForWidther); !ok || !hfw.HasHeightForWidth() {
@@ -707,13 +708,13 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 
 			if orientation == Horizontal {
 				if info.spanHorz == 1 {
-					minSizes[i] = maxi(minSizes[i], li.MinSizeEffectiveForChild(item).Width)
+					minSizes[i] = max(minSizes[i], li.MinSizeEffectiveForChild(item).Width)
 				}
 
-				if max.Width > 0 {
-					maxSizes[i] = maxi(maxSizes[i], max.Width)
+				if maxSize.Width > 0 {
+					maxSizes[i] = max(maxSizes[i], maxSize.Width)
 				} else if pref.Width > 0 && flags&GrowableHorz == 0 {
-					maxSizes[i] = maxi(maxSizes[i], pref.Width)
+					maxSizes[i] = max(maxSizes[i], pref.Width)
 				} else {
 					maxSizes[i] = 32768
 				}
@@ -728,18 +729,18 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 			} else {
 				if info.spanVert == 1 {
 					if hfw, ok := item.(HeightForWidther); ok && hfw.HasHeightForWidth() {
-						minSizes[i] = maxi(minSizes[i], hfw.HeightForWidth(li.spannedWidth(info, widths)))
+						minSizes[i] = max(minSizes[i], hfw.HeightForWidth(li.spannedWidth(info, widths)))
 					} else {
-						minSizes[i] = maxi(minSizes[i], li.MinSizeEffectiveForChild(item).Height)
+						minSizes[i] = max(minSizes[i], li.MinSizeEffectiveForChild(item).Height)
 					}
 				}
 
-				if max.Height > 0 {
-					maxSizes[i] = maxi(maxSizes[i], max.Height)
+				if maxSize.Height > 0 {
+					maxSizes[i] = max(maxSizes[i], maxSize.Height)
 				} else if hfw, ok := item.(HeightForWidther); ok && flags&GrowableVert == 0 && hfw.HasHeightForWidth() {
 					maxSizes[i] = minSizes[i]
 				} else if pref.Height > 0 && flags&GrowableVert == 0 {
-					maxSizes[i] = maxi(maxSizes[i], pref.Height)
+					maxSizes[i] = max(maxSizes[i], pref.Height)
 				} else {
 					maxSizes[i] = 32768
 				}
@@ -757,7 +758,7 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 		sortedSections[i].index = i
 		sortedSections[i].minSize = minSizes[i]
 		sortedSections[i].maxSize = maxSizes[i]
-		sortedSections[i].stretch = maxi(1, stretchFactors[i])
+		sortedSections[i].stretch = max(1, stretchFactors[i])
 
 		minSizesRemaining += minSizes[i]
 
@@ -796,10 +797,10 @@ func (li *gridLayoutItem) sectionSizesForSpace(orientation Orientation, space in
 	offsets := [3]int{0, sectionCountWithGreedyNonSpacer, sectionCountWithGreedyNonSpacer + sectionCountWithGreedySpacer}
 	counts := [3]int{sectionCountWithGreedyNonSpacer, sectionCountWithGreedySpacer, len(stretchFactors) - sectionCountWithGreedyNonSpacer - sectionCountWithGreedySpacer}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		stretchFactorsRemaining := stretchFactorsTotal[i]
 
-		for j := 0; j < counts[i]; j++ {
+		for j := range counts[i] {
 			info := sortedSections[offsets[i]+j]
 			k := info.index
 

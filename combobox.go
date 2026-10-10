@@ -219,7 +219,7 @@ func newComboBoxWithStyle(parent Container, style uint32) (*ComboBox, error) {
 			index := -1
 
 			count := cb.model.ItemCount()
-			for i := 0; i < count; i++ {
+			for i := range count {
 				if cb.bindingValueProvider.BindingValue(i) == v {
 					index = i
 					break
@@ -304,7 +304,7 @@ func (cb *ComboBox) resetItems() error {
 
 	count := cb.model.ItemCount()
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if err := cb.insertItemAt(i); err != nil {
 			return err
 		}
@@ -535,7 +535,7 @@ func (cb *ComboBox) calculateMaxItemTextWidth() int {
 	var maxWidth int
 
 	count := cb.model.ItemCount()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		var s win.SIZE
 		str := syscall.StringToUTF16(cb.itemString(i))
 
@@ -544,7 +544,7 @@ func (cb *ComboBox) calculateMaxItemTextWidth() int {
 			return -1
 		}
 
-		maxWidth = maxi(maxWidth, int(s.CX))
+		maxWidth = max(maxWidth, int(s.CX))
 	}
 
 	return maxWidth
@@ -735,7 +735,7 @@ func (cb *ComboBox) CreateLayoutItem(ctx *LayoutContext) LayoutItem {
 	}
 
 	// FIXME: Use GetThemePartSize instead of guessing
-	w := maxi(defaultSize.Width, cb.maxItemTextWidth+int(win.GetSystemMetricsForDpi(win.SM_CXVSCROLL, uint32(ctx.dpi)))+8)
+	w := max(defaultSize.Width, cb.maxItemTextWidth+int(win.GetSystemMetricsForDpi(win.SM_CXVSCROLL, uint32(ctx.dpi)))+8)
 	h := defaultSize.Height + 1
 
 	return &comboBoxLayoutItem{

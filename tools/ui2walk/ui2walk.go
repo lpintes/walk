@@ -238,7 +238,7 @@ func writeProperty(buf *bytes.Buffer, prop *Property, qualifiedReceiver string, 
 		included := []bool{f.Bold, f.Italic, f.StrikeOut, f.Underline}
 		flags := []string{"walk.FontBold", "walk.FontItalic", "walk.FontStrikeOut", "walk.FontUnderline"}
 		var includedFlags []string
-		for i := 0; i < len(included); i++ {
+		for i := range included {
 			if included[i] {
 				includedFlags = append(includedFlags, flags[i])
 			}

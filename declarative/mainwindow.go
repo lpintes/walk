@@ -6,6 +6,8 @@
 
 package declarative
 
+import "maps"
+
 import "github.com/lpintes/walk"
 
 type MainWindow struct {
@@ -177,9 +179,7 @@ func (mw MainWindow) Create() error {
 		// }
 
 		if mw.Expressions != nil {
-			for name, expr := range mw.Expressions() {
-				builder.expressions[name] = expr
-			}
+			maps.Copy(builder.expressions, mw.Expressions())
 		}
 		if mw.Functions != nil {
 			for name, fn := range mw.Functions {

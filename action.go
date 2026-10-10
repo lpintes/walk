@@ -6,6 +6,8 @@
 
 package walk
 
+import "slices"
+
 type actionChangedHandler interface {
 	onActionChanged(action *Action) error
 	onActionVisibleChanged(action *Action) error
@@ -455,7 +457,7 @@ func (a *Action) addChangedHandler(handler actionChangedHandler) {
 func (a *Action) removeChangedHandler(handler actionChangedHandler) {
 	for i, h := range a.changedHandlers {
 		if h == handler {
-			a.changedHandlers = append(a.changedHandlers[:i], a.changedHandlers[i+1:]...)
+			a.changedHandlers = slices.Delete(a.changedHandlers, i, i+1)
 			break
 		}
 	}

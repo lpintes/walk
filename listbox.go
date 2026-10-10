@@ -130,7 +130,7 @@ func NewListBoxWithStyle(parent Container, style uint32) (*ListBox, error) {
 			index := -1
 
 			count := lb.model.ItemCount()
-			for i := 0; i < count; i++ {
+			for i := range count {
 				if lb.bindingValueProvider.BindingValue(i) == v {
 					index = i
 					break
@@ -243,7 +243,7 @@ func (lb *ListBox) resetItems() error {
 
 	lb.lastWidthsMeasuredFor = make([]int, count)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if err := lb.insertItemAt(i); err != nil {
 			return err
 		}
@@ -275,7 +275,7 @@ func (lb *ListBox) ensureVisibleItemsHeightUpToDate() error {
 	}
 
 	topIndex := int(lb.SendMessage(win.LB_GETTOPINDEX, 0, 0))
-	offset := maxi(0, topIndex-10)
+	offset := max(0, topIndex-10)
 	count := lb.model.ItemCount()
 	var rc win.RECT
 	lb.SendMessage(win.LB_GETITEMRECT, uintptr(offset), uintptr(unsafe.Pointer(&rc)))
@@ -535,7 +535,7 @@ func (lb *ListBox) calculateMaxItemTextWidth() int {
 		return -1
 	}
 	count := lb.model.ItemCount()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		item := lb.itemString(i)
 		var s win.SIZE
 		str := syscall.StringToUTF16(item)
@@ -545,7 +545,7 @@ func (lb *ListBox) calculateMaxItemTextWidth() int {
 			return -1
 		}
 
-		maxWidth = maxi(maxWidth, int(s.CX))
+		maxWidth = max(maxWidth, int(s.CX))
 	}
 
 	return maxWidth
@@ -560,7 +560,7 @@ func (lb *ListBox) idealSize() Size {
 	}
 
 	// FIXME: Use GetThemePartSize instead of guessing
-	w := maxi(defaultSize.Width, lb.maxItemTextWidth+IntFrom96DPI(24, lb.DPI()))
+	w := max(defaultSize.Width, lb.maxItemTextWidth+IntFrom96DPI(24, lb.DPI()))
 	h := defaultSize.Height + 1
 
 	return Size{w, h}
@@ -611,7 +611,7 @@ func (lb *ListBox) SelectedIndexes() []int {
 		return nil
 	} else {
 		indexes := make([]int, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			indexes[i] = int(index32[i])
 		}
 		return indexes

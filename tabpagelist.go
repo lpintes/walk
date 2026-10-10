@@ -6,7 +6,9 @@
 
 package walk
 
-import ()
+import (
+	"slices"
+)
 
 type tabPageListObserver interface {
 	onInsertingPage(index int, page *TabPage) error
@@ -87,7 +89,7 @@ func (l *TabPageList) Insert(index int, item *TabPage) error {
 
 	if observer != nil {
 		if err := observer.onInsertedPage(index, item); err != nil {
-			l.items = append(l.items[:index], l.items[index+1:]...)
+			l.items = slices.Delete(l.items, index, index+1)
 			return err
 		}
 	}
@@ -119,7 +121,7 @@ func (l *TabPageList) RemoveAt(index int) error {
 		}
 	}
 
-	l.items = append(l.items[:index], l.items[index+1:]...)
+	l.items = slices.Delete(l.items, index, index+1)
 
 	if observer != nil {
 		if err := observer.onRemovedPage(index, item); err != nil {

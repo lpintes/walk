@@ -39,36 +39,6 @@ func init() {
 	})
 }
 
-func maxi(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
-}
-
-func mini(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
-func uint16IndexUint16(s []uint16, v uint16) int {
-	for i, u := range s {
-		if u == v {
-			return i
-		}
-	}
-
-	return -1
-}
-
-func uint16ContainsUint16(s []uint16, v uint16) bool {
-	return uint16IndexUint16(s, v) != -1
-}
-
 func uint16CountUint16(s []uint16, v uint16) int {
 	var count int
 
@@ -160,7 +130,7 @@ func FormatFloat(f float64, prec int) string {
 }
 
 func FormatFloatGrouped(f float64, prec int) string {
-	return formatFloatString(strconv.FormatFloat(f, 'f', maxi(1, prec), 64), prec, true)
+	return formatFloatString(strconv.FormatFloat(f, 'f', max(1, prec), 64), prec, true)
 }
 
 func formatBigRatGrouped(r *big.Rat, prec int) string {
@@ -187,7 +157,7 @@ func formatFloatString(s string, prec int, grouped bool) string {
 		s = s[1:]
 	}
 
-	intLen := len(s) - maxi(1, prec) - 1
+	intLen := len(s) - max(1, prec) - 1
 
 	n := intLen % 3
 	if n != 0 {
