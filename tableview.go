@@ -1715,7 +1715,7 @@ func (tv *TableView) RestoreState() error {
 	tvcsRetained := make([]*tableViewColumnState, 0, len(tvs.Columns))
 	for _, tvcs := range tvs.Columns {
 		if tvcs.LastSeenDate != "" {
-			if lastSeen, err := time.Parse("2006-02-01", tvcs.LastSeenDate); err != nil {
+			if lastSeen, err := time.Parse("2006-01-02", tvcs.LastSeenDate); err != nil {
 				tvcs.LastSeenDate = ""
 			} else if name2tvc[tvcs.Name] == nil && lastSeen.Add(time.Hour*24*90).Before(time.Now()) {
 				continue

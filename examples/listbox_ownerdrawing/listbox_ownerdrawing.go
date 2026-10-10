@@ -78,7 +78,7 @@ func main() {
 				})
 
 			case <-cancel:
-				break
+				return
 			}
 		}
 	}()
