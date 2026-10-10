@@ -200,9 +200,16 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   (see its `README.md`); rerun them on Windows after changes to
   `internal/win`, `internal/com` or the affected widgets. The leading underscore keeps
   them out of `./...`.
-- Step 6: done in the cloud, pull request lpintes/walk#7, waiting for testing on
-  Windows (Task 5 of `TESTING_ON_WINDOWS.md`). Done before steps 4 and 5
+- Step 6: done, pull request lpintes/walk#7. Done before steps 4 and 5
   because it needs no live testing while it is written.
+  - Task 5 of `TESTING_ON_WINDOWS.md` passed on Windows 11 (386 and
+    amd64): the `com` unit tests and all checks of `tests/_wingui/webview`
+    pass; `webview_events` logs its events, opens the native context menu
+    and exits with code 0 when closed with Alt+F4 after loading or with
+    `WM_CLOSE` during loading. NVDA showed only the known problems. The
+    webview test first timed out because the `WebBrowser` control reports
+    the local path, not the `file:///` URL, in `Navigating`, `Navigated`
+    and `DocumentCompleted`; the test now accepts both.
   - New package `internal/com` (see its package documentation):
     `NewVTable` takes a generated `win.*Vtbl` struct with the method
     callbacks (fields by name, so the order cannot be wrong; a missing
