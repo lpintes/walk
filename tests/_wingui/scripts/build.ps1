@@ -73,9 +73,15 @@ try {
 	# The examples load images from ../img.
 	Copy-Item -Recurse -Force (Join-Path $repo "examples\img") (Join-Path $dest "examples")
 
-	foreach ($n in "part3", "dragfinish") {
+	foreach ($n in "part3", "dragfinish", "webview") {
 		Build "./tests/_wingui/$n" (Join-Path $dest "tests\$n") $n
 	}
+	# The unit tests of internal/com need Windows; build them as an exe.
+	$comDir = Join-Path $dest "tests\com"
+	New-Item -ItemType Directory -Force $comDir | Out-Null
+	Write-Host "build $Arch test ./internal/com"
+	& go test -c -o (Join-Path $comDir "com.exe") ./internal/com
+	if ($LASTEXITCODE -ne 0) { $failed += "./internal/com" }
 	foreach ($n in "source", "target") {
 		Build "./tests/_wingui/olednd/$n" (Join-Path $dest "tests\olednd") $n
 	}

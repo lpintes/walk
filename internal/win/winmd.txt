@@ -1344,9 +1344,12 @@ guid IID_IConnectionPointContainer
 guid IID_IDocHostUIHandler
 guid IID_IOleClientSite
 guid IID_IOleInPlaceActiveObject
+guid IID_IOleInPlaceFrame
 guid IID_IOleInPlaceObject
 guid IID_IOleInPlaceSite
+guid IID_IOleInPlaceUIWindow
 guid IID_IOleObject
+guid IID_IOleWindow
 guid IID_ITaskbarList3
 guid IID_IUnknown
 guid IID_IWebBrowser2

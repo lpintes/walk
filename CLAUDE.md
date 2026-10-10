@@ -11,7 +11,9 @@ The `LICENSE` and `AUTHORS` files must be preserved.
 
 - Module: `github.com/lpintes/walk`, Go 1.23 or later.
 - Main package in the repository root, declarative API in `declarative/`,
-  examples in `examples/`, tool in `tools/ui2walk`.
+  examples in `examples/`, tool in `tools/ui2walk`. Internal packages:
+  `internal/win` (Win32 declarations) and `internal/com` (COM objects
+  implemented in Go).
 
 ## User and communication
 
@@ -75,8 +77,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
 - Step 2: done, pull request lpintes/walk#2. `github.com/lxn/win` (version
   v0.0.0-20210218163916-a377121e959e) lives in `internal/win`; see its
   `README.md`.
-- Step 3: done in three parts, the last one waiting for review and
-  testing on Windows.
+- Step 3: done in three parts, merged and tested on Windows.
   - Part 1: pull request lpintes/walk#4.
   - Part 1 contents: generator `tools/winmdgen` (see its package documentation
     and `internal/win/README.md`), specification `internal/win/winmd.txt`,
@@ -110,7 +111,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     versions); `BITMAPINFO` (see "Known issues"); `BITMAPV4HEADER`,
     `BITMAPV5HEADER`, `VARIANTARG` (embedded fields); `ENHMETAHEADER`
     (refers to `RECTL`, which the package does not define).
-  - Part 3: pull request lpintes/walk#6 (draft). New directives `guid`
+  - Part 3: pull request lpintes/walk#6. New directives `guid`
     (26 GUID variables in `zwinmd_guids.go`) and `interface` (17 COM
     vtable structs and interface pointer structs in
     `zwinmd_interfaces.go`; the methods calling through the vtables stay
@@ -197,9 +198,44 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
 - The test programs of these tasks are kept in `tests/_wingui` with
   PowerShell scripts that build and run them and smoke test every example
   (see its `README.md`); rerun them on Windows after changes to
-  `internal/win` or the affected widgets. The leading underscore keeps
+  `internal/win`, `internal/com` or the affected widgets. The leading underscore keeps
   them out of `./...`.
-- Steps 4 to 9: not started.
+- Step 6: done in the cloud, pull request lpintes/walk#7, waiting for testing on
+  Windows (Task 5 of `TESTING_ON_WINDOWS.md`). Done before steps 4 and 5
+  because it needs no live testing while it is written.
+  - New package `internal/com` (see its package documentation):
+    `NewVTable` takes a generated `win.*Vtbl` struct with the method
+    callbacks (fields by name, so the order cannot be wrong; a missing
+    method panics) and the interface IDs `QueryInterface` answers with
+    it; `NewObject` builds an object from vtables and a Go value that
+    implements it. Methods take `this *com.This` as first parameter and
+    reach the Go value with `this.Object().Impl()`. Reference counting
+    is real; while the count is above zero the memory COM points to is
+    pinned with `runtime.Pinner` and the object stays reachable through
+    a package map, so COM never holds pointers to memory the garbage
+    collector may free. Unit tests in `com_test.go` run only on Windows.
+  - `WebView` uses it: one site object (`IOleClientSite`,
+    `IOleInPlaceSite`, `IDocHostUIHandler`, `DWebBrowserEvents2` sink)
+    and one frame object (`IOleInPlaceFrame`). Gone are the structs
+    embedded in `WebView`, the pointer arithmetic that found the
+    `WebView` from an interface pointer, and the rule that the site must
+    be the first field after `WidgetBase`. Intended behavior changes:
+    `Dispose` unadvises the events sink and releases the objects;
+    `GetWindowContext` adds a reference to the frame it returns; the
+    frame answers `QueryInterface` for `IUnknown`, `IOleWindow`,
+    `IOleInPlaceUIWindow` and `IOleInPlaceFrame` instead of
+    `E_NOTIMPL`; the sink's `GetTypeInfoCount`, `GetTypeInfo` and
+    `GetIDsOfNames` take their real parameters (they took one, which
+    would unbalance the stack on 386). `go vet` lost 6 "possible misuse
+    of unsafe.Pointer" warnings (now 63 in walk).
+  - New in `internal/win`: GUIDs `IID_IOleWindow`, `IID_IOleInPlaceUIWindow`
+    and `IID_IOleInPlaceFrame`, the hand-written
+    `IConnectionPoint.Unadvise` and `E_POINTER`.
+  - Test programs: `tests/_wingui/webview` and the `com` entry of the
+    scripts (unit tests of `internal/com`).
+  - Next users of `internal/com`: WebView2 handlers (step 7) and the
+    `IRichEditOleCallback` of RichEdit (step 5) if needed.
+- Steps 4, 5, 7, 8 and 9: not started.
 
 ## Candidate next steps (analysis for steps 4 to 9)
 
@@ -311,7 +347,7 @@ and real dialogs all need new Win32/COM declarations.
 
 ## Known issues
 
-- `go vet` reports 72 "possible misuse of unsafe.Pointer" warnings: 69 in
+- `go vet` reports 66 "possible misuse of unsafe.Pointer" warnings: 63 in
   walk, mostly `lParam` to struct pointer conversions in window procedures,
   and 3 in `internal/win` (`GlobalLock`, `SysAllocString`,
   `MAKEINTRESOURCE`). The 3 in `internal/win` were reviewed in step 3: they

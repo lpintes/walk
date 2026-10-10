@@ -13,6 +13,7 @@ import (
 )
 
 import (
+	"github.com/lpintes/walk/internal/com"
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -26,8 +27,11 @@ func init() {
 
 type WebView struct {
 	WidgetBase
-	clientSite                               webViewIOleClientSite // IMPORTANT: Must remain first member after WidgetBase
+	site                                     *com.Object // IOleClientSite and the other host interfaces
+	frame                                    *com.Object // IOleInPlaceFrame
 	browserObject                            *win.IOleObject
+	eventsConnectionPoint                    *win.IConnectionPoint
+	eventsCookie                             uint32
 	urlChangedPublisher                      EventPublisher
 	shortcutsEnabled                         bool
 	shortcutsEnabledChangedPublisher         EventPublisher
@@ -71,31 +75,6 @@ func NewWebView(parent Container) (*WebView, error) {
 	}
 
 	wv := &WebView{
-		clientSite: webViewIOleClientSite{
-			IOleClientSite: win.IOleClientSite{
-				LpVtbl: webViewIOleClientSiteVtbl,
-			},
-			inPlaceSite: webViewIOleInPlaceSite{
-				IOleInPlaceSite: win.IOleInPlaceSite{
-					LpVtbl: webViewIOleInPlaceSiteVtbl,
-				},
-				inPlaceFrame: webViewIOleInPlaceFrame{
-					IOleInPlaceFrame: win.IOleInPlaceFrame{
-						LpVtbl: webViewIOleInPlaceFrameVtbl,
-					},
-				},
-			},
-			docHostUIHandler: webViewIDocHostUIHandler{
-				IDocHostUIHandler: win.IDocHostUIHandler{
-					LpVtbl: webViewIDocHostUIHandlerVtbl,
-				},
-			},
-			webBrowserEvents2: webViewDWebBrowserEvents2{
-				DWebBrowserEvents2: win.DWebBrowserEvents2{
-					LpVtbl: webViewDWebBrowserEvents2Vtbl,
-				},
-			},
-		},
 		shortcutsEnabled:         false,
 		nativeContextMenuEnabled: false,
 	}
@@ -109,8 +88,6 @@ func NewWebView(parent Container) (*WebView, error) {
 		return nil, err
 	}
 
-	wv.clientSite.inPlaceSite.inPlaceFrame.webView = wv
-
 	succeeded := false
 
 	defer func() {
@@ -118,6 +95,10 @@ func NewWebView(parent Container) (*WebView, error) {
 			wv.Dispose()
 		}
 	}()
+
+	wv.site = newWebViewSite(wv)
+	wv.frame = newWebViewFrame(wv)
+	clientSite := (*win.IOleClientSite)(wv.site.Interface(webViewSiteIOleClientSite))
 
 	var classFactoryPtr unsafe.Pointer
 	if hr := win.CoGetClassObject(&win.CLSID_WebBrowser, win.CLSCTX_INPROC_HANDLER|win.CLSCTX_INPROC_SERVER, nil, &win.IID_IClassFactory, &classFactoryPtr); win.FAILED(hr) {
@@ -134,7 +115,7 @@ func NewWebView(parent Container) (*WebView, error) {
 
 	wv.browserObject = browserObject
 
-	if hr := browserObject.SetClientSite((*win.IOleClientSite)(unsafe.Pointer(&wv.clientSite))); win.FAILED(hr) {
+	if hr := browserObject.SetClientSite(clientSite); win.FAILED(hr) {
 		return nil, errorFromHRESULT("IOleObject.SetClientSite", hr)
 	}
 
@@ -149,7 +130,7 @@ func NewWebView(parent Container) (*WebView, error) {
 	var rect win.RECT
 	win.GetClientRect(wv.hWnd, &rect)
 
-	if hr := browserObject.DoVerb(win.OLEIVERB_SHOW, nil, (*win.IOleClientSite)(unsafe.Pointer(&wv.clientSite)), 0, wv.hWnd, &rect); win.FAILED(hr) {
+	if hr := browserObject.DoVerb(win.OLEIVERB_SHOW, nil, clientSite, 0, wv.hWnd, &rect); win.FAILED(hr) {
 		return nil, errorFromHRESULT("IOleObject.DoVerb", hr)
 	}
 
@@ -164,12 +145,12 @@ func NewWebView(parent Container) (*WebView, error) {
 	if hr := cpc.FindConnectionPoint(&win.DIID_DWebBrowserEvents2, &cp); win.FAILED(hr) {
 		return nil, errorFromHRESULT("IConnectionPointContainer.FindConnectionPoint(DIID_DWebBrowserEvents2)", hr)
 	}
-	defer cp.Release()
 
-	var cookie uint32
-	if hr := cp.Advise(unsafe.Pointer(&wv.clientSite.webBrowserEvents2), &cookie); win.FAILED(hr) {
+	if hr := cp.Advise(wv.site.Interface(webViewSiteDWebBrowserEvents2), &wv.eventsCookie); win.FAILED(hr) {
+		cp.Release()
 		return nil, errorFromHRESULT("IConnectionPoint.Advise", hr)
 	}
+	wv.eventsConnectionPoint = cp
 
 	wv.onResize()
 
@@ -209,6 +190,13 @@ func NewWebView(parent Container) (*WebView, error) {
 }
 
 func (wv *WebView) Dispose() {
+	if wv.eventsConnectionPoint != nil {
+		wv.eventsConnectionPoint.Unadvise(wv.eventsCookie)
+		wv.eventsConnectionPoint.Release()
+
+		wv.eventsConnectionPoint = nil
+	}
+
 	if wv.browserObject != nil {
 		wv.browserObject.Close(win.OLECLOSE_NOSAVE)
 		wv.browserObject.Release()
@@ -216,6 +204,17 @@ func (wv *WebView) Dispose() {
 		wv.browserObject = nil
 
 		win.OleUninitialize()
+	}
+
+	// The browser may still hold references to the site and the frame;
+	// they live on until it releases them.
+	if wv.site != nil {
+		wv.site.Release()
+		wv.site = nil
+	}
+	if wv.frame != nil {
+		wv.frame.Release()
+		wv.frame = nil
 	}
 
 	wv.WidgetBase.Dispose()
@@ -499,7 +498,7 @@ func (wv *WebView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 			break
 		}
 
-		if wv.clientSite.inPlaceSite.inPlaceFrame.webView == nil {
+		if wv.browserObject == nil {
 			break
 		}
 
