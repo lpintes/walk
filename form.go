@@ -9,7 +9,6 @@ package walk
 import (
 	"fmt"
 	"math"
-	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -25,11 +24,6 @@ const (
 )
 
 var (
-	syncFuncs struct {
-		m     sync.Mutex
-		funcs []func()
-	}
-
 	syncMsgId                 uint32
 	taskbarButtonCreatedMsgId uint32
 	taskbarCreatedMsgId       uint32

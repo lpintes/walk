@@ -262,8 +262,6 @@ func (cb *ComboBox) itemString(index int) string {
 	default:
 		return fmt.Sprintf(cb.format, val)
 	}
-
-	panic("unreachable")
 }
 
 func (cb *ComboBox) insertItemAt(index int) error {

@@ -81,34 +81,6 @@ func NewFont(family string, pointSize int, style FontStyle) (*Font, error) {
 	return font, nil
 }
 
-func newFontFromLOGFONT(lf *win.LOGFONT, dpi int) (*Font, error) {
-	if lf == nil {
-		return nil, newError("lf cannot be nil")
-	}
-
-	family := win.UTF16PtrToString(&lf.LfFaceName[0])
-	pointSize := int(win.MulDiv(lf.LfHeight, 72, int32(dpi)))
-	if pointSize < 0 {
-		pointSize = -pointSize
-	}
-
-	var style FontStyle
-	if lf.LfWeight > win.FW_NORMAL {
-		style |= FontBold
-	}
-	if lf.LfItalic == win.TRUE {
-		style |= FontItalic
-	}
-	if lf.LfUnderline == win.TRUE {
-		style |= FontUnderline
-	}
-	if lf.LfStrikeOut == win.TRUE {
-		style |= FontStrikeOut
-	}
-
-	return NewFont(family, pointSize, style)
-}
-
 func (f *Font) createForDPI(dpi int) (win.HFONT, error) {
 	var lf win.LOGFONT
 

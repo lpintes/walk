@@ -17,11 +17,6 @@ type gridLayoutCell struct {
 	widgetBase *WidgetBase
 }
 
-type gridLayoutSection struct {
-	greedyNonSpacerCount int
-	greedySpacerCount    int
-}
-
 type gridLayoutWidgetInfo struct {
 	cell     *gridLayoutCell
 	spanHorz int
@@ -320,7 +315,6 @@ type gridLayoutItem struct {
 	columnStretchFactors []int
 	item2Info            map[LayoutItem]*gridLayoutItemInfo
 	cells                [][]gridLayoutItemCell
-	minSize              Size // in native pixels
 }
 
 type gridLayoutItemInfo struct {
@@ -334,16 +328,6 @@ type gridLayoutItemCell struct {
 	row    int
 	column int
 	item   LayoutItem
-}
-
-func (*gridLayoutItem) stretchFactorsTotal(stretchFactors []int) int {
-	total := 0
-
-	for _, v := range stretchFactors {
-		total += maxi(1, v)
-	}
-
-	return total
 }
 
 func (li *gridLayoutItem) LayoutFlags() LayoutFlags {

@@ -21,7 +21,6 @@ type TextEdit struct {
 	textColor                Color
 	compactHeight            bool
 	margins                  Size // in native pixels
-	lastHeight               int
 	origWordbreakProcPtr     uintptr
 }
 

@@ -118,7 +118,6 @@ type Styler struct {
 	lb                  **walk.ListBox
 	canvas              *walk.Canvas
 	model               *logModel
-	font                *walk.Font
 	dpi2StampSize       map[int]walk.Size
 	widthDPI2WsPerLine  map[widthDPI]int
 	textWidthDPI2Height map[textWidthDPI]int // in native pixels

@@ -45,14 +45,6 @@ const (
 	TextPrefixOnly           DrawTextFormat = win.DT_PREFIXONLY
 )
 
-var gM *uint16
-
-func init() {
-	AppendToWalkInit(func() {
-		gM = syscall.StringToUTF16Ptr("gM")
-	})
-}
-
 type Canvas struct {
 	hdc                 win.HDC
 	hBmpStock           win.HBITMAP
@@ -590,25 +582,6 @@ func (c *Canvas) DrawTextPixels(text string, font *Font, color Color, bounds Rec
 
 		return nil
 	})
-}
-
-// fontHeight returns font height in native pixels.
-func (c *Canvas) fontHeight(font *Font) (height int, err error) {
-	err = c.withFontAndTextColor(font, 0, func() error {
-		var size win.SIZE
-		if !win.GetTextExtentPoint32(c.hdc, gM, 2, &size) {
-			return newError("GetTextExtentPoint32 failed")
-		}
-
-		height = int(size.CY)
-		if height == 0 {
-			return newError("invalid font height")
-		}
-
-		return nil
-	})
-
-	return
 }
 
 // measureTextForDPI measures text for given DPI. Input and output bounds are in native pixels.

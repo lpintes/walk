@@ -766,10 +766,6 @@ func (wb *WindowBase) setAndClearStyleBits(set, clear uint32) error {
 	return setAndClearWindowLongBits(wb.hWnd, win.GWL_STYLE, set, clear)
 }
 
-func (wb *WindowBase) setAndClearExtendedStyleBits(set, clear uint32) error {
-	return setAndClearWindowLongBits(wb.hWnd, win.GWL_EXSTYLE, set, clear)
-}
-
 func setAndClearWindowLongBits(hwnd win.HWND, index int32, set, clear uint32) error {
 	value := uint32(win.GetWindowLong(hwnd, index))
 	if value == 0 {

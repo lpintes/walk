@@ -163,7 +163,6 @@ func (s *Splitter) updateMarginsForFocusEffect() {
 
 			default:
 				marginsNeeded = true
-				break
 			}
 		}
 

@@ -322,13 +322,7 @@ type WebViewWindowClosingEventData struct {
 }
 
 func (eventData *WebViewWindowClosingEventData) IsChildWindow() bool {
-	bIsChildWindow := eventData.bIsChildWindow
-	if bIsChildWindow != win.VARIANT_FALSE {
-		return true
-	} else {
-		return false
-	}
-	return false
+	return eventData.bIsChildWindow != win.VARIANT_FALSE
 }
 
 func (eventData *WebViewWindowClosingEventData) Canceled() bool {

@@ -135,8 +135,6 @@ func (m *FooModel) ResetRows() {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	boldFont, _ := walk.NewFont("Segoe UI", 9, walk.FontBold)
 	goodIcon, _ := walk.Resources.Icon("../img/check.ico")
 	badIcon, _ := walk.Resources.Icon("../img/stop.ico")

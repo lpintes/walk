@@ -38,7 +38,7 @@ func main() {
 	go func() {
 		for i := 0; i < 10000; i++ {
 			time.Sleep(100 * time.Millisecond)
-			log.Println("Text" + "\r\n")
+			log.Println("Text")
 		}
 	}()
 

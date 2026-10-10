@@ -75,8 +75,6 @@ func RunMainWindow() error {
 func NewFooModel() *FooModel {
 	now := time.Now()
 
-	rand.Seed(now.UnixNano())
-
 	m := &FooModel{items: make([]*Foo, 1000)}
 
 	for i := range m.items {

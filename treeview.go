@@ -462,7 +462,7 @@ func (tv *TreeView) removeItem(item TreeItem) error {
 }
 
 func (tv *TreeView) removeDescendants(parent TreeItem) error {
-	for item, _ := range tv.item2Info[parent].child2Handle {
+	for item := range tv.item2Info[parent].child2Handle {
 		if err := tv.removeItem(item); err != nil {
 			return err
 		}

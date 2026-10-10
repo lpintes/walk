@@ -6,9 +6,7 @@
 
 package walk
 
-import (
-	"github.com/lpintes/walk/internal/win"
-)
+import ()
 
 type tabPageListObserver interface {
 	onInsertingPage(index int, page *TabPage) error
@@ -69,20 +67,6 @@ func (l *TabPageList) Index(item *TabPage) int {
 
 func (l *TabPageList) Contains(item *TabPage) bool {
 	return l.Index(item) > -1
-}
-
-func (l *TabPageList) indexHandle(handle win.HWND) int {
-	for i, page := range l.items {
-		if page.Handle() == handle {
-			return i
-		}
-	}
-
-	return -1
-}
-
-func (l *TabPageList) containsHandle(handle win.HWND) bool {
-	return l.indexHandle(handle) > -1
 }
 
 func (l *TabPageList) insertIntoSlice(index int, item *TabPage) {

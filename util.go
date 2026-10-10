@@ -19,12 +19,10 @@ import (
 )
 
 var (
-	decimalSepB      byte
 	decimalSepUint16 uint16
 	decimalSepS      string
 	groupSepB        byte
 	groupSepUint16   uint16
-	groupSepS        string
 )
 
 func init() {
@@ -32,13 +30,11 @@ func init() {
 		var buf [4]uint16
 
 		win.GetLocaleInfo(win.LOCALE_USER_DEFAULT, win.LOCALE_SDECIMAL, &buf[0], int32(len(buf)))
-		decimalSepB = byte(buf[0])
 		decimalSepS = syscall.UTF16ToString(buf[0:1])
 		decimalSepUint16 = buf[0]
 
 		win.GetLocaleInfo(win.LOCALE_USER_DEFAULT, win.LOCALE_STHOUSAND, &buf[0], int32(len(buf)))
 		groupSepB = byte(buf[0])
-		groupSepS = syscall.UTF16ToString(buf[0:1])
 		groupSepUint16 = buf[0]
 	})
 }
@@ -57,14 +53,6 @@ func mini(a, b int) int {
 	}
 
 	return b
-}
-
-func boolToInt(value bool) int {
-	if value {
-		return 1
-	}
-
-	return 0
 }
 
 func uint16IndexUint16(s []uint16, v uint16) int {
@@ -173,10 +161,6 @@ func FormatFloat(f float64, prec int) string {
 
 func FormatFloatGrouped(f float64, prec int) string {
 	return formatFloatString(strconv.FormatFloat(f, 'f', maxi(1, prec), 64), prec, true)
-}
-
-func formatBigRat(r *big.Rat, prec int) string {
-	return formatFloatString(r.FloatString(prec), prec, false)
 }
 
 func formatBigRatGrouped(r *big.Rat, prec int) string {

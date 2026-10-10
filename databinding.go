@@ -263,7 +263,8 @@ func (db *DataBinder) Reset() error {
 	}()
 
 	if err := db.forEach(func(prop Property, field DataField) error {
-		if f64, ok := prop.Get().(float64); ok {
+		if _, ok := prop.Get().(float64); ok {
+			var f64 float64
 			switch v := field.Get().(type) {
 			case float32:
 				f64 = float64(v)
@@ -418,11 +419,6 @@ func (db *DataBinder) fieldBoundToProperty(v reflect.Value, prop Property) DataF
 	}
 
 	return f
-}
-
-func validateBindingMemberSyntax(member string) error {
-	// FIXME
-	return nil
 }
 
 type DataField interface {

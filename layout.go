@@ -415,8 +415,6 @@ type LayoutBase struct {
 	spacing96dpi int
 	spacing      int // in native pixels
 	alignment    Alignment2D
-	resetNeeded  bool
-	dirty        bool
 }
 
 func (l *LayoutBase) asLayoutBase() *LayoutBase {

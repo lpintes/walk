@@ -21,7 +21,6 @@ import (
 const tableViewWindowClass = `\o/ Walk_TableView_Class \o/`
 
 var (
-	white                       = win.COLORREF(RGB(255, 255, 255))
 	checkmark                   = string([]byte{0xE2, 0x9C, 0x94})
 	tableViewFrozenLVWndProcPtr uintptr
 	tableViewNormalLVWndProcPtr uintptr
@@ -327,10 +326,6 @@ func NewTableViewWithCfg(parent Container, cfg *TableViewCfg) (*TableView, error
 	succeeded = true
 
 	return tv, nil
-}
-
-func (tv *TableView) asTableView() *TableView {
-	return tv
 }
 
 // Dispose releases the operating system resources, associated with the
@@ -1328,10 +1323,7 @@ func (tv *TableView) SetMultiSelection(multiSel bool) error {
 // SelectedIndexes returns the indexes of the currently selected items.
 func (tv *TableView) SelectedIndexes() []int {
 	indexes := make([]int, len(tv.selectedIndexes))
-
-	for i, j := range tv.selectedIndexes {
-		indexes[i] = j
-	}
+	copy(indexes, tv.selectedIndexes)
 
 	return indexes
 }
@@ -1372,10 +1364,7 @@ func (tv *TableView) SetSelectedIndexes(indexes []int) error {
 
 	if !selectAll {
 		idxs := make([]int, len(indexes))
-
-		for i, j := range indexes {
-			idxs[i] = j
-		}
+		copy(idxs, indexes)
 
 		tv.selectedIndexes = idxs
 	} else {
