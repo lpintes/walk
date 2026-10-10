@@ -22,8 +22,8 @@ func main() {
 	if _, err := (MainWindow{
 		AssignTo: &mw.MainWindow,
 		Title:    "Walk ListBox Example",
-		MinSize:  Size{240, 320},
-		Size:     Size{300, 400},
+		MinSize:  Size{Width: 240, Height: 320},
+		Size:     Size{Width: 300, Height: 400},
 		Layout:   VBox{MarginsZero: true},
 		Children: []Widget{
 			HSplitter{

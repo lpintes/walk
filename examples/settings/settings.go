@@ -49,7 +49,7 @@ func RunMainWindow() error {
 	if _, err := (MainWindow{
 		Name:    "mainWindow", // Name is needed for settings persistence
 		Title:   "Walk Settings Example",
-		MinSize: Size{800, 600},
+		MinSize: Size{Width: 800, Height: 600},
 		Layout:  VBox{MarginsZero: true},
 		Children: []Widget{
 			TableView{

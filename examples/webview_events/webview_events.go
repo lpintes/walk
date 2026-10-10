@@ -35,7 +35,7 @@ func NewMainWin() (*MainWin, error) {
 		AssignTo: &mainWin.MainWindow,
 		Icon:     Bind("'../img/' + icon(mainWin.wv.URL) + '.ico'"),
 		Title:    "Walk WebView Example (With Events Printing)",
-		MinSize:  Size{800, 600},
+		MinSize:  Size{Width: 800, Height: 600},
 		Layout:   VBox{MarginsZero: true},
 		Children: []Widget{
 			LineEdit{

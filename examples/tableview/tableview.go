@@ -139,7 +139,7 @@ func main() {
 	goodIcon, _ := walk.Resources.Icon("../img/check.ico")
 	badIcon, _ := walk.Resources.Icon("../img/stop.ico")
 
-	barBitmap, err := walk.NewBitmap(walk.Size{100, 1})
+	barBitmap, err := walk.NewBitmap(walk.Size{Width: 100, Height: 1})
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +151,7 @@ func main() {
 	}
 	defer barBitmap.Dispose()
 
-	canvas.GradientFillRectangle(walk.RGB(255, 0, 0), walk.RGB(0, 255, 0), walk.Horizontal, walk.Rectangle{0, 0, 100, 1})
+	canvas.GradientFillRectangle(walk.RGB(255, 0, 0), walk.RGB(0, 255, 0), walk.Horizontal, walk.Rectangle{X: 0, Y: 0, Width: 100, Height: 1})
 
 	canvas.Dispose()
 
@@ -161,7 +161,7 @@ func main() {
 
 	MainWindow{
 		Title:  "Walk TableView Example",
-		Size:   Size{800, 600},
+		Size:   Size{Width: 800, Height: 600},
 		Layout: VBox{MarginsZero: true},
 		Children: []Widget{
 			PushButton{
@@ -205,7 +205,7 @@ func main() {
 							bounds.Y += 2
 							bounds.Width = int((float64(bounds.Width) - 4) / 5 * float64(len(item.Bar)))
 							bounds.Height -= 4
-							canvas.DrawBitmapPartWithOpacity(barBitmap, bounds, walk.Rectangle{0, 0, 100 / 5 * len(item.Bar), 1}, 127)
+							canvas.DrawBitmapPartWithOpacity(barBitmap, bounds, walk.Rectangle{X: 0, Y: 0, Width: 100 / 5 * len(item.Bar), Height: 1}, 127)
 
 							bounds.X += 4
 							bounds.Y += 2

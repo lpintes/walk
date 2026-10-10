@@ -1966,7 +1966,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 
 	case win.WM_LBUTTONDOWN, win.WM_RBUTTONDOWN, win.WM_LBUTTONDBLCLK, win.WM_RBUTTONDBLCLK:
 		var hti win.LVHITTESTINFO
-		hti.Pt = win.POINT{win.GET_X_LPARAM(lp), win.GET_Y_LPARAM(lp)}
+		hti.Pt = win.POINT{X: win.GET_X_LPARAM(lp), Y: win.GET_Y_LPARAM(lp)}
 		win.SendMessage(hwnd, win.LVM_HITTEST, 0, uintptr(unsafe.Pointer(&hti)))
 
 		tv.itemIndexOfLastMouseButtonDown = int(hti.IItem)
@@ -2545,7 +2545,7 @@ func tableViewHdrWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 		return result
 
 	case win.WM_MOUSEMOVE, win.WM_LBUTTONDOWN, win.WM_LBUTTONUP, win.WM_MBUTTONDOWN, win.WM_MBUTTONUP, win.WM_RBUTTONDOWN, win.WM_RBUTTONUP:
-		hti := win.HDHITTESTINFO{Pt: win.POINT{int32(win.GET_X_LPARAM(lp)), int32(win.GET_Y_LPARAM(lp))}}
+		hti := win.HDHITTESTINFO{Pt: win.POINT{X: int32(win.GET_X_LPARAM(lp)), Y: int32(win.GET_Y_LPARAM(lp))}}
 		win.SendMessage(hwnd, win.HDM_HITTEST, 0, uintptr(unsafe.Pointer(&hti)))
 		if hti.IItem == -1 {
 			tv.group.toolTip.setText(hwnd, "")
@@ -2626,11 +2626,11 @@ func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr 
 		var rc win.RECT
 
 		vsbWidth := win.GetSystemMetricsForDpi(win.SM_CXVSCROLL, dpi)
-		rc = win.RECT{wp.Cx - vsbWidth - 1, 0, wp.Cx, wp.Cy}
+		rc = win.RECT{Left: wp.Cx - vsbWidth - 1, Top: 0, Right: wp.Cx, Bottom: wp.Cy}
 		win.InvalidateRect(tv.hWnd, &rc, true)
 
 		hsbHeight := win.GetSystemMetricsForDpi(win.SM_CYHSCROLL, dpi)
-		rc = win.RECT{0, wp.Cy - hsbHeight - 1, wp.Cx, wp.Cy}
+		rc = win.RECT{Left: 0, Top: wp.Cy - hsbHeight - 1, Right: wp.Cx, Bottom: wp.Cy}
 		win.InvalidateRect(tv.hWnd, &rc, true)
 
 		tv.redrawItems()

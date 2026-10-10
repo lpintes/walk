@@ -50,10 +50,10 @@ func main() {
 			},
 		},
 		ToolBarItems: []MenuItem{
-			ActionRef{&openAction},
+			ActionRef{Action: &openAction},
 		},
-		MinSize: Size{320, 240},
-		Size:    Size{800, 600},
+		MinSize: Size{Width: 320, Height: 240},
+		Size:    Size{Width: 800, Height: 600},
 		Layout:  VBox{MarginsZero: true},
 		Children: []Widget{
 			TabWidget{

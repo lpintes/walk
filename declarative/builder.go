@@ -313,7 +313,7 @@ func (b *Builder) InitWidget(d Widget, w walk.Window, customInit func() error) e
 					b.col += columnSpan
 				}
 
-				r := walk.Rectangle{column, row, columnSpan, rowSpan}
+				r := walk.Rectangle{X: column, Y: row, Width: columnSpan, Height: rowSpan}
 
 				if err := l.SetRange(widget, r); err != nil {
 					return err

@@ -22,7 +22,7 @@ func main() {
 
 	MainWindow{
 		Title:   "Walk RadioButton Example",
-		MinSize: Size{320, 240},
+		MinSize: Size{Width: 320, Height: 240},
 		Layout:  VBox{},
 		DataBinder: DataBinder{
 			DataSource: foo,

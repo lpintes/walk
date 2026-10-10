@@ -20,8 +20,8 @@ func main() {
 	if err := (MainWindow{
 		AssignTo: &mw,
 		Title:    "Walk LogView Example",
-		MinSize:  Size{320, 240},
-		Size:     Size{400, 600},
+		MinSize:  Size{Width: 320, Height: 240},
+		Size:     Size{Width: 400, Height: 600},
 		Layout:   VBox{MarginsZero: true},
 	}.Create()); err != nil {
 		log.Fatal(err)
