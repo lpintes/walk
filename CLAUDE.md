@@ -243,7 +243,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     scripts (unit tests of `internal/com`).
   - Next users of `internal/com`: WebView2 handlers (step 7) and the
     `IRichEditOleCallback` of RichEdit (step 5) if needed.
-- Step 8, part 1: pull request lpintes/walk#PRNUM, mechanical and
+- Step 8, part 1: pull request lpintes/walk#9, mechanical and
   behavior-preserving, checked with `go vet`, staticcheck 2025.1.1 and
   the modernize analyzer of gopls v0.18.1 (run them with
   `GOOS=windows`; install them with the Go 1.24 toolchain).
