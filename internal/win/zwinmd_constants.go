@@ -467,6 +467,11 @@ const (
 	ODA_DRAWENTIRE = 1
 )
 
+// ODS_FLAGS
+const (
+	ODS_SELECTED = 1
+)
+
 // OLECLOSE
 const (
 	OLECLOSE_NOSAVE = 1

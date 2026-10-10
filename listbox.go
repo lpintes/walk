@@ -668,10 +668,6 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		lb.style.hdc = dis.HDC
 		lb.style.Font = lb.Font()
 
-		if dis.ItemAction == win.ODA_FOCUS {
-			return win.TRUE
-		}
-
 		var hTheme win.HTHEME
 		if !lb.style.highContrastActive {
 			if hTheme = win.OpenThemeData(lb.hWnd, syscall.StringToUTF16Ptr("Listview")); hTheme != 0 {
@@ -680,7 +676,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		}
 		lb.style.hTheme = hTheme
 
-		if dis.ItemState&win.ODS_CHECKED != 0 {
+		if dis.ItemState&win.ODS_SELECTED != 0 {
 			if lb.style.highContrastActive || lb.Focused() {
 				lb.style.BackgroundColor = lb.themeSelectedBGColor
 				lb.style.TextColor = lb.themeSelectedTextColor

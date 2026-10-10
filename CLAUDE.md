@@ -174,8 +174,20 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   messages sent to the header window) on both headers, the header sends
   `HDN_ITEMCHANGINGW` (0xFFFFFEC0) and `HDN_ITEMCHANGEDW`, `updateLVSizes`
   runs once right after the latter, before and after the fix, and the
-  frozen and normal list views stay adjacent. The `ODA_*`/`ODS_*` bugs stay
-  recorded. No GitHub issues were created for them.
+  frozen and normal list views stay adjacent. The `ODS_*`/`ODA_*` bug is
+  fixed without a change of behavior: `ODS_CHECKED` and `ODA_FOCUS` are
+  gone, `ODS_SELECTED` (1, the bit walk always tested) is generated,
+  `ListBox` and `ListItemStyle.stateID` use it, and the dead `ODA_FOCUS`
+  check in `ListBox.WndProc` is removed. Tested on Windows 11 (386 and
+  amd64) with an owner drawn `ListBox` (selection by mouse and keyboard
+  messages, focus moved away and back, pixels read with `GetPixel`):
+  the selected item gets `LISS_SELECTED` with focus and
+  `LISS_SELECTEDNOTFOCUS` without, the others `LISS_NORMAL`, with the
+  same results before and after the fix. No GitHub issues were created
+  for these bugs.
+- Task 1 of `TESTING_ON_WINDOWS.md` (smoke test of step 3, 386 and amd64,
+  also with NVDA on amd64) passed apart from the inherited problems listed
+  under "Known issues".
 - `TESTING_ON_WINDOWS.md` describes tasks for an agent on a Windows
   machine: a smoke test of step 3 (all three parts) and tests for these
   bugs. Finding while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
@@ -306,12 +318,31 @@ and real dialogs all need new Win32/COM declarations.
   widths converted to 96 DPI and back, so at 150 % scaling it can be one
   pixel wider than the frozen columns (column 220 pixels, list view 221).
   Found while testing the `HDN_*` fix; inherited and cosmetic.
+- Inherited problems found while testing step 3 on Windows 11 (all are
+  the same on a build from before step 3):
+  - A `MainWindow` or dialog without a layout panics in `SetVisible` (nil
+    layout in `ContainerBase.CreateLayoutItem`, `container.go`); this
+    breaks `examples/progressindicator`.
+  - `Accessibility.SetRole` and everything else going through
+    `accSetPropertyInt` fails on 386 with `E_INVALIDARG`: `SetHwndProp`
+    in `internal/win/oleacc_32.go` passes a `*VARIANT`, but on 386 the
+    16-byte `VARIANT` is passed by value. amd64 and arm64 work.
+  - An owner drawn `ListBox` created directly in a `MainWindow` sends
+    `WM_DRAWITEM` to the form window, which does not forward it, so the
+    styler is never called; inside a `Composite` it works (as in
+    `examples/listbox_ownerdrawing`).
+  - `ListBox` starts with `style.hoverIndex` 0 instead of -1, so item 0
+    is drawn in the hot state until the mouse leaves the list once.
+  - `WebView`: the keyboard (Tab, F6) cannot move focus into the web
+    content; NVDA can still read the page.
+  - Seen with NVDA: when a window opens, only its title is announced, not
+    the focused control; most fields in the `databinding` example dialog
+    have no accessible name (labels are not associated); Enter on a
+    focused `PushButton` in a `MainWindow` does nothing (Space works);
+    validation errors are shown only as tooltips and not announced.
 - Bugs inherited from lxn/win, found by comparing with the metadata in
   step 3 and kept hand-written so that behavior does not change. Fixing
   them changes behavior and needs GUI testing:
-  - `ODA_FOCUS` is 2 (really `ODA_SELECT`, `ODA_FOCUS` is 4) and
-    `ODS_CHECKED` is 1 (really `ODS_SELECTED`, `ODS_CHECKED` is 8); used by
-    `ListBox` owner drawing and `models.go`.
   - `SetViewportOrgEx` returns `COLORREF` and `PostMessage` returns
     `uintptr` instead of a BOOL; `DragAcceptFiles` returns a result although
     the function has none.

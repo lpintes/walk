@@ -19,16 +19,6 @@ const (
 	HWND_MESSAGE   = ^HWND(2) // -3
 )
 
-// Owner drawing actions
-const (
-	ODA_FOCUS = 0x0002
-)
-
-// Owner drawing states
-const (
-	ODS_CHECKED = 0x0001
-)
-
 type (
 	HACCEL   HANDLE
 	HCURSOR  HANDLE

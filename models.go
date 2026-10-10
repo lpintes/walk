@@ -499,7 +499,7 @@ func (lis *ListItemStyle) DrawText(text string, bounds Rectangle, format DrawTex
 }
 
 func (lis *ListItemStyle) stateID() int32 {
-	if lis.state&win.ODS_CHECKED != 0 {
+	if lis.state&win.ODS_SELECTED != 0 {
 		if win.GetFocus() == lis.hwnd {
 			if lis.index == lis.hoverIndex {
 				return win.LISS_HOTSELECTED
