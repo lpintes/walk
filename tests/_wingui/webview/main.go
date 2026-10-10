@@ -42,18 +42,31 @@ func writePage(dir, name, title string) string {
 	return (&url.URL{Scheme: "file", Path: "/" + filepath.ToSlash(path)}).String()
 }
 
+// samePage reports whether u names the page at pageURL. For file URLs the
+// browser reports the local path (C:\...\page1.html) in its events.
+func samePage(u, pageURL string) bool {
+	if strings.EqualFold(u, pageURL) {
+		return true
+	}
+	p, err := url.Parse(pageURL)
+	if err != nil || p.Scheme != "file" {
+		return false
+	}
+	return strings.EqualFold(u, filepath.FromSlash(strings.TrimPrefix(p.Path, "/")))
+}
+
 // load loads pageURL into wv and calls done on the GUI thread when the
 // document is complete, after a garbage collection.
 func load(name string, wv *walk.WebView, pageURL, title string, done func()) {
 	navigating := false
 	wv.Navigating().Attach(func(e *walk.WebViewNavigatingEventData) {
-		if strings.EqualFold(e.Url(), pageURL) {
+		if samePage(e.Url(), pageURL) {
 			navigating = true
 		}
 	})
 	completed := false
 	wv.DocumentCompleted().Attach(func(u string) {
-		if completed || !strings.EqualFold(u, pageURL) {
+		if completed || !samePage(u, pageURL) {
 			return
 		}
 		completed = true
@@ -66,7 +79,7 @@ func load(name string, wv *walk.WebView, pageURL, title string, done func()) {
 		check(name+" Navigating", navigating, "Navigating for %s", pageURL)
 		check(name+" title", wv.DocumentTitle() == title, "DocumentTitle %q, want %q", wv.DocumentTitle(), title)
 		cur, err := wv.URL()
-		check(name+" URL", err == nil && strings.EqualFold(cur, pageURL), "URL %q, err %v", cur, err)
+		check(name+" URL", err == nil && samePage(cur, pageURL), "URL %q, err %v", cur, err)
 
 		// Let the resize hack of DocumentCompleted run first.
 		time.AfterFunc(500*time.Millisecond, func() {
