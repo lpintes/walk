@@ -69,8 +69,10 @@ The `LICENSE` and `AUTHORS` files must be preserved.
 8. Internal code modernization without public API changes.
 9. Generic public API (events, models); breaking, needs a separate decision
    before it starts.
+10. Live regions and screen reader announcements (queued 2026-10-10).
+11. MDI windows (queued 2026-10-10).
 
-Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
+Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
 
 ## Status
 
@@ -279,10 +281,10 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     error strings in walk and `internal/win`; dot imports in the
     examples; call sites that could return an error instead of
     panicking on strings with NUL.
-- Steps 4, 5, 7 and 9: not started; step 8 can continue (for example
-  `errors.Is` and `errors.As`, generic event types are step 9).
+- Steps 4, 5, 7, 9, 10 and 11: not started; step 8 can continue (for
+  example `errors.Is` and `errors.As`, generic event types are step 9).
 
-## Candidate next steps (analysis for steps 4 to 9)
+## Candidate next steps (analysis for steps 4 to 11)
 
 Each item is its own step and pull request, in the order given in the
 modernization plan. Step 3 (generator) goes first, because RichEdit, WebView2
@@ -389,6 +391,66 @@ and real dialogs all need new Win32/COM declarations.
   (`event.go`, `intevent.go`, `stringevent.go`, `keyevent.go`, ...) are nearly
   identical copies and could become a generic `Event[T]`; models and data
   binding could use generics instead of `any` and reflection.
+
+### Live regions and announcements (step 10)
+
+- Goal: let a program have a screen reader read changed text without
+  moving focus (status lines, progress, validation errors, search result
+  counts). Today nothing is announced unless focus moves; validation
+  errors are only tooltips (see "Known issues").
+- Part A, live regions on existing widgets (small, try first): Windows 8
+  and later accept UI Automation properties through Dynamic Annotation.
+  Set `LiveSetting` (Off, Polite or Assertive) with
+  `IAccPropServices.SetHwndProp` and the UIA property GUID
+  `LiveSetting_Property_GUID`, and after each text change call
+  `NotifyWinEvent(EVENT_OBJECT_LIVEREGIONCHANGED, hwnd, OBJID_CLIENT,
+  CHILDID_SELF)`. This is the documented way for plain Win32 controls.
+  walk already has the pieces in `accessibility.go` (`accSetPropertyInt`,
+  `NotifyWinEvent`). Proposed API: `Accessibility.SetLiveSetting` plus
+  an automatic live region changed event when the text of a widget with
+  a live setting changes (at least `Label`, `TextLabel`, `LineEdit` read
+  only, `StatusBarItem`), and a `LiveSetting` property in `declarative`.
+  The 386 bug of `SetHwndProp` (see "Known issues") must be fixed first,
+  because `LiveSetting` is an integer `VARIANT`.
+- Part B, one-off announcements: `UiaRaiseNotificationEvent`
+  (Windows 10 1709 and later, `uiautomationcore.dll`) speaks any text
+  without a visible control, with a priority (`NotificationProcessing`).
+  It needs an `IRawElementProviderSimple` for a window; try
+  `UiaHostProviderFromHwnd` first, otherwise implement a minimal provider
+  with `internal/com`. Proposed API: `walk.Announce(window, text,
+  priority)`. Use it, for example, to announce validation errors.
+- Declarations (GUIDs, `EVENT_OBJECT_LIVEREGIONCHANGED`, the UIA
+  functions and enums) come from the generator.
+- Only testable with screen readers: NVDA, JAWS and Narrator handle
+  live region and notification events differently (for example how
+  Polite and Assertive interrupt speech), so every part needs live
+  testing on Windows.
+
+### MDI windows (step 11)
+
+- Goal: multiple-document interface, a frame window whose client area
+  is the system `MDICLIENT` window holding child document windows.
+  walk has no MDI support today.
+- Plan: new `MdiMainWindow` (or an MDI option of `MainWindow`) that
+  creates `MDICLIENT` and calls `DefFrameProcW`, and `MdiChildWindow`, a
+  container created with `WM_MDICREATE` whose window procedure calls
+  `DefMDIChildProcW`. The message loop (`mainloop_default.go` and
+  `mainloop_cgo.go`) must call `TranslateMDISysAccel` (Ctrl+F4, Ctrl+F6)
+  before `IsDialogMessage`. A Window menu with the list of children comes
+  from `WM_MDISETMENU`; cascade, tile and arrange from `WM_MDICASCADE`,
+  `WM_MDITILE` and `WM_MDIICONARRANGE`. Declarative counterparts too.
+- Risks: walk's `FormBase` assumes top-level windows (activation, focus
+  restore, keyboard handling in `handleKeyDown`, layout), and MDI
+  children are child windows that behave like top-level ones; menus
+  merge when a child is maximized. Larger than step 10; expect a few
+  rounds of testing.
+- Accessibility: native MDI is understood by screen readers (MSAA
+  exposes the children as windows, NVDA reads the active child's title,
+  Ctrl+F6 switches documents). Check focus on child switches, the title
+  announcement and the maximized state with NVDA, JAWS and Narrator.
+- Microsoft considers MDI legacy; tabbed documents (`TabWidget`) are the
+  modern alternative. Worth doing for applications that want the classic
+  model, but after the accessibility steps.
 
 ## Known issues
 
