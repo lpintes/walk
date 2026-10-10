@@ -65,6 +65,7 @@ var (
 	procDestroyMenu                 = libuser32.NewProc("DestroyMenu")
 	procDestroyWindow               = libuser32.NewProc("DestroyWindow")
 	procDispatchMessageW            = libuser32.NewProc("DispatchMessageW")
+	procDragFinish                  = libshell32.NewProc("DragFinish")
 	procDragQueryFileW              = libshell32.NewProc("DragQueryFileW")
 	procDrawIconEx                  = libuser32.NewProc("DrawIconEx")
 	procDrawMenuBar                 = libuser32.NewProc("DrawMenuBar")
@@ -417,6 +418,10 @@ func DestroyWindow(hWnd HWND) bool {
 func DispatchMessage(lpMsg *MSG) uintptr {
 	r1, _, _ := syscall.SyscallN(procDispatchMessageW.Addr(), uintptr(unsafe.Pointer(lpMsg)))
 	return r1
+}
+
+func DragFinish(hDrop HDROP) {
+	syscall.SyscallN(procDragFinish.Addr(), uintptr(hDrop))
 }
 
 func DragQueryFile(hDrop HDROP, iFile uint, lpszFile *uint16, cch uint) uint {

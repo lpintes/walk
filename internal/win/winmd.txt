@@ -1107,6 +1107,7 @@ func DestroyMenu
 func DestroyWindow
 func DispatchMessage
 func DragQueryFile result=uint cch:uint iFile:uint
+func DragFinish
 func DrawIconEx
 func DrawMenuBar
 func DrawTextEx

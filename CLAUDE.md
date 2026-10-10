@@ -132,7 +132,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     helpers (`LOWORD`, `MAKEINTRESOURCE`, `BoolToBOOL`, ...), functions
     with a fallback for older Windows versions (`GetDpiForWindow`, ...),
     functions returning pointers (`GlobalLock`, `LockResource`), the
-    functions with known bugs (`DragAcceptFiles`, `DragFinish`) and
+    function with a known bug (`DragAcceptFiles`) and
     deliberately different bodies (`OleInitialize`, `GdiplusStartup`,
     `SHParseDisplayName`, which passes 0 for `sfgaoIn`), and the
     constants listed under "Known issues". New Win32 symbols go into
@@ -161,9 +161,11 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
     `go run ./tools/winmigrate/prune internal/win`; the dump after it may
     only lose lines.
 - Bugs found in part 1 (see "Known issues"): the user decided to record
-  them; fixing is optional. Proposed: fix `DragFinish` in a separate small
-  pull request (a memory leak, low risk, test that dropping files still
-  works); the `HDN_*` and `ODA_*`/`ODS_*` bugs are visual only and hard to
+  them; fixing is optional. `DragFinish` is fixed: it is generated now and
+  calls `shell32!DragFinish` instead of `DragAcceptFiles`, so the `HDROP`
+  of dropped files is freed. Tested on Windows 11 (386 and amd64) with a
+  posted `WM_DROPFILES` (`GlobalFlags` reports the handle freed) and with
+  a real OLE drag of shell files from another process (amd64). The `HDN_*` and `ODA_*`/`ODS_*` bugs are visual only and hard to
   test with a screen reader, so they stay recorded until someone can check
   the appearance. No GitHub issues were created for them.
 - `TESTING_ON_WINDOWS.md` describes tasks for an agent on a Windows
@@ -171,7 +173,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   bugs. Finding while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
   change of behavior (walk effectively reacts to `HDN_ITEMCHANGEDW` and
   tests the real `ODS_SELECTED` bit; the `ODA_FOCUS` check is dead code).
-  Only the `DragFinish` fix changes behavior.
+  Only the `DragFinish` fix changed behavior.
 - Steps 4 to 9: not started.
 
 ## Candidate next steps (analysis for steps 4 to 9)
@@ -301,8 +303,6 @@ and real dialogs all need new Win32/COM declarations.
   - `ODA_FOCUS` is 2 (really `ODA_SELECT`, `ODA_FOCUS` is 4) and
     `ODS_CHECKED` is 1 (really `ODS_SELECTED`, `ODS_CHECKED` is 8); used by
     `ListBox` owner drawing and `models.go`.
-  - `DragFinish` calls the `DragAcceptFiles` entry point, so the `HDROP` of
-    dropped files is never freed.
   - `SetViewportOrgEx` returns `COLORREF` and `PostMessage` returns
     `uintptr` instead of a BOOL; `DragAcceptFiles` returns a result although
     the function has none.

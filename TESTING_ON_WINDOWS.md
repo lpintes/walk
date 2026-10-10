@@ -166,6 +166,25 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
      reader user can do) and check the file names arrive.
 - This fix changes behavior (the handle is now freed, the bogus
   `DragAcceptFiles` call is gone), so it needs this test.
+- Done: `DragFinish` is generated now. Results on Windows 11:
+  - Steps 1 to 3 on 386 and amd64: before the fix the paths (including
+    non-ASCII ones) arrived and `GlobalFlags` returned 0 (handle still
+    valid); after the fix it returned 0x8000.
+  - Step 4 without global keyboard or mouse input, on amd64: a second
+    process got the shell's own `IDataObject` for two files
+    (`SHParseDisplayName`, `SHBindToParent`,
+    `IShellFolder::GetUIObjectOf`), moved the pointer over the walk window
+    with `SetCursorPos` (the window made topmost with `SWP_NOACTIVATE`)
+    and called `DoDragDrop` with a Go `IDropSource` whose
+    `QueryContinueDrag` returns `DRAGDROP_S_DROP` after a few calls. OLE
+    turned the drop into `WM_DROPFILES` and the handler got both paths;
+    `DoDragDrop` returned `DRAGDROP_S_DROP` with `DROPEFFECT_COPY`. Without
+    real mouse input the `DoDragDrop` loop waits for mouse messages and
+    hangs, so the source posts `WM_MOUSEMOVE` to its own thread with
+    `PostThreadMessage` every 50 ms. Restore the pointer position at the
+    end, also from a watchdog.
+  - A `MainWindow` without a layout panics in `SetVisible` (nil layout in
+    `ContainerBase.CreateLayoutItem`), so give test windows a layout.
 
 ### Task 3: HDN_* values are off by one
 

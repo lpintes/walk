@@ -63,13 +63,6 @@ func DragAcceptFiles(hWnd HWND, fAccept bool) bool {
 	return ret != 0
 }
 
-func DragFinish(hDrop HDROP) {
-	syscall.Syscall(dragAcceptFiles.Addr(), 1,
-		uintptr(hDrop),
-		0,
-		0)
-}
-
 func SHParseDisplayName(pszName *uint16, pbc uintptr, ppidl *uintptr, sfgaoIn uint32, psfgaoOut *uint32) HRESULT {
 	ret, _, _ := syscall.Syscall6(shParseDisplayName.Addr(), 5,
 		uintptr(unsafe.Pointer(pszName)),
