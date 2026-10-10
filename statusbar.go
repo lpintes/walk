@@ -108,11 +108,11 @@ func (sb *StatusBar) updateParts() error {
 func (sb *StatusBar) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 		switch nmhdr.Code {
 		case win.NM_CLICK:
-			lpnm := (*win.NMMOUSE)(unsafe.Pointer(lParam))
+			lpnm := ptrFromUintptr[win.NMMOUSE](lParam)
 			if n := int(lpnm.DwItemSpec); n >= 0 && n < sb.items.Len() {
 				sb.items.At(n).raiseClicked()
 			}

@@ -645,14 +645,14 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 			break
 		}
 
-		mis := (*win.MEASUREITEMSTRUCT)(unsafe.Pointer(lParam))
+		mis := ptrFromUintptr[win.MEASUREITEMSTRUCT](lParam)
 
 		mis.ItemHeight = uint32(lb.styler.DefaultItemHeight())
 
 		return win.TRUE
 
 	case win.WM_DRAWITEM:
-		dis := (*win.DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
+		dis := ptrFromUintptr[win.DRAWITEMSTRUCT](lParam)
 
 		if lb.styler == nil || dis.ItemID < 0 || dis.ItemAction != win.ODA_DRAWENTIRE {
 			return win.TRUE
@@ -717,7 +717,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		return win.TRUE
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

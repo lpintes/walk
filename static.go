@@ -264,7 +264,7 @@ func (s *static) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lp))
+		wp := ptrFromUintptr[win.WINDOWPOS](lp)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

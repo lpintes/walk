@@ -276,11 +276,11 @@ func (tb *ToolBar) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		}
 
 	case win.WM_NOTIFY:
-		nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 		switch int32(nmhdr.Code) {
 		case win.TBN_DROPDOWN:
-			nmtb := (*win.NMTOOLBAR)(unsafe.Pointer(lParam))
+			nmtb := ptrFromUintptr[win.NMTOOLBAR](lParam)
 			actionId := uint16(nmtb.IItem)
 			if action := actionsById[actionId]; action != nil {
 				var r win.RECT
@@ -309,7 +309,7 @@ func (tb *ToolBar) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

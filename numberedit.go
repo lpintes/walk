@@ -428,9 +428,9 @@ func (*NumberEdit) NeedsWmSize() bool {
 func (ne *NumberEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		switch ((*win.NMHDR)(unsafe.Pointer(lParam))).Code {
+		switch ptrFromUintptr[win.NMHDR](lParam).Code {
 		case win.UDN_DELTAPOS:
-			nmud := (*win.NMUPDOWN)(unsafe.Pointer(lParam))
+			nmud := ptrFromUintptr[win.NMUPDOWN](lParam)
 			ne.edit.incrementValue(-float64(nmud.IDelta) * ne.edit.increment)
 		}
 
@@ -440,7 +440,7 @@ func (ne *NumberEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

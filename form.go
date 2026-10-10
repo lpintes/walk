@@ -745,7 +745,7 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			break
 		}
 
-		mmi := (*win.MINMAXINFO)(unsafe.Pointer(lParam))
+		mmi := ptrFromUintptr[win.MINMAXINFO](lParam)
 
 		var min Size
 		if layout := fb.clientComposite.layout; layout != nil {
@@ -781,7 +781,7 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		fb.inSizeLoop <- false
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_SHOWWINDOW != 0 {
 			fb.startLayout()
@@ -841,7 +841,7 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 
 		fb.SetSuspended(wasSuspended)
 
-		rc := (*win.RECT)(unsafe.Pointer(lParam))
+		rc := ptrFromUintptr[win.RECT](lParam)
 		bounds := rectangleFromRECT(*rc)
 		fb.proposedSize = bounds.Size()
 		fb.window.SetBoundsPixels(bounds)

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
 )
@@ -37,6 +38,20 @@ func init() {
 		groupSepB = byte(buf[0])
 		groupSepUint16 = buf[0]
 	})
+}
+
+// ptrFromUintptr converts an address received from Windows as an integer,
+// such as the lParam of a window message or the result of
+// GetWindowLongPtr, to a typed pointer.
+//
+// The memory belongs to Windows or is kept alive by its owner for as long
+// as the caller uses the pointer (for example a struct passed with
+// SendMessage), so the conversion is safe, but go vet cannot prove that
+// for a uintptr variable. Reinterpreting the variable through a pointer
+// is equivalent to (*T)(unsafe.Pointer(p)) and keeps the one place where
+// walk does this documented.
+func ptrFromUintptr[T any](p uintptr) *T {
+	return *(**T)(unsafe.Pointer(&p))
 }
 
 func uint16CountUint16(s []uint16, v uint16) int {

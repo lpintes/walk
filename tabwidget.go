@@ -321,7 +321,7 @@ func (tw *TabWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 			return 1
 
 		case win.WM_WINDOWPOSCHANGED:
-			wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+			wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 			if wp.Flags&win.SWP_NOSIZE != 0 {
 				break
@@ -330,7 +330,7 @@ func (tw *TabWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 			tw.onResize(wp.Cx, wp.Cy)
 
 		case win.WM_NOTIFY:
-			nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+			nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 			switch int32(nmhdr.Code) {
 			case win.TCN_SELCHANGE:
@@ -345,7 +345,7 @@ func (tw *TabWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 var tabWidgetTabWndProcPtr uintptr
 
 func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
-	tw := (*TabWidget)(unsafe.Pointer(win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA)))
+	tw := ptrFromUintptr[TabWidget](win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA))
 
 	switch msg {
 	case win.WM_MOUSEMOVE:

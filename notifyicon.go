@@ -18,7 +18,7 @@ var notifyIcons = make(map[*NotifyIcon]bool)
 func notifyIconWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (result uintptr) {
 	// Retrieve our *NotifyIcon from the message window.
 	ptr := win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA)
-	ni := (*NotifyIcon)(unsafe.Pointer(ptr))
+	ni := ptrFromUintptr[NotifyIcon](ptr)
 
 	switch lParam {
 	case win.WM_LBUTTONDOWN:

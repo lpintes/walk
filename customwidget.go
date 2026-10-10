@@ -7,8 +7,6 @@
 package walk
 
 import (
-	"unsafe"
-
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -168,7 +166,7 @@ func (cw *CustomWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintpt
 		win.SendMessage(hwnd, win.WM_PAINT, wParam, lParam)
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

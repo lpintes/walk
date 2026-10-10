@@ -234,7 +234,7 @@ func (de *DateEdit) DateChanged() *Event {
 func (de *DateEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		switch uint32(((*win.NMHDR)(unsafe.Pointer(lParam))).Code) {
+		switch uint32(ptrFromUintptr[win.NMHDR](lParam).Code) {
 		case win.DTN_DATETIMECHANGE:
 			de.dateChangedPublisher.Publish()
 		}

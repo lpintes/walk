@@ -1949,7 +1949,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 		maybeStretchLastColumn = true
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lp))
+		wp := ptrFromUintptr[win.WINDOWPOS](lp)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break
@@ -2040,7 +2040,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 		tv.handleKeyUp(wp, lp)
 
 	case win.WM_NOTIFY:
-		nmh := ((*win.NMHDR)(unsafe.Pointer(lp)))
+		nmh := ptrFromUintptr[win.NMHDR](lp)
 		switch nmh.HwndFrom {
 		case tv.hwndFrozenHdr, tv.hwndNormalHdr:
 			if nmh.Code == win.NM_CUSTOMDRAW {
@@ -2050,7 +2050,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 
 		switch nmh.Code {
 		case win.LVN_GETDISPINFO:
-			di := (*win.NMLVDISPINFO)(unsafe.Pointer(lp))
+			di := ptrFromUintptr[win.NMLVDISPINFO](lp)
 
 			row := int(di.Item.IItem)
 			col := tv.fromLVColIdx(hwnd == tv.hwndFrozenLV, di.Item.ISubItem)
@@ -2105,10 +2105,10 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 				}
 
 				utf16 := win.StringToUTF16(text)
-				buf := (*[264]uint16)(unsafe.Pointer(di.Item.PszText))
-				max := min(len(utf16), int(di.Item.CchTextMax))
-				copy((*buf)[:], utf16[:max])
-				(*buf)[max-1] = 0
+				buf := unsafe.Slice(di.Item.PszText, di.Item.CchTextMax)
+				max := min(len(utf16), len(buf))
+				copy(buf, utf16[:max])
+				buf[max-1] = 0
 			}
 
 			if (tv.imageProvider != nil || tv.styler != nil) && di.Item.Mask&win.LVIF_IMAGE > 0 {
@@ -2157,7 +2157,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 			}
 
 		case win.NM_CUSTOMDRAW:
-			nmlvcd := (*win.NMLVCUSTOMDRAW)(unsafe.Pointer(lp))
+			nmlvcd := ptrFromUintptr[win.NMLVCUSTOMDRAW](lp)
 
 			if nmlvcd.IIconPhase == 0 {
 				row := int(nmlvcd.Nmcd.DwItemSpec)
@@ -2311,11 +2311,11 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 			var rc win.RECT
 			win.SendMessage(hwnd, win.LVM_GETITEMRECT, 0, uintptr(unsafe.Pointer(&rc)))
 
-			nmlvs := (*win.NMLVSCROLL)(unsafe.Pointer(lp))
+			nmlvs := ptrFromUintptr[win.NMLVSCROLL](lp)
 			win.SendMessage(hwndOther, win.LVM_SCROLL, 0, uintptr(nmlvs.Dy*(rc.Bottom-rc.Top)))
 
 		case win.LVN_COLUMNCLICK:
-			nmlv := (*win.NMLISTVIEW)(unsafe.Pointer(lp))
+			nmlv := ptrFromUintptr[win.NMLISTVIEW](lp)
 
 			col := tv.fromLVColIdx(hwnd == tv.hwndFrozenLV, nmlv.ISubItem)
 
@@ -2335,7 +2335,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 			tv.columnClickedPublisher.Publish(col)
 
 		case win.LVN_ITEMCHANGED:
-			nmlv := (*win.NMLISTVIEW)(unsafe.Pointer(lp))
+			nmlv := ptrFromUintptr[win.NMLISTVIEW](lp)
 
 			if tv.hwndItemChanged != 0 && tv.hwndItemChanged != hwnd {
 				break
@@ -2394,7 +2394,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 			tv.updateSelectedIndexes()
 
 		case win.LVN_ITEMACTIVATE:
-			nmia := (*win.NMITEMACTIVATE)(unsafe.Pointer(lp))
+			nmia := ptrFromUintptr[win.NMITEMACTIVATE](lp)
 
 			if tv.itemStateChangedEventDelay > 0 {
 				tv.delayedCurrentIndexChangedCanceled = true
@@ -2485,13 +2485,13 @@ func tableViewHdrWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 
 	switch msg {
 	case win.WM_NOTIFY:
-		switch ((*win.NMHDR)(unsafe.Pointer(lp))).Code {
+		switch ptrFromUintptr[win.NMHDR](lp).Code {
 		case win.NM_CUSTOMDRAW:
 			if tv.customHeaderHeight == 0 {
 				break
 			}
 
-			nmcd := (*win.NMCUSTOMDRAW)(unsafe.Pointer(lp))
+			nmcd := ptrFromUintptr[win.NMCUSTOMDRAW](lp)
 
 			switch nmcd.DwDrawStage {
 			case win.CDDS_PREPAINT:
@@ -2536,7 +2536,7 @@ func tableViewHdrWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 
 		result := win.CallWindowProc(origWndProcPtr, hwnd, msg, wp, lp)
 
-		hdl := (*win.HDLAYOUT)(unsafe.Pointer(lp))
+		hdl := ptrFromUintptr[win.HDLAYOUT](lp)
 		hdl.Prc.Top = int32(tv.customHeaderHeight)
 		hdl.Pwpos.Cy = int32(tv.customHeaderHeight)
 
@@ -2588,7 +2588,7 @@ func tableViewHdrWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		nmh := (*win.NMHDR)(unsafe.Pointer(lp))
+		nmh := ptrFromUintptr[win.NMHDR](lp)
 		switch nmh.HwndFrom {
 		case tv.hwndFrozenLV:
 			return tableViewFrozenLVWndProc(nmh.HwndFrom, msg, wp, lp)
@@ -2598,7 +2598,7 @@ func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr 
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lp))
+		wp := ptrFromUintptr[win.WINDOWPOS](lp)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break
@@ -2650,7 +2650,7 @@ func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr 
 		}
 
 	case win.WM_MEASUREITEM:
-		mis := (*win.MEASUREITEMSTRUCT)(unsafe.Pointer(lp))
+		mis := ptrFromUintptr[win.MEASUREITEMSTRUCT](lp)
 		mis.ItemHeight = uint32(tv.customRowHeight)
 
 		ensureWindowLongBits(tv.hwndFrozenLV, win.GWL_STYLE, win.LVS_OWNERDRAWFIXED, false)

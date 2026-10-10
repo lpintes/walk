@@ -563,20 +563,20 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		}
 
 	case win.WM_NOTIFY:
-		nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 		switch nmhdr.Code {
 		case win.TVN_GETDISPINFO:
-			nmtvdi := (*win.NMTVDISPINFO)(unsafe.Pointer(lParam))
+			nmtvdi := ptrFromUintptr[win.NMTVDISPINFO](lParam)
 			item := tv.handle2Item[nmtvdi.Item.HItem]
 
 			if nmtvdi.Item.Mask&win.TVIF_TEXT != 0 {
 				text := item.Text()
 				utf16 := win.StringToUTF16(text)
-				buf := (*[264]uint16)(unsafe.Pointer(nmtvdi.Item.PszText))
-				max := min(len(utf16), int(nmtvdi.Item.CchTextMax))
-				copy((*buf)[:], utf16[:max])
-				(*buf)[max-1] = 0
+				buf := unsafe.Slice(ptrFromUintptr[uint16](nmtvdi.Item.PszText), nmtvdi.Item.CchTextMax)
+				max := min(len(utf16), len(buf))
+				copy(buf, utf16[:max])
+				buf[max-1] = 0
 			}
 			if nmtvdi.Item.Mask&win.TVIF_CHILDREN != 0 {
 				if hc, ok := item.(HasChilder); ok {
@@ -591,7 +591,7 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			}
 
 		case win.TVN_ITEMEXPANDING:
-			nmtv := (*win.NMTREEVIEW)(unsafe.Pointer(lParam))
+			nmtv := ptrFromUintptr[win.NMTREEVIEW](lParam)
 			item := tv.handle2Item[nmtv.ItemNew.HItem]
 
 			if nmtv.Action == win.TVE_EXPAND && tv.lazyPopulation {
@@ -602,7 +602,7 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			}
 
 		case win.TVN_ITEMEXPANDED:
-			nmtv := (*win.NMTREEVIEW)(unsafe.Pointer(lParam))
+			nmtv := ptrFromUintptr[win.NMTREEVIEW](lParam)
 			item := tv.handle2Item[nmtv.ItemNew.HItem]
 
 			switch nmtv.Action {
@@ -623,13 +623,13 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			tv.itemActivatedPublisher.Publish()
 
 		case win.TVN_KEYDOWN:
-			nmtvkd := (*win.NMTVKEYDOWN)(unsafe.Pointer(lParam))
+			nmtvkd := ptrFromUintptr[win.NMTVKEYDOWN](lParam)
 			if nmtvkd.WVKey == uint16(KeyReturn) {
 				tv.itemActivatedPublisher.Publish()
 			}
 
 		case win.TVN_SELCHANGED:
-			nmtv := (*win.NMTREEVIEW)(unsafe.Pointer(lParam))
+			nmtv := ptrFromUintptr[win.NMTREEVIEW](lParam)
 
 			tv.currItem = tv.handle2Item[nmtv.ItemNew.HItem]
 
