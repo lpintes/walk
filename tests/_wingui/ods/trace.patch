@@ -1,20 +1,20 @@
 diff --git a/listbox.go b/listbox.go
-index d0e369b..8aa9c36 100644
+index 319e032..8e9ae4d 100644
 --- a/listbox.go
 +++ b/listbox.go
-@@ -654,6 +654,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
+@@ -653,6 +653,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
  
  	case win.WM_DRAWITEM:
- 		dis := (*win.DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
+ 		dis := ptrFromUintptr[win.DRAWITEMSTRUCT](lParam)
 +		odsTrace("draw id=%d action=%d state=%#x focused=%v", int32(dis.ItemID), dis.ItemAction, dis.ItemState, lb.Focused())
  
  		if lb.styler == nil || dis.ItemID < 0 || dis.ItemAction != win.ODA_DRAWENTIRE {
  			return win.TRUE
 diff --git a/models.go b/models.go
-index 9d26d54..5ea0811 100644
+index fb66933..971c6b3 100644
 --- a/models.go
 +++ b/models.go
-@@ -443,6 +443,7 @@ func (lis *ListItemStyle) DrawBackground() error {
+@@ -441,6 +441,7 @@ func (lis *ListItemStyle) DrawBackground() error {
  	}
  
  	stateID := lis.stateID()

@@ -1,18 +1,18 @@
 diff --git a/tableview.go b/tableview.go
-index f9182d0..479ca00 100644
+index c1c7d01..e16a483 100644
 --- a/tableview.go
 +++ b/tableview.go
-@@ -2054,6 +2054,9 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
+@@ -2041,6 +2041,9 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
  
  	case win.WM_NOTIFY:
- 		nmh := ((*win.NMHDR)(unsafe.Pointer(lp)))
+ 		nmh := ptrFromUintptr[win.NMHDR](lp)
 +		if HDNTrace != nil && (nmh.HwndFrom == tv.hwndFrozenHdr || nmh.HwndFrom == tv.hwndNormalHdr) && nmh.Code != win.NM_CUSTOMDRAW {
 +			HDNTrace("notify frozenHdr=%t code=0x%08X", nmh.HwndFrom == tv.hwndFrozenHdr, nmh.Code)
 +		}
  		switch nmh.HwndFrom {
  		case tv.hwndFrozenHdr, tv.hwndNormalHdr:
  			if nmh.Code == win.NM_CUSTOMDRAW {
-@@ -2695,6 +2698,9 @@ func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr
+@@ -2682,6 +2685,9 @@ func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr
  }
  
  func (tv *TableView) updateLVSizes() {
