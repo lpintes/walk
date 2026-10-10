@@ -1,0 +1,43 @@
+diff --git a/tableview.go b/tableview.go
+index f9182d0..479ca00 100644
+--- a/tableview.go
++++ b/tableview.go
+@@ -2054,6 +2054,9 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
+ 
+ 	case win.WM_NOTIFY:
+ 		nmh := ((*win.NMHDR)(unsafe.Pointer(lp)))
++		if HDNTrace != nil && (nmh.HwndFrom == tv.hwndFrozenHdr || nmh.HwndFrom == tv.hwndNormalHdr) && nmh.Code != win.NM_CUSTOMDRAW {
++			HDNTrace("notify frozenHdr=%t code=0x%08X", nmh.HwndFrom == tv.hwndFrozenHdr, nmh.Code)
++		}
+ 		switch nmh.HwndFrom {
+ 		case tv.hwndFrozenHdr, tv.hwndNormalHdr:
+ 			if nmh.Code == win.NM_CUSTOMDRAW {
+@@ -2695,6 +2698,9 @@ func (tv *TableView) WndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr
+ }
+ 
+ func (tv *TableView) updateLVSizes() {
++	if HDNTrace != nil {
++		HDNTrace("updateLVSizes")
++	}
+ 	tv.updateLVSizesWithSpecialCare(false)
+ }
+ 
+diff --git a/zz_hdntrace.go b/zz_hdntrace.go
+new file mode 100644
+index 0000000..6b307f1
+--- /dev/null
++++ b/zz_hdntrace.go
+@@ -0,0 +1,13 @@
++//go:build windows
++
++package walk
++
++// HDNTrace receives the header notifications of a TableView and its
++// updateLVSizes calls. Test hook for tests/_wingui/hdn, never commit it.
++var HDNTrace func(format string, args ...any)
++
++// TableViewHandles returns the list view and header windows of tv. Test hook
++// for tests/_wingui/hdn, never commit it.
++func TableViewHandles(tv *TableView) (frozenLV, normalLV, frozenHdr, normalHdr uintptr) {
++	return uintptr(tv.hwndFrozenLV), uintptr(tv.hwndNormalLV), uintptr(tv.hwndFrozenHdr), uintptr(tv.hwndNormalHdr)
++}

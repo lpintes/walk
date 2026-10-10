@@ -18,6 +18,11 @@ Read `CLAUDE.md` first. In particular:
 
 ## Setup
 
+- Ready-made tests: `tests/_wingui` has test programs for the tasks
+  below and PowerShell scripts that build all examples and tests, run the
+  self-checking tests, and start every example with an MSAA dump and Tab
+  steps. Start with its `README.md`; the notes below explain what the
+  scripts do for you.
 - Install Go 1.23 or newer.
 - Build everything: `go build ./...` (on Windows, `GOOS` is already
   `windows`). The examples carry 386 `rsrc.syso` resource files with the
@@ -50,10 +55,10 @@ Read `CLAUDE.md` first. In particular:
     reported every Win32 control, also in `charmap.exe`, as `Pane` and not
     keyboard focusable, so it is useless for roles there. MSAA works:
     `AccessibleObjectFromWindow(hwnd, OBJID_CLIENT, IID_IAccessible)` from
-    C# in Windows PowerShell 5.1 (`Add-Type -ReferencedAssemblies
-    Accessibility`, cast to `Accessibility.IAccessible`) gives role, name,
-    value, state and help, and `GetGUIThreadInfo` gives the focused window
-    of the tested thread.
+    C# loaded with `Add-Type` gives role, name, value, state and help, and
+    `GetGUIThreadInfo` gives the focused window of the tested thread; see
+    `tests/_wingui/scripts/WinTest.cs`, which declares `IAccessible` itself
+    (`-ReferencedAssemblies Accessibility` fails in PowerShell 7.6).
   - NVDA through the `screenreader` MCP server, if it is configured. Use
     `connect_reader` with reader `nvda`, mode `silent` (the user hears
     nothing but `announce` texts, so announce longer runs) and persona
@@ -71,8 +76,8 @@ Read `CLAUDE.md` first. In particular:
   - Temporary `log.Printf` calls in walk to record the notification codes
     and structures a window procedure receives.
   - Small Go test programs that use walk and `internal/win` (they must live
-    inside this module, for example under a temporary directory of
-    `examples/`, because `internal/win` is internal). Since step 3 part 3,
+    inside this module because `internal/win` is internal; put them in
+    `tests/_wingui` and follow its `README.md`). Since step 3 part 3,
     `internal/win` declares only what walk uses, so a test program may
     have to declare other Win32 functions and constants itself, with
     `windows.NewLazySystemDLL` and plain constants.
@@ -126,6 +131,12 @@ such as a network for `webview`; say so) and check:
 Do this on both 386 and amd64 builds if possible (`GOARCH=386` and
 `GOARCH=amd64`), and arm64 if the machine is arm64. Report per example what
 was checked and what failed.
+
+Automated parts: `tests/_wingui/scripts/examples.ps1` (start, MSAA tree,
+Tab, `WM_CLOSE` for every example) and the test `tests/_wingui/part3`
+(`GetObject`, `AlphaBlend`, `ITaskbarList3`, `IAccPropServices`,
+`SHBrowseForFolder`). Keyboard use of menus and dialogs and what a screen
+reader announces still need NVDA.
 
 ## Bugs inherited from lxn/win
 
@@ -185,6 +196,8 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
     end, also from a watchdog.
   - A `MainWindow` without a layout panics in `SetVisible` (nil layout in
     `ContainerBase.CreateLayoutItem`), so give test windows a layout.
+  - Test programs: `tests/_wingui/dragfinish` (steps 1 to 3) and
+    `tests/_wingui/olednd` (step 4, `run.ps1 -Drag`).
 
 ### Task 3: HDN_* values are off by one
 
@@ -216,6 +229,9 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
      header sent `HDN_ITEMCHANGEDW` (0xFFFFFEBF), both before and after the
      fix. Check with Win32 queries (`LVM_GETCOLUMNWIDTH`, `GetWindowRect`
      of both list views) that the frozen and normal parts stay aligned.
+- Done; test program `tests/_wingui/hdn` with the logging of step 1 in
+  `tests/_wingui/hdn/trace.patch`. It drags the divider with mouse
+  messages sent to the header window instead of `SendInput`.
 
 ### Task 4: ODS_* and ODA_* values are wrong
 
@@ -246,6 +262,9 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
   and not focused) and the others do not. Read pixel colors with
   `GetPixel` on a screen DC, or compare against the logged colors, rather
   than judging a screenshot.
+- Done; test program `tests/_wingui/ods` with the logging in
+  `tests/_wingui/ods/trace.patch`. It uses its own owner drawn `ListBox`
+  inside a `Composite` instead of the example.
 
 ## Reporting
 

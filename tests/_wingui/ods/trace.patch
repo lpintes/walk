@@ -1,0 +1,43 @@
+diff --git a/listbox.go b/listbox.go
+index d0e369b..8aa9c36 100644
+--- a/listbox.go
++++ b/listbox.go
+@@ -654,6 +654,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
+ 
+ 	case win.WM_DRAWITEM:
+ 		dis := (*win.DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
++		odsTrace("draw id=%d action=%d state=%#x focused=%v", int32(dis.ItemID), dis.ItemAction, dis.ItemState, lb.Focused())
+ 
+ 		if lb.styler == nil || dis.ItemID < 0 || dis.ItemAction != win.ODA_DRAWENTIRE {
+ 			return win.TRUE
+diff --git a/models.go b/models.go
+index 9d26d54..5ea0811 100644
+--- a/models.go
++++ b/models.go
+@@ -443,6 +443,7 @@ func (lis *ListItemStyle) DrawBackground() error {
+ 	}
+ 
+ 	stateID := lis.stateID()
++	odsTrace("background idx=%d stateID=%d theme=%v bg=%#06x text=%#06x", lis.index, stateID, lis.hTheme != 0, uint32(lis.BackgroundColor), uint32(lis.TextColor))
+ 
+ 	if lis.hTheme != 0 && stateID != win.LISS_NORMAL {
+ 		if win.FAILED(win.DrawThemeBackground(lis.hTheme, lis.hdc, win.LVP_LISTITEM, stateID, &lis.rc, nil)) {
+diff --git a/zz_odstrace.go b/zz_odstrace.go
+new file mode 100644
+index 0000000..164fe31
+--- /dev/null
++++ b/zz_odstrace.go
+@@ -0,0 +1,13 @@
++//go:build windows
++
++package walk
++
++// ODSTrace receives the WM_DRAWITEM state and the chosen background of owner
++// drawn ListBox items. Test hook for tests/_wingui/ods, never commit it.
++var ODSTrace func(format string, args ...any)
++
++func odsTrace(format string, args ...any) {
++	if ODSTrace != nil {
++		ODSTrace(format, args...)
++	}
++}

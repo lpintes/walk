@@ -194,6 +194,11 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   change of behavior (walk effectively reacts to `HDN_ITEMCHANGEDW` and
   tests the real `ODS_SELECTED` bit; the `ODA_FOCUS` check is dead code).
   Only the `DragFinish` fix changed behavior.
+- The test programs of these tasks are kept in `tests/_wingui` with
+  PowerShell scripts that build and run them and smoke test every example
+  (see its `README.md`); rerun them on Windows after changes to
+  `internal/win` or the affected widgets. The leading underscore keeps
+  them out of `./...`.
 - Steps 4 to 9: not started.
 
 ## Candidate next steps (analysis for steps 4 to 9)
