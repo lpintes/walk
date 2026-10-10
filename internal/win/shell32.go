@@ -55,22 +55,20 @@ func init() {
 }
 
 func DragAcceptFiles(hWnd HWND, fAccept bool) bool {
-	ret, _, _ := syscall.Syscall(dragAcceptFiles.Addr(), 2,
+	ret, _, _ := syscall.SyscallN(dragAcceptFiles.Addr(),
 		uintptr(hWnd),
-		uintptr(BoolToBOOL(fAccept)),
-		0)
+		uintptr(BoolToBOOL(fAccept)))
 
 	return ret != 0
 }
 
 func SHParseDisplayName(pszName *uint16, pbc uintptr, ppidl *uintptr, sfgaoIn uint32, psfgaoOut *uint32) HRESULT {
-	ret, _, _ := syscall.Syscall6(shParseDisplayName.Addr(), 5,
+	ret, _, _ := syscall.SyscallN(shParseDisplayName.Addr(),
 		uintptr(unsafe.Pointer(pszName)),
 		pbc,
 		uintptr(unsafe.Pointer(ppidl)),
 		0,
-		uintptr(unsafe.Pointer(psfgaoOut)),
-		0)
+		uintptr(unsafe.Pointer(psfgaoOut)))
 
 	return HRESULT(ret)
 }

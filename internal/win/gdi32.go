@@ -94,13 +94,12 @@ func init() {
 }
 
 func Rectangle_(hdc HDC, nLeftRect, nTopRect, nRightRect, nBottomRect int32) bool {
-	ret, _, _ := syscall.Syscall6(rectangle.Addr(), 5,
+	ret, _, _ := syscall.SyscallN(rectangle.Addr(),
 		uintptr(hdc),
 		uintptr(nLeftRect),
 		uintptr(nTopRect),
 		uintptr(nRightRect),
-		uintptr(nBottomRect),
-		0)
+		uintptr(nBottomRect))
 
 	return ret != 0
 }
