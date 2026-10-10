@@ -453,7 +453,7 @@ func init() {
 	AppendToWalkInit(func() {
 		forEachDescendantCallbackPtr = syscall.NewCallback(forEachDescendant)
 		forEachDescendantRawCallbackPtr = syscall.NewCallback(forEachDescendantRaw)
-		dialogBaseUnitsUTF16StringPtr = syscall.StringToUTF16Ptr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+		dialogBaseUnitsUTF16StringPtr = win.StringToUTF16Ptr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 	})
 }
 
@@ -505,7 +505,7 @@ func MustRegisterWindowClassWithWndProcPtrAndStyle(className string, wndProcPtr 
 	wc.HIcon = hIcon
 	wc.HCursor = hCursor
 	wc.HbrBackground = win.COLOR_BTNFACE + 1
-	wc.LpszClassName = syscall.StringToUTF16Ptr(className)
+	wc.LpszClassName = win.StringToUTF16Ptr(className)
 	wc.Style = style
 
 	if atom := win.RegisterClassEx(&wc); atom == 0 {
@@ -584,7 +584,7 @@ func initWindowWithCfg(cfg *windowCfg) error {
 
 	var windowName *uint16
 	if len(wb.name) != 0 {
-		windowName = syscall.StringToUTF16Ptr(wb.name)
+		windowName = win.StringToUTF16Ptr(wb.name)
 	}
 
 	if hwnd := cfg.Window.Handle(); hwnd == 0 {
@@ -603,7 +603,7 @@ func initWindowWithCfg(cfg *windowCfg) error {
 
 		wb.hWnd = win.CreateWindowEx(
 			cfg.ExStyle,
-			syscall.StringToUTF16Ptr(cfg.ClassName),
+			win.StringToUTF16Ptr(cfg.ClassName),
 			windowName,
 			cfg.Style|win.WS_CLIPSIBLINGS,
 			x,
@@ -764,10 +764,6 @@ func hasWindowLongBits(hwnd win.HWND, index int32, bits uint32) bool {
 
 func (wb *WindowBase) setAndClearStyleBits(set, clear uint32) error {
 	return setAndClearWindowLongBits(wb.hWnd, win.GWL_STYLE, set, clear)
-}
-
-func (wb *WindowBase) setAndClearExtendedStyleBits(set, clear uint32) error {
-	return setAndClearWindowLongBits(wb.hWnd, win.GWL_EXSTYLE, set, clear)
 }
 
 func setAndClearWindowLongBits(hwnd win.HWND, index int32, set, clear uint32) error {
@@ -1235,7 +1231,7 @@ func windowText(hwnd win.HWND) string {
 }
 
 func setWindowText(hwnd win.HWND, text string) error {
-	if win.TRUE != win.SendMessage(hwnd, win.WM_SETTEXT, 0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text)))) {
+	if win.TRUE != win.SendMessage(hwnd, win.WM_SETTEXT, 0, uintptr(unsafe.Pointer(win.StringToUTF16Ptr(text)))) {
 		return newError("WM_SETTEXT failed")
 	}
 
@@ -1649,14 +1645,14 @@ func calculateTextSize(text string, font *Font, dpi int, width int, hwnd win.HWN
 
 		for _, line := range lines {
 			var s win.SIZE
-			str := syscall.StringToUTF16(strings.TrimRight(line, "\r "))
+			str := win.StringToUTF16(strings.TrimRight(line, "\r "))
 
 			if !win.GetTextExtentPoint32(hdc, &str[0], int32(len(str)-1), &s) {
 				newError("GetTextExtentPoint32 failed")
 				return Size{}
 			}
 
-			size.Width = maxi(size.Width, int(s.CX))
+			size.Width = max(size.Width, int(s.CX))
 			size.Height += int(s.CY)
 		}
 	}
@@ -1979,7 +1975,7 @@ func (wb *WindowBase) CreateCanvas() (*Canvas, error) {
 }
 
 func (wb *WindowBase) setTheme(appName string) error {
-	if hr := win.SetWindowTheme(wb.hWnd, syscall.StringToUTF16Ptr(appName), nil); win.FAILED(hr) {
+	if hr := win.SetWindowTheme(wb.hWnd, win.StringToUTF16Ptr(appName), nil); win.FAILED(hr) {
 		return errorFromHRESULT("SetWindowTheme", hr)
 	}
 
@@ -2464,7 +2460,7 @@ func (wb *WindowBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 		wb.dropFilesPublisher.Publish(win.HDROP(wParam))
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOMOVE != 0 && wp.Flags&win.SWP_NOSIZE != 0 {
 			break

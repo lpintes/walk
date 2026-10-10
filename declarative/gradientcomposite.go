@@ -7,6 +7,8 @@
 package declarative
 
 import (
+	"maps"
+
 	"github.com/lpintes/walk"
 	"github.com/lpintes/walk/internal/win"
 )
@@ -86,9 +88,7 @@ func (gc GradientComposite) Create(builder *Builder) error {
 
 	return builder.InitWidget(gc, w, func() error {
 		if gc.Expressions != nil {
-			for name, expr := range gc.Expressions() {
-				builder.expressions[name] = expr
-			}
+			maps.Copy(builder.expressions, gc.Expressions())
 		}
 		if gc.Functions != nil {
 			for name, fn := range gc.Functions {

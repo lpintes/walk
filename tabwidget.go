@@ -58,7 +58,7 @@ func NewTabWidget(parent Container) (*TabWidget, error) {
 	tw.SetPersistent(true)
 
 	tw.hWndTab = win.CreateWindowEx(
-		0, syscall.StringToUTF16Ptr("SysTabControl32"), nil,
+		0, win.StringToUTF16Ptr("SysTabControl32"), nil,
 		win.WS_CHILD|win.WS_CLIPSIBLINGS|win.WS_TABSTOP|win.WS_VISIBLE,
 		0, 0, 0, 0, tw.hWnd, 0, 0, nil)
 	if tw.hWndTab == 0 {
@@ -247,8 +247,8 @@ func (tw *TabWidget) pageBounds() Rectangle {
 	}
 
 	p := win.POINT{
-		r.Left,
-		r.Top,
+		X: r.Left,
+		Y: r.Top,
 	}
 	if !win.ScreenToClient(tw.hWnd, &p) {
 		newError("ScreenToClient failed")
@@ -256,10 +256,10 @@ func (tw *TabWidget) pageBounds() Rectangle {
 	}
 
 	r = win.RECT{
-		p.X,
-		p.Y,
-		r.Right - r.Left + p.X,
-		r.Bottom - r.Top + p.Y,
+		Left:   p.X,
+		Top:    p.Y,
+		Right:  r.Right - r.Left + p.X,
+		Bottom: r.Bottom - r.Top + p.Y,
 	}
 	win.SendMessage(tw.hWndTab, win.TCM_ADJUSTRECT, 0, uintptr(unsafe.Pointer(&r)))
 
@@ -321,7 +321,7 @@ func (tw *TabWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 			return 1
 
 		case win.WM_WINDOWPOSCHANGED:
-			wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+			wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 			if wp.Flags&win.SWP_NOSIZE != 0 {
 				break
@@ -330,7 +330,7 @@ func (tw *TabWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 			tw.onResize(wp.Cx, wp.Cy)
 
 		case win.WM_NOTIFY:
-			nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+			nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 			switch int32(nmhdr.Code) {
 			case win.TCN_SELCHANGE:
@@ -345,7 +345,7 @@ func (tw *TabWidget) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 var tabWidgetTabWndProcPtr uintptr
 
 func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
-	tw := (*TabWidget)(unsafe.Pointer(win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA)))
+	tw := ptrFromUintptr[TabWidget](win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA))
 
 	switch msg {
 	case win.WM_MOUSEMOVE:
@@ -401,8 +401,8 @@ func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 
 			adjustment := SizeFrom96DPI(Size{1, 1}, dpi).toSIZE()
 			count := tw.pages.Len()
-			for i := 0; i < count; i++ {
-				if 0 == win.SendMessage(hwnd, win.TCM_GETITEMRECT, uintptr(i), uintptr(unsafe.Pointer(&rc))) {
+			for i := range count {
+				if win.SendMessage(hwnd, win.TCM_GETITEMRECT, uintptr(i), uintptr(unsafe.Pointer(&rc))) == 0 {
 					break
 				}
 
@@ -441,7 +441,7 @@ func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 				tw.prepareDCForBackground(canvas.hdc, hwnd, wnd)
 
 				var rc win.RECT
-				if 0 == win.SendMessage(hwnd, win.TCM_GETITEMRECT, uintptr(tw.currentIndex), uintptr(unsafe.Pointer(&rc))) {
+				if win.SendMessage(hwnd, win.TCM_GETITEMRECT, uintptr(tw.currentIndex), uintptr(unsafe.Pointer(&rc))) == 0 {
 					break
 				}
 
@@ -477,10 +477,10 @@ func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 				rc.Left += adjustment.CX
 				rc.Top += adjustment.CY
 
-				title := syscall.StringToUTF16(page.title)
+				title := win.StringToUTF16(page.title)
 
 				if themed {
-					hTheme := win.OpenThemeData(hwnd, syscall.StringToUTF16Ptr("tab"))
+					hTheme := win.OpenThemeData(hwnd, win.StringToUTF16Ptr("tab"))
 					defer win.CloseThemeData(hTheme)
 
 					options := win.DTTOPTS{DwFlags: win.DTT_GLOWSIZE, IGlowSize: int32(IntFrom96DPI(3, dpi))}
@@ -489,7 +489,7 @@ func tabWidgetTabWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 						break
 					}
 				} else {
-					if 0 == win.DrawTextEx(canvas.hdc, &title[0], int32(len(title)), &rc, 0, nil) {
+					if win.DrawTextEx(canvas.hdc, &title[0], int32(len(title)), &rc, 0, nil) == 0 {
 						break
 					}
 				}
@@ -510,7 +510,7 @@ func (tw *TabWidget) onPageChanged(page *TabPage) (err error) {
 	index := tw.pages.Index(page)
 	item := tw.tcitemFromPage(page)
 
-	if 0 == win.SendMessage(tw.hWndTab, win.TCM_SETITEM, uintptr(index), uintptr(unsafe.Pointer(item))) {
+	if win.SendMessage(tw.hWndTab, win.TCM_SETITEM, uintptr(index), uintptr(unsafe.Pointer(item))) == 0 {
 		return newError("SendMessage(TCM_SETITEM) failed")
 	}
 
@@ -607,27 +607,6 @@ func (tw *TabWidget) onRemovedPage(index int, page *TabPage) (err error) {
 	tw.onSelChange()
 
 	return
-
-	// FIXME: Either make use of this unreachable code or remove it.
-	if index == tw.currentIndex {
-		// removal of current visible tabpage...
-		tw.currentIndex = -1
-
-		// select new tabpage if any :
-		if tw.pages.Len() > 0 {
-			// are we removing the rightmost page ?
-			if index == tw.pages.Len()-1 {
-				// If so, select the page on the left
-				index -= 1
-			}
-		}
-	}
-
-	tw.SetCurrentIndex(index)
-
-	tw.Invalidate()
-
-	return
 }
 
 func (tw *TabWidget) onClearingPages(pages []*TabPage) (err error) {
@@ -654,7 +633,7 @@ func (tw *TabWidget) tcitemFromPage(page *TabPage) *win.TCITEM {
 		}
 	}
 
-	text := syscall.StringToUTF16(page.title)
+	text := win.StringToUTF16(page.title)
 
 	item := &win.TCITEM{
 		Mask:       win.TCIF_IMAGE | win.TCIF_TEXT,
@@ -757,8 +736,8 @@ func (li *tabWidgetLayoutItem) MinSize() Size {
 		if ms, ok := page.(MinSizer); ok {
 			s := ms.MinSize()
 
-			min.Width = maxi(min.Width, s.Width)
-			min.Height = maxi(min.Height, s.Height)
+			min.Width = max(min.Width, s.Width)
+			min.Height = max(min.Height, s.Height)
 		}
 	}
 
@@ -799,7 +778,7 @@ func (li *tabWidgetLayoutItem) HeightForWidth(width int) int {
 		if hfw, ok := page.(HeightForWidther); ok && hfw.HasHeightForWidth() {
 			h := hfw.HeightForWidth(width + margin.Width)
 
-			height = maxi(height, h)
+			height = max(height, h)
 		}
 	}
 

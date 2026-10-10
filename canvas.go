@@ -8,7 +8,6 @@ package walk
 
 import (
 	"log"
-	"syscall"
 	"unicode/utf8"
 	"unsafe"
 
@@ -44,14 +43,6 @@ const (
 	TextHidePrefix           DrawTextFormat = win.DT_HIDEPREFIX
 	TextPrefixOnly           DrawTextFormat = win.DT_PREFIXONLY
 )
-
-var gM *uint16
-
-func init() {
-	AppendToWalkInit(func() {
-		gM = syscall.StringToUTF16Ptr("gM")
-	})
-}
 
 type Canvas struct {
 	hdc                 win.HDC
@@ -579,7 +570,7 @@ func (c *Canvas) DrawTextPixels(text string, font *Font, color Color, bounds Rec
 		rect := bounds.toRECT()
 		ret := win.DrawTextEx(
 			c.hdc,
-			syscall.StringToUTF16Ptr(text),
+			win.StringToUTF16Ptr(text),
 			-1,
 			&rect,
 			uint32(format)|win.DT_EDITCONTROL,
@@ -590,25 +581,6 @@ func (c *Canvas) DrawTextPixels(text string, font *Font, color Color, bounds Rec
 
 		return nil
 	})
-}
-
-// fontHeight returns font height in native pixels.
-func (c *Canvas) fontHeight(font *Font) (height int, err error) {
-	err = c.withFontAndTextColor(font, 0, func() error {
-		var size win.SIZE
-		if !win.GetTextExtentPoint32(c.hdc, gM, 2, &size) {
-			return newError("GetTextExtentPoint32 failed")
-		}
-
-		height = int(size.CY)
-		if height == 0 {
-			return newError("invalid font height")
-		}
-
-		return nil
-	})
-
-	return
 }
 
 // measureTextForDPI measures text for given DPI. Input and output bounds are in native pixels.
@@ -622,15 +594,15 @@ func (c *Canvas) measureTextForDPI(text string, font *Font, bounds Rectangle, fo
 	defer win.SelectObject(c.hdc, oldHandle)
 
 	rect := &win.RECT{
-		int32(bounds.X),
-		int32(bounds.Y),
-		int32(bounds.X + bounds.Width),
-		int32(bounds.Y + bounds.Height),
+		Left:   int32(bounds.X),
+		Top:    int32(bounds.Y),
+		Right:  int32(bounds.X + bounds.Width),
+		Bottom: int32(bounds.Y + bounds.Height),
 	}
 	var params win.DRAWTEXTPARAMS
 	params.CbSize = uint32(unsafe.Sizeof(params))
 
-	strPtr := syscall.StringToUTF16Ptr(text)
+	strPtr := win.StringToUTF16Ptr(text)
 	dtfmt := uint32(format) | win.DT_CALCRECT | win.DT_EDITCONTROL | win.DT_NOPREFIX | win.DT_WORDBREAK
 
 	height := win.DrawTextEx(
@@ -715,15 +687,15 @@ func (c *Canvas) measureAndModifyTextPixels(text string, font *Font, bounds Rect
 	defer win.SelectObject(c.measureTextMetafile.hdc, oldHandle)
 
 	rect := &win.RECT{
-		int32(bounds.X),
-		int32(bounds.Y),
-		int32(bounds.X + bounds.Width),
-		int32(bounds.Y + bounds.Height),
+		Left:   int32(bounds.X),
+		Top:    int32(bounds.Y),
+		Right:  int32(bounds.X + bounds.Width),
+		Bottom: int32(bounds.Y + bounds.Height),
 	}
 	var params win.DRAWTEXTPARAMS
 	params.CbSize = uint32(unsafe.Sizeof(params))
 
-	strPtr := syscall.StringToUTF16Ptr(text)
+	strPtr := win.StringToUTF16Ptr(text)
 	dtfmt := uint32(format) | win.DT_EDITCONTROL | win.DT_WORDBREAK
 
 	height := win.DrawTextEx(

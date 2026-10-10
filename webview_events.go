@@ -48,8 +48,7 @@ func (eventData *WebViewNavigatingEventData) PostData() string {
 			psa := pvar.MustPSafeArray()
 			if psa != nil && psa.CDims == 1 && psa.CbElements == 1 {
 				postDataSize := psa.Rgsabound[0].CElements * psa.CbElements
-				byteAryPtr := (*[200000000]byte)(unsafe.Pointer(psa.PvData))
-				byteArySlice := (*byteAryPtr)[0 : postDataSize-1]
+				byteArySlice := unsafe.Slice(ptrFromUintptr[byte](psa.PvData), postDataSize)[:postDataSize-1]
 				return string(byteArySlice)
 			}
 		}
@@ -322,13 +321,7 @@ type WebViewWindowClosingEventData struct {
 }
 
 func (eventData *WebViewWindowClosingEventData) IsChildWindow() bool {
-	bIsChildWindow := eventData.bIsChildWindow
-	if bIsChildWindow != win.VARIANT_FALSE {
-		return true
-	} else {
-		return false
-	}
-	return false
+	return eventData.bIsChildWindow != win.VARIANT_FALSE
 }
 
 func (eventData *WebViewWindowClosingEventData) Canceled() bool {

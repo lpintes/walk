@@ -7,7 +7,6 @@
 package walk
 
 import (
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -197,7 +196,7 @@ func iconIndexAndHImlForFilePath(filePath string) (int32, win.HIMAGELIST) {
 	var shfi win.SHFILEINFO
 
 	if hIml := win.HIMAGELIST(win.SHGetFileInfo(
-		syscall.StringToUTF16Ptr(filePath),
+		win.StringToUTF16Ptr(filePath),
 		0,
 		&shfi,
 		uint32(unsafe.Sizeof(shfi)),

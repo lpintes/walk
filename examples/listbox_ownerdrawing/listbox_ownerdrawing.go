@@ -34,8 +34,8 @@ func main() {
 	if err := (MainWindow{
 		AssignTo: &mw,
 		Title:    "Walk ListBox Owner Drawing Example",
-		MinSize:  Size{200, 200},
-		Size:     Size{800, 600},
+		MinSize:  Size{Width: 200, Height: 200},
+		Size:     Size{Width: 800, Height: 600},
 		Font:     Font{Family: "Segoe UI", PointSize: 9},
 		Layout:   VBox{},
 		Children: []Widget{
@@ -78,7 +78,7 @@ func main() {
 				})
 
 			case <-cancel:
-				break
+				return
 			}
 		}
 	}()
@@ -118,7 +118,6 @@ type Styler struct {
 	lb                  **walk.ListBox
 	canvas              *walk.Canvas
 	model               *logModel
-	font                *walk.Font
 	dpi2StampSize       map[int]walk.Size
 	widthDPI2WsPerLine  map[widthDPI]int
 	textWidthDPI2Height map[textWidthDPI]int // in native pixels
@@ -219,7 +218,7 @@ func (s *Styler) StyleItem(style *walk.ListItemStyle) {
 		stampSize := s.StampSize()
 
 		x := b.X + stampSize.Width + marginH + lineW
-		canvas.DrawLinePixels(pen, walk.Point{x, b.Y - marginV}, walk.Point{x, b.Y - marginV + b.Height})
+		canvas.DrawLinePixels(pen, walk.Point{X: x, Y: b.Y - marginV}, walk.Point{X: x, Y: b.Y - marginV + b.Height})
 
 		b.X += stampSize.Width + marginH*2 + lineW
 		b.Width -= stampSize.Width + marginH*4 + lineW

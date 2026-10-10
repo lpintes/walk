@@ -24,7 +24,7 @@ var (
 
 func init() {
 	walk.AppendToWalkInit(func() {
-		propertyRE = regexp.MustCompile("[A-Za-z]+[0-9A-Za-z]*(\\.[A-Za-z]+[0-9A-Za-z]*)+")
+		propertyRE = regexp.MustCompile(`[A-Za-z]+[0-9A-Za-z]*(\.[A-Za-z]+[0-9A-Za-z]*)+`)
 	})
 }
 
@@ -257,11 +257,7 @@ func (b *Builder) InitWidget(d Widget, w walk.Window, customInit func() error) e
 				SetStretchFactor(widget walk.Widget, factor int) error
 			}
 
-			stretchFactor := b.int("StretchFactor")
-
-			if stretchFactor < 1 {
-				stretchFactor = 1
-			}
+			stretchFactor := max(b.int("StretchFactor"), 1)
 
 			switch l := p.Layout().(type) {
 			case SetStretchFactorer:
@@ -270,16 +266,10 @@ func (b *Builder) InitWidget(d Widget, w walk.Window, customInit func() error) e
 				}
 
 			case *walk.GridLayout:
-				csf := l.ColumnStretchFactor(column)
-				if csf < stretchFactor {
-					csf = stretchFactor
-				}
+				csf := max(l.ColumnStretchFactor(column), stretchFactor)
 				l.SetColumnStretchFactor(column, csf)
 
-				rsf := l.RowStretchFactor(row)
-				if rsf < stretchFactor {
-					rsf = stretchFactor
-				}
+				rsf := max(l.RowStretchFactor(row), stretchFactor)
 				l.SetRowStretchFactor(row, rsf)
 
 				if rowSpan < 1 {
@@ -313,7 +303,7 @@ func (b *Builder) InitWidget(d Widget, w walk.Window, customInit func() error) e
 					b.col += columnSpan
 				}
 
-				r := walk.Rectangle{column, row, columnSpan, rowSpan}
+				r := walk.Rectangle{X: column, Y: row, Width: columnSpan, Height: rowSpan}
 
 				if err := l.SetRange(widget, r); err != nil {
 					return err
@@ -530,16 +520,6 @@ func (b *Builder) eventHandler(fieldName string) walk.EventHandler {
 	return nil
 }
 
-func (b *Builder) float64(fieldName string) float64 {
-	fieldValue := b.widgetValue.FieldByName(fieldName)
-
-	if fieldValue.IsValid() {
-		return fieldValue.Interface().(float64)
-	}
-
-	return 0
-}
-
 func (b *Builder) int(fieldName string) int {
 	fieldValue := b.widgetValue.FieldByName(fieldName)
 
@@ -613,7 +593,7 @@ func (b *Builder) initProperties() error {
 		wb := w.AsWindowBase()
 
 		fieldCount := st.NumField()
-		for i := 0; i < fieldCount; i++ {
+		for i := range fieldCount {
 			sf := st.Field(i)
 
 			prop := wb.Property(sf.Name)

@@ -37,13 +37,12 @@ func LoadIconWithScaleDown(hInstance HINSTANCE, lpIconName *uint16, w int32, h i
 	if loadIconWithScaleDown.Find() != nil {
 		return HRESULT(0)
 	}
-	ret, _, _ := syscall.Syscall6(loadIconWithScaleDown.Addr(), 5,
+	ret, _, _ := syscall.SyscallN(loadIconWithScaleDown.Addr(),
 		uintptr(hInstance),
 		uintptr(unsafe.Pointer(lpIconName)),
 		uintptr(w),
 		uintptr(h),
-		uintptr(unsafe.Pointer(hicon)),
-		0)
+		uintptr(unsafe.Pointer(hicon)))
 
 	return HRESULT(ret)
 }

@@ -52,6 +52,26 @@ func UTF16PtrToString(s *uint16) string {
 	return windows.UTF16PtrToString(s)
 }
 
+// StringToUTF16 returns the UTF-16 encoding of s with a terminating NUL
+// added. Like the deprecated syscall.StringToUTF16, it panics if s
+// contains a NUL byte; use windows.UTF16FromString to get an error
+// instead.
+func StringToUTF16(s string) []uint16 {
+	a, err := windows.UTF16FromString(s)
+	if err != nil {
+		panic("syscall: string with NUL passed to StringToUTF16")
+	}
+	return a
+}
+
+// StringToUTF16Ptr returns a pointer to the UTF-16 encoding of s with a
+// terminating NUL added. Like the deprecated syscall.StringToUTF16Ptr, it
+// panics if s contains a NUL byte; use windows.UTF16PtrFromString to get
+// an error instead.
+func StringToUTF16Ptr(s string) *uint16 {
+	return &StringToUTF16(s)[0]
+}
+
 func MAKEINTRESOURCE(id uintptr) *uint16 {
 	return (*uint16)(unsafe.Pointer(id))
 }

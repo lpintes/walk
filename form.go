@@ -9,8 +9,6 @@ package walk
 import (
 	"fmt"
 	"math"
-	"sync"
-	"syscall"
 	"time"
 	"unsafe"
 
@@ -25,11 +23,6 @@ const (
 )
 
 var (
-	syncFuncs struct {
-		m     sync.Mutex
-		funcs []func()
-	}
-
 	syncMsgId                 uint32
 	taskbarButtonCreatedMsgId uint32
 	taskbarCreatedMsgId       uint32
@@ -37,9 +30,9 @@ var (
 
 func init() {
 	AppendToWalkInit(func() {
-		syncMsgId = win.RegisterWindowMessage(syscall.StringToUTF16Ptr("WalkSync"))
-		taskbarButtonCreatedMsgId = win.RegisterWindowMessage(syscall.StringToUTF16Ptr("TaskbarButtonCreated"))
-		taskbarCreatedMsgId = win.RegisterWindowMessage(syscall.StringToUTF16Ptr("TaskbarCreated"))
+		syncMsgId = win.RegisterWindowMessage(win.StringToUTF16Ptr("WalkSync"))
+		taskbarButtonCreatedMsgId = win.RegisterWindowMessage(win.StringToUTF16Ptr("TaskbarButtonCreated"))
+		taskbarCreatedMsgId = win.RegisterWindowMessage(win.StringToUTF16Ptr("TaskbarCreated"))
 	})
 }
 
@@ -501,10 +494,10 @@ func (fb *FormBase) SetOwner(value Form) error {
 	}
 
 	win.SetLastError(0)
-	if 0 == win.SetWindowLong(
+	if win.SetWindowLong(
 		fb.hWnd,
 		win.GWL_HWNDPARENT,
-		int32(ownerHWnd)) && win.GetLastError() != 0 {
+		int32(ownerHWnd)) == 0 && win.GetLastError() != 0 {
 
 		return lastError("SetWindowLong")
 	}
@@ -752,7 +745,7 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			break
 		}
 
-		mmi := (*win.MINMAXINFO)(unsafe.Pointer(lParam))
+		mmi := ptrFromUintptr[win.MINMAXINFO](lParam)
 
 		var min Size
 		if layout := fb.clientComposite.layout; layout != nil {
@@ -768,8 +761,8 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		minSize := SizeFrom96DPI(fb.minSize96dpi, fb.DPI())
 
 		mmi.PtMinTrackSize = Point{
-			maxi(min.Width, minSize.Width),
-			maxi(min.Height, minSize.Height),
+			max(min.Width, minSize.Width),
+			max(min.Height, minSize.Height),
 		}.toPOINT()
 		return 0
 
@@ -788,7 +781,7 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		fb.inSizeLoop <- false
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_SHOWWINDOW != 0 {
 			fb.startLayout()
@@ -848,7 +841,7 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 
 		fb.SetSuspended(wasSuspended)
 
-		rc := (*win.RECT)(unsafe.Pointer(lParam))
+		rc := ptrFromUintptr[win.RECT](lParam)
 		bounds := rectangleFromRECT(*rc)
 		fb.proposedSize = bounds.Size()
 		fb.window.SetBoundsPixels(bounds)

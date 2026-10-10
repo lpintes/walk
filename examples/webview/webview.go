@@ -18,7 +18,7 @@ func main() {
 	MainWindow{
 		Icon:    Bind("'../img/' + icon(wv.URL) + '.ico'"),
 		Title:   "Walk WebView Example'",
-		MinSize: Size{800, 600},
+		MinSize: Size{Width: 800, Height: 600},
 		Layout:  VBox{MarginsZero: true},
 		Children: []Widget{
 			LineEdit{

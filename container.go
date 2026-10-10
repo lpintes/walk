@@ -313,8 +313,6 @@ func (cb *ContainerBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintp
 					if button != nil && button.Visible() && button.Enabled() {
 						button.raiseClicked()
 					}
-
-					break
 				}
 
 				// Menu
@@ -348,21 +346,21 @@ func (cb *ContainerBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintp
 		}
 
 	case win.WM_MEASUREITEM:
-		mis := (*win.MEASUREITEMSTRUCT)(unsafe.Pointer(lParam))
+		mis := ptrFromUintptr[win.MEASUREITEMSTRUCT](lParam)
 		if window := windowFromHandle(win.GetDlgItem(hwnd, int32(mis.CtlID))); window != nil {
 			// The window that sent the notification shall handle it itself.
 			return window.WndProc(hwnd, msg, wParam, lParam)
 		}
 
 	case win.WM_DRAWITEM:
-		dis := (*win.DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
+		dis := ptrFromUintptr[win.DRAWITEMSTRUCT](lParam)
 		if window := windowFromHandle(dis.HwndItem); window != nil {
 			// The window that sent the notification shall handle it itself.
 			return window.WndProc(hwnd, msg, wParam, lParam)
 		}
 
 	case win.WM_NOTIFY:
-		nmh := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmh := ptrFromUintptr[win.NMHDR](lParam)
 		if window := windowFromHandle(nmh.HwndFrom); window != nil {
 			// The window that sent the notification shall handle it itself.
 			return window.WndProc(hwnd, msg, wParam, lParam)
@@ -375,7 +373,7 @@ func (cb *ContainerBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintp
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 || cb.Layout() == nil {
 			break
@@ -478,7 +476,7 @@ func firstFocusableDescendantCallback(hwnd win.HWND, lParam uintptr) uintptr {
 			}
 		}
 
-		hwndPtr := (*win.HWND)(unsafe.Pointer(lParam))
+		hwndPtr := ptrFromUintptr[win.HWND](lParam)
 		*hwndPtr = hwnd
 		return 0
 	}

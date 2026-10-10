@@ -6,6 +6,8 @@
 
 package walk
 
+import "slices"
+
 type actionListObserver interface {
 	onInsertedAction(action *Action) error
 	onRemovingAction(action *Action) error
@@ -100,7 +102,7 @@ func (l *ActionList) Insert(index int, action *Action) error {
 	l.actions[index] = action
 
 	if err := l.observer.onInsertedAction(action); err != nil {
-		l.actions = append(l.actions[:index], l.actions[index+1:]...)
+		l.actions = slices.Delete(l.actions, index, index+1)
 
 		return err
 	}
@@ -148,7 +150,7 @@ func (l *ActionList) RemoveAt(index int) error {
 
 	action.release()
 
-	l.actions = append(l.actions[:index], l.actions[index+1:]...)
+	l.actions = slices.Delete(l.actions, index, index+1)
 
 	if action.Visible() {
 		return l.updateSeparatorVisibility()

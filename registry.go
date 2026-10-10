@@ -35,7 +35,7 @@ func RegistryKeyString(rootKey *RegistryKey, subKeyPath, valueName string) (valu
 	var hKey win.HKEY
 	if win.RegOpenKeyEx(
 		rootKey.hKey,
-		syscall.StringToUTF16Ptr(subKeyPath),
+		win.StringToUTF16Ptr(subKeyPath),
 		0,
 		win.KEY_READ,
 		&hKey) != win.ERROR_SUCCESS {
@@ -50,7 +50,7 @@ func RegistryKeyString(rootKey *RegistryKey, subKeyPath, valueName string) (valu
 
 	if win.ERROR_SUCCESS != win.RegQueryValueEx(
 		hKey,
-		syscall.StringToUTF16Ptr(valueName),
+		win.StringToUTF16Ptr(valueName),
 		nil,
 		&typ,
 		nil,
@@ -63,7 +63,7 @@ func RegistryKeyString(rootKey *RegistryKey, subKeyPath, valueName string) (valu
 
 	if win.ERROR_SUCCESS != win.RegQueryValueEx(
 		hKey,
-		syscall.StringToUTF16Ptr(valueName),
+		win.StringToUTF16Ptr(valueName),
 		nil,
 		&typ,
 		(*byte)(unsafe.Pointer(&data[0])),
@@ -79,7 +79,7 @@ func RegistryKeyUint32(rootKey *RegistryKey, subKeyPath, valueName string) (valu
 	var hKey win.HKEY
 	if win.RegOpenKeyEx(
 		rootKey.hKey,
-		syscall.StringToUTF16Ptr(subKeyPath),
+		win.StringToUTF16Ptr(subKeyPath),
 		0,
 		win.KEY_READ,
 		&hKey) != win.ERROR_SUCCESS {
@@ -92,7 +92,7 @@ func RegistryKeyUint32(rootKey *RegistryKey, subKeyPath, valueName string) (valu
 
 	if win.ERROR_SUCCESS != win.RegQueryValueEx(
 		hKey,
-		syscall.StringToUTF16Ptr(valueName),
+		win.StringToUTF16Ptr(valueName),
 		nil,
 		nil,
 		(*byte)(unsafe.Pointer(&value)),

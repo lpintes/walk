@@ -35,7 +35,8 @@ The `LICENSE` and `AUTHORS` files must be preserved.
     (examples do not build on arm64: their `rsrc.syso` files are 386 COFF
     objects)
   - `gofmt -l .` must print nothing
-  - `GOOS=windows go vet ./...` (has known warnings; do not add new ones)
+  - `GOOS=windows go vet ./...` (only the 3 known warnings in
+    `internal/win`; do not add new ones)
   - `go test ./tools/...`
   - after changing `internal/win/winmd.txt` or the generator:
     `go generate ./internal/win` and commit the regenerated files
@@ -244,7 +245,48 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     scripts (unit tests of `internal/com`).
   - Next users of `internal/com`: WebView2 handlers (step 7) and the
     `IRichEditOleCallback` of RichEdit (step 5) if needed.
-- Steps 4, 5, 7, 8, 9, 10 and 11: not started.
+- Step 8, part 1: pull request lpintes/walk#9, mechanical and
+  behavior-preserving, checked with `go vet`, staticcheck 2025.1.1 and
+  the modernize analyzer of gopls v0.18.1 (run them with
+  `GOOS=windows`; install them with the Go 1.24 toolchain).
+  - Removed unused and unreachable code; kept on purpose: the stopwatch
+    debugging helpers, `ImageView.applyDPI` and
+    `WebView.inPlaceActiveObjectSetFocus` (look like unfinished
+    features; the latter may help with the WebView focus problem) and
+    the `setValueFunc` methods (needed by unexported interface
+    methods).
+  - Field names in all struct literals of types from other packages;
+    `0 == x` comparisons turned around; range over int, `slices`,
+    `maps`, built-in `min` and `max` (the helpers `maxi` and `mini` are
+    gone).
+  - Hand-written `syscall.Syscall*` calls in `internal/win` use
+    `syscall.SyscallN` with exactly the old argument count (apidump
+    unchanged). `win.StringToUTF16` and `win.StringToUTF16Ptr` replace
+    the deprecated syscall functions with identical behavior, including
+    the panic for strings containing NUL.
+  - `ptrFromUintptr[T]` in `util.go` converts `lParam` and
+    `GetWindowLongPtr` values to pointers in one documented place; huge
+    array casts became `unsafe.Slice` of the real length. `go vet` now
+    reports only the 3 reviewed warnings in `internal/win`.
+  - Fixed on the way: `TableView.RestoreState` parsed `LastSeenDate`
+    with the wrong layout (column state was not pruned as intended);
+    the `LoadIconWithScaleDown` failure check in `Icon` never fired; the
+    `listbox_ownerdrawing` example goroutine never stopped; a
+    transparent bitmap above 4 megapixels and a TableView or TreeView
+    text above 264 characters with a larger buffer panicked.
+  - The trace patches in `tests/_wingui/hdn` and `ods` were updated.
+  - Tested on Windows 11 (386 and amd64) with `tests/_wingui`: `build.ps1`,
+    `run.ps1` (all tests but `olednd`) and `examples.ps1` pass, with only
+    the known problems (`SetRole` on 386, `ListBox` `hoverIndex`,
+    `progressindicator` nil layout).
+  - Left for later (each changes behavior or public text): the
+    deprecated 96 DPI APIs still used by `declarative` (`NewCustomWidget`,
+    `NewImageList`, `Resources.Bitmap`) and the examples; capitalized
+    error strings in walk and `internal/win`; dot imports in the
+    examples; call sites that could return an error instead of
+    panicking on strings with NUL.
+- Steps 4, 5, 7, 9, 10 and 11: not started; step 8 can continue (for
+  example `errors.Is` and `errors.As`, generic event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
 
@@ -416,14 +458,11 @@ and real dialogs all need new Win32/COM declarations.
 
 ## Known issues
 
-- `go vet` reports 66 "possible misuse of unsafe.Pointer" warnings: 63 in
-  walk, mostly `lParam` to struct pointer conversions in window procedures,
-  and 3 in `internal/win` (`GlobalLock`, `SysAllocString`,
-  `MAKEINTRESOURCE`). The 3 in `internal/win` were reviewed in step 3: they
-  convert memory allocated by Windows or integer resource IDs, not Go
-  memory, and stay as they are. `go vet` also reports "struct literal
-  uses unkeyed fields" for walk and the examples (for example unkeyed
-  `win.RECT` and `win.POINT` literals); these are known too.
+- `go vet` reports 3 "possible misuse of unsafe.Pointer" warnings, all in
+  `internal/win` (`GlobalLock`, `SysAllocString`, `MAKEINTRESOURCE`).
+  They were reviewed in step 3: they convert memory allocated by Windows
+  or integer resource IDs, not Go memory, and stay as they are. The 63
+  warnings in walk went away in step 8 part 1 (`ptrFromUintptr`).
 - `TableView.updateLVSizes` sizes the frozen list view from the column
   widths converted to 96 DPI and back, so at 150 % scaling it can be one
   pixel wider than the frozen columns (column 220 pixels, list view 221).

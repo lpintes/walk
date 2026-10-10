@@ -37,26 +37,22 @@ func init() {
 }
 
 func GlobalLock(hMem HGLOBAL) unsafe.Pointer {
-	ret, _, _ := syscall.Syscall(globalLock.Addr(), 1,
-		uintptr(hMem),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(globalLock.Addr(),
+		uintptr(hMem))
 
 	return unsafe.Pointer(ret)
 }
 
 func MoveMemory(destination, source unsafe.Pointer, length uintptr) {
-	syscall.Syscall(moveMemory.Addr(), 3,
+	syscall.SyscallN(moveMemory.Addr(),
 		uintptr(unsafe.Pointer(destination)),
 		uintptr(source),
 		uintptr(length))
 }
 
 func LockResource(hResData HGLOBAL) uintptr {
-	ret, _, _ := syscall.Syscall(lockResource.Addr(), 1,
-		uintptr(hResData),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(lockResource.Addr(),
+		uintptr(hResData))
 
 	return ret
 }

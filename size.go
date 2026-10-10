@@ -26,38 +26,12 @@ func (s Size) toSIZE() win.SIZE {
 	}
 }
 
-func minSize(a, b Size) Size {
-	var s Size
-
-	if a.Width < b.Width {
-		s.Width = a.Width
-	} else {
-		s.Width = b.Width
-	}
-
-	if a.Height < b.Height {
-		s.Height = a.Height
-	} else {
-		s.Height = b.Height
-	}
-
-	return s
-}
-
 func maxSize(a, b Size) Size {
 	var s Size
 
-	if a.Width > b.Width {
-		s.Width = a.Width
-	} else {
-		s.Width = b.Width
-	}
+	s.Width = max(a.Width, b.Width)
 
-	if a.Height > b.Height {
-		s.Height = a.Height
-	} else {
-		s.Height = b.Height
-	}
+	s.Height = max(a.Height, b.Height)
 
 	return s
 }

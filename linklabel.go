@@ -70,7 +70,7 @@ func (ll *LinkLabel) LinkActivated() *LinkLabelLinkEvent {
 func (ll *LinkLabel) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		nml := (*win.NMLINK)(unsafe.Pointer(lParam))
+		nml := ptrFromUintptr[win.NMLINK](lParam)
 
 		switch nml.Hdr.Code {
 		case win.NM_CLICK, win.NM_RETURN:
@@ -91,7 +91,7 @@ func (ll *LinkLabel) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) 
 		ll.textChangedPublisher.Publish()
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

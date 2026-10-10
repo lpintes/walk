@@ -222,7 +222,7 @@ func (mw *MainWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 	switch msg {
 	case win.WM_WINDOWPOSCHANGED, win.WM_SIZE:
 		if win.WM_WINDOWPOSCHANGED == msg {
-			wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+			wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 			if wp.Flags&win.SWP_NOSIZE != 0 {
 				break
 			}

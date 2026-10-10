@@ -22,7 +22,7 @@ func (idProp *MSAAPROPID) split() (uintptr, uintptr, uintptr, uintptr) {
 // SetHwndProp wraps SetPropValue, providing a convenient entry point for callers who are annotating HWND-based accessible elements. If the new value is a string, you can use SetHwndPropStr instead.
 func (obj *IAccPropServices) SetHwndProp(hwnd HWND, idObject int32, idChild uint32, idProp *MSAAPROPID, v *VARIANT) HRESULT {
 	propA, propB, propC, propD := idProp.split()
-	ret, _, _ := syscall.Syscall9(obj.LpVtbl.SetHwndProp, 9,
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.SetHwndProp,
 		uintptr(unsafe.Pointer(obj)),
 		uintptr(hwnd),
 		uintptr(idObject),
@@ -39,7 +39,7 @@ func (obj *IAccPropServices) SetHwndPropStr(hwnd HWND, idObject int32, idChild u
 		return -((E_INVALIDARG ^ 0xFFFFFFFF) + 1)
 	}
 	propA, propB, propC, propD := idProp.split()
-	ret, _, _ := syscall.Syscall9(obj.LpVtbl.SetHwndPropStr, 9,
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.SetHwndPropStr,
 		uintptr(unsafe.Pointer(obj)),
 		uintptr(hwnd),
 		uintptr(idObject),

@@ -29,7 +29,7 @@ func main() {
 	if _, err := (MainWindow{
 		AssignTo: &mw,
 		Title:    "Walk Data Binding Example",
-		MinSize:  Size{300, 200},
+		MinSize:  Size{Width: 300, Height: 200},
 		Layout:   VBox{},
 		Children: []Widget{
 			PushButton{
@@ -127,7 +127,7 @@ func RunAnimalDialog(owner walk.Form, animal *Animal) (int, error) {
 			DataSource:     animal,
 			ErrorPresenter: ToolTipErrorPresenter{},
 		},
-		MinSize: Size{300, 300},
+		MinSize: Size{Width: 300, Height: 300},
 		Layout:  VBox{},
 		Children: []Widget{
 			Composite{
@@ -180,7 +180,7 @@ func RunAnimalDialog(owner walk.Form, animal *Animal) (int, error) {
 						Text: "Weight:",
 					},
 					NumberEdit{
-						Value:    Bind("Weight", Range{0.01, 9999.99}),
+						Value:    Bind("Weight", Range{Min: 0.01, Max: 9999.99}),
 						Suffix:   " kg",
 						Decimals: 2,
 					},
@@ -212,7 +212,7 @@ func RunAnimalDialog(owner walk.Form, animal *Animal) (int, error) {
 					},
 					TextEdit{
 						ColumnSpan: 2,
-						MinSize:    Size{100, 50},
+						MinSize:    Size{Width: 100, Height: 50},
 						Text:       Bind("Remarks"),
 					},
 

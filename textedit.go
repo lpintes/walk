@@ -21,7 +21,6 @@ type TextEdit struct {
 	textColor                Color
 	compactHeight            bool
 	margins                  Size // in native pixels
-	lastHeight               int
 	origWordbreakProcPtr     uintptr
 }
 
@@ -234,7 +233,7 @@ func (te *TextEdit) SetTextSelection(start, end int) {
 func (te *TextEdit) ReplaceSelectedText(text string, canUndo bool) {
 	te.SendMessage(win.EM_REPLACESEL,
 		uintptr(win.BoolToBOOL(canUndo)),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))))
+		uintptr(unsafe.Pointer(win.StringToUTF16Ptr(text))))
 }
 
 func (te *TextEdit) AppendText(value string) {
@@ -250,7 +249,7 @@ func (te *TextEdit) ReadOnly() bool {
 }
 
 func (te *TextEdit) SetReadOnly(readOnly bool) error {
-	if 0 == te.SendMessage(win.EM_SETREADONLY, uintptr(win.BoolToBOOL(readOnly)), 0) {
+	if te.SendMessage(win.EM_SETREADONLY, uintptr(win.BoolToBOOL(readOnly)), 0) == 0 {
 		return newError("SendMessage(EM_SETREADONLY)")
 	}
 
@@ -281,7 +280,7 @@ func (te *TextEdit) ContextMenuLocation() Point {
 		idx = (start + end) / 2
 	}
 	res := uint32(te.SendMessage(win.EM_POSFROMCHAR, uintptr(idx), 0))
-	pt := win.POINT{int32(win.LOWORD(res)), int32(win.HIWORD(res))}
+	pt := win.POINT{X: int32(win.LOWORD(res)), Y: int32(win.HIWORD(res))}
 	windowTrimToClientBounds(te.hWnd, &pt)
 	return pointPixelsFromPOINT(pt)
 }
@@ -386,7 +385,7 @@ func (li *textEditLayoutItem) HeightForWidth(width int) int {
 
 	size := calculateTextSize(li.text, li.font, li.ctx.dpi, width-li.margins.Width, li.handle)
 	size.Height += li.margins.Height
-	size.Height = maxi(size.Height, li.nonCompactHeightMinSize.Height)
+	size.Height = max(size.Height, li.nonCompactHeightMinSize.Height)
 
 	li.width2Height[width] = size.Height
 

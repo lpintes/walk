@@ -53,7 +53,7 @@ func init() {
 }
 
 func comboBoxEditWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
-	cb := (*ComboBox)(unsafe.Pointer(win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA)))
+	cb := ptrFromUintptr[ComboBox](win.GetWindowLongPtr(hwnd, win.GWLP_USERDATA))
 
 	switch msg {
 	case win.WM_GETDLGCODE:
@@ -74,7 +74,7 @@ func comboBoxEditWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 		}
 
 	case win.WM_KEYDOWN:
-		if wParam != win.VK_RETURN || 0 == cb.SendMessage(win.CB_GETDROPPEDSTATE, 0, 0) {
+		if wParam != win.VK_RETURN || cb.SendMessage(win.CB_GETDROPPEDSTATE, 0, 0) == 0 {
 			cb.handleKeyDown(wParam, lParam)
 		}
 
@@ -84,7 +84,7 @@ func comboBoxEditWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uint
 		}
 
 	case win.WM_KEYUP:
-		if wParam != win.VK_RETURN || 0 == cb.SendMessage(win.CB_GETDROPPEDSTATE, 0, 0) {
+		if wParam != win.VK_RETURN || cb.SendMessage(win.CB_GETDROPPEDSTATE, 0, 0) == 0 {
 			cb.handleKeyUp(wParam, lParam)
 		}
 
@@ -219,7 +219,7 @@ func newComboBoxWithStyle(parent Container, style uint32) (*ComboBox, error) {
 			index := -1
 
 			count := cb.model.ItemCount()
-			for i := 0; i < count; i++ {
+			for i := range count {
 				if cb.bindingValueProvider.BindingValue(i) == v {
 					index = i
 					break
@@ -262,13 +262,11 @@ func (cb *ComboBox) itemString(index int) string {
 	default:
 		return fmt.Sprintf(cb.format, val)
 	}
-
-	panic("unreachable")
 }
 
 func (cb *ComboBox) insertItemAt(index int) error {
 	str := cb.itemString(index)
-	lp := uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(str)))
+	lp := uintptr(unsafe.Pointer(win.StringToUTF16Ptr(str)))
 
 	if win.CB_ERR == cb.SendMessage(win.CB_INSERTSTRING, uintptr(index), lp) {
 		return newError("SendMessage(CB_INSERTSTRING)")
@@ -306,7 +304,7 @@ func (cb *ComboBox) resetItems() error {
 
 	count := cb.model.ItemCount()
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if err := cb.insertItemAt(i); err != nil {
 			return err
 		}
@@ -537,16 +535,16 @@ func (cb *ComboBox) calculateMaxItemTextWidth() int {
 	var maxWidth int
 
 	count := cb.model.ItemCount()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		var s win.SIZE
-		str := syscall.StringToUTF16(cb.itemString(i))
+		str := win.StringToUTF16(cb.itemString(i))
 
 		if !win.GetTextExtentPoint32(hdc, &str[0], int32(len(str)-1), &s) {
 			newError("GetTextExtentPoint32 failed")
 			return -1
 		}
 
-		maxWidth = maxi(maxWidth, int(s.CX))
+		maxWidth = max(maxWidth, int(s.CX))
 	}
 
 	return maxWidth
@@ -700,7 +698,7 @@ func (cb *ComboBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break
@@ -737,7 +735,7 @@ func (cb *ComboBox) CreateLayoutItem(ctx *LayoutContext) LayoutItem {
 	}
 
 	// FIXME: Use GetThemePartSize instead of guessing
-	w := maxi(defaultSize.Width, cb.maxItemTextWidth+int(win.GetSystemMetricsForDpi(win.SM_CXVSCROLL, uint32(ctx.dpi)))+8)
+	w := max(defaultSize.Width, cb.maxItemTextWidth+int(win.GetSystemMetricsForDpi(win.SM_CXVSCROLL, uint32(ctx.dpi)))+8)
 	h := defaultSize.Height + 1
 
 	return &comboBoxLayoutItem{

@@ -12,7 +12,7 @@ import (
 func main() {
 	MainWindow{
 		Title:   "Walk GradientComposite Example",
-		MinSize: Size{400, 0},
+		MinSize: Size{Width: 400, Height: 0},
 		Background: GradientBrush{
 			Vertexes: []walk.GradientVertex{
 				{X: 0, Y: 0, Color: walk.RGB(255, 255, 127)},
@@ -22,13 +22,13 @@ func main() {
 				{X: 0, Y: 1, Color: walk.RGB(255, 127, 127)},
 			},
 			Triangles: []walk.GradientTriangle{
-				{0, 1, 2},
-				{1, 3, 2},
-				{3, 4, 2},
-				{4, 0, 2},
+				{Vertex1: 0, Vertex2: 1, Vertex3: 2},
+				{Vertex1: 1, Vertex2: 3, Vertex3: 2},
+				{Vertex1: 3, Vertex2: 4, Vertex3: 2},
+				{Vertex1: 4, Vertex2: 0, Vertex3: 2},
 			},
 		},
-		Layout: HBox{Margins: Margins{100, 100, 100, 100}},
+		Layout: HBox{Margins: Margins{Left: 100, Top: 100, Right: 100, Bottom: 100}},
 		Children: []Widget{
 			GradientComposite{
 				Border:   true,

@@ -6,6 +6,8 @@
 
 package walk
 
+import "slices"
+
 import "math"
 
 var (
@@ -254,7 +256,7 @@ func (l *WidgetGraphicsEffectList) Insert(index int, effect WidgetGraphicsEffect
 
 	if observer != nil {
 		if err := observer.onInsertedGraphicsEffect(index, effect); err != nil {
-			l.items = append(l.items[:index], l.items[index+1:]...)
+			l.items = slices.Delete(l.items, index, index+1)
 			return err
 		}
 	}
@@ -279,7 +281,7 @@ func (l *WidgetGraphicsEffectList) RemoveAt(index int) error {
 	observer := l.observer
 	item := l.items[index]
 
-	l.items = append(l.items[:index], l.items[index+1:]...)
+	l.items = slices.Delete(l.items, index, index+1)
 
 	if observer != nil {
 		if err := observer.onRemovedGraphicsEffect(index, item); err != nil {

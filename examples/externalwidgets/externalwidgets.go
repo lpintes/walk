@@ -27,7 +27,7 @@ func main() {
 	if err := (MainWindow{
 		AssignTo: &mw,
 		Title:    "Walk External Widgets Example",
-		Size:     Size{400, 300},
+		Size:     Size{Width: 400, Height: 300},
 		Layout:   HBox{},
 	}).Create(); err != nil {
 		log.Fatal(err)
@@ -77,7 +77,7 @@ func NewMyWidget(parent walk.Container) (*MyWidget, error) {
 }
 
 func (*MyWidget) CreateLayoutItem(ctx *walk.LayoutContext) walk.LayoutItem {
-	return &myWidgetLayoutItem{idealSize: walk.SizeFrom96DPI(walk.Size{50, 50}, ctx.DPI())}
+	return &myWidgetLayoutItem{idealSize: walk.SizeFrom96DPI(walk.Size{Width: 50, Height: 50}, ctx.DPI())}
 }
 
 type myWidgetLayoutItem struct {

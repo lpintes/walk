@@ -8,7 +8,6 @@ package walk
 
 import (
 	"math"
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -33,7 +32,7 @@ func NewMetafile(referenceCanvas *Canvas) (*Metafile, error) {
 }
 
 func NewMetafileFromFile(filePath string) (*Metafile, error) {
-	hemf := win.GetEnhMetaFile(syscall.StringToUTF16Ptr(filePath))
+	hemf := win.GetEnhMetaFile(win.StringToUTF16Ptr(filePath))
 	if hemf == 0 {
 		return nil, newError("GetEnhMetaFile failed")
 	}
@@ -59,7 +58,7 @@ func (mf *Metafile) Dispose() {
 }
 
 func (mf *Metafile) Save(filePath string) error {
-	hemf := win.CopyEnhMetaFile(mf.hemf, syscall.StringToUTF16Ptr(filePath))
+	hemf := win.CopyEnhMetaFile(mf.hemf, win.StringToUTF16Ptr(filePath))
 	if hemf == 0 {
 		return newError("CopyEnhMetaFile failed")
 	}

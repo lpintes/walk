@@ -233,8 +233,8 @@ func main() {
 	if err := (MainWindow{
 		AssignTo: &mainWindow,
 		Title:    "Walk File Browser Example",
-		MinSize:  Size{600, 400},
-		Size:     Size{1024, 640},
+		MinSize:  Size{Width: 600, Height: 400},
+		Size:     Size{Width: 1024, Height: 640},
 		Layout:   HBox{MarginsZero: true},
 		Children: []Widget{
 			HSplitter{

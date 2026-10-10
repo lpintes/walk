@@ -18,7 +18,7 @@ func main() {
 
 	if _, err := (MainWindow{
 		Title:   "Walk Clipboard Example",
-		MinSize: Size{300, 200},
+		MinSize: Size{Width: 300, Height: 200},
 		Layout:  VBox{},
 		Children: []Widget{
 			PushButton{

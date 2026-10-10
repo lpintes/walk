@@ -7,10 +7,6 @@
 package walk
 
 import (
-	"unsafe"
-)
-
-import (
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -80,11 +76,11 @@ func (sb *SplitButton) Menu() *Menu {
 func (sb *SplitButton) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		switch ((*win.NMHDR)(unsafe.Pointer(lParam))).Code {
+		switch ptrFromUintptr[win.NMHDR](lParam).Code {
 		case win.BCN_DROPDOWN:
-			dd := (*win.NMBCDROPDOWN)(unsafe.Pointer(lParam))
+			dd := ptrFromUintptr[win.NMBCDROPDOWN](lParam)
 
-			p := win.POINT{dd.RcButton.Left, dd.RcButton.Bottom}
+			p := win.POINT{X: dd.RcButton.Left, Y: dd.RcButton.Bottom}
 
 			win.ClientToScreen(sb.hWnd, &p)
 

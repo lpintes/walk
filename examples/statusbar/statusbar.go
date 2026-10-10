@@ -28,7 +28,7 @@ func main() {
 
 	MainWindow{
 		Title:   "Walk Statusbar Example",
-		MinSize: Size{600, 200},
+		MinSize: Size{Width: 600, Height: 200},
 		Layout:  VBox{MarginsZero: true},
 		StatusBarItems: []StatusBarItem{
 			StatusBarItem{

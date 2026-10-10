@@ -7,9 +7,6 @@
 package walk
 
 import (
-	"syscall"
-	"unsafe"
-
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -50,7 +47,7 @@ func NewGroupBox(parent Container) (*GroupBox, error) {
 	}()
 
 	gb.hWndGroupBox = win.CreateWindowEx(
-		0, syscall.StringToUTF16Ptr("BUTTON"), nil,
+		0, win.StringToUTF16Ptr("BUTTON"), nil,
 		win.WS_CHILD|win.WS_VISIBLE|win.BS_GROUPBOX,
 		0, 0, 80, 24, gb.hWnd, 0, 0, nil)
 	if gb.hWndGroupBox == 0 {
@@ -333,7 +330,7 @@ func (gb *GroupBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			win.UpdateWindow(gb.checkBox.hWnd)
 
 		case win.WM_WINDOWPOSCHANGED:
-			wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+			wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 			if wp.Flags&win.SWP_NOSIZE != 0 {
 				break

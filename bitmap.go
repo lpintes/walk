@@ -11,7 +11,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -102,7 +101,7 @@ func newBitmap(size Size, transparent bool, dpi int) (bmp *Bitmap, err error) {
 		if transparent {
 			win.GdiFlush()
 
-			bits := (*[1 << 24]byte)(bitsPtr)
+			bits := unsafe.Slice((*byte)(bitsPtr), bufSize)
 
 			for i := 0; i < bufSize; i += 4 {
 				// Mark pixel as not drawn to by GDI.
@@ -134,7 +133,7 @@ func NewBitmapFromFileForDPI(filePath string, dpi int) (*Bitmap, error) {
 	defer win.GdiplusShutdown()
 
 	var gpBmp *win.GpBitmap
-	if status := win.GdipCreateBitmapFromFile(syscall.StringToUTF16Ptr(filePath), &gpBmp); status != win.Ok {
+	if status := win.GdipCreateBitmapFromFile(win.StringToUTF16Ptr(filePath), &gpBmp); status != win.Ok {
 		return nil, newError(fmt.Sprintf("GdipCreateBitmapFromFile failed with status '%s' for file '%s'", status, filePath))
 	}
 	defer win.GdipDisposeImage((*win.GpImage)(gpBmp))
@@ -168,12 +167,12 @@ func NewBitmapFromImageForDPI(im image.Image, dpi int) (*Bitmap, error) {
 //
 // Deprecated: Newer applications should use NewBitmapFromResourceForDPI.
 func NewBitmapFromResource(name string) (*Bitmap, error) {
-	return newBitmapFromResource(syscall.StringToUTF16Ptr(name), 96)
+	return newBitmapFromResource(win.StringToUTF16Ptr(name), 96)
 }
 
 // NewBitmapFromResourceForDPI creates a Bitmap at given DPI from resource by name.
 func NewBitmapFromResourceForDPI(name string, dpi int) (*Bitmap, error) {
-	return newBitmapFromResource(syscall.StringToUTF16Ptr(name), dpi)
+	return newBitmapFromResource(win.StringToUTF16Ptr(name), dpi)
 }
 
 // NewBitmapFromResourceId creates a Bitmap at 96dpi from resource by ID.
@@ -280,8 +279,8 @@ func (bmp *Bitmap) ToImage() (*image.RGBA, error) {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	n := 0
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := range height {
+		for x := range width {
 			a := buf[n+3]
 			r := buf[n+2]
 			g := buf[n+1]
@@ -296,8 +295,8 @@ func (bmp *Bitmap) ToImage() (*image.RGBA, error) {
 
 func (bmp *Bitmap) hasTransparency() (bool, error) {
 	if bmp.transparencyStatus == transparencyUnknown {
-		if err := bmp.withPixels(func(bi *win.BITMAPINFO, hdc win.HDC, pixels *[maxPixels]bgraPixel, pixelsLen int) error {
-			for i := 0; i < pixelsLen; i++ {
+		if err := bmp.withPixels(func(bi *win.BITMAPINFO, hdc win.HDC, pixels []bgraPixel) error {
+			for i := range pixels {
 				if pixels[i].A == 0x00 {
 					bmp.transparencyStatus = transparencyTransparent
 					break
@@ -318,8 +317,8 @@ func (bmp *Bitmap) hasTransparency() (bool, error) {
 }
 
 func (bmp *Bitmap) postProcess() error {
-	return bmp.withPixels(func(bi *win.BITMAPINFO, hdc win.HDC, pixels *[maxPixels]bgraPixel, pixelsLen int) error {
-		for i := 0; i < pixelsLen; i++ {
+	return bmp.withPixels(func(bi *win.BITMAPINFO, hdc win.HDC, pixels []bgraPixel) error {
+		for i := range pixels {
 			switch pixels[i].A {
 			case 0x00:
 				// The pixel has been drawn to by GDI, so we make it fully opaque.
@@ -332,7 +331,7 @@ func (bmp *Bitmap) postProcess() error {
 			}
 		}
 
-		if 0 == win.SetDIBits(hdc, bmp.hBmp, 0, uint32(bi.BmiHeader.BiHeight), &pixels[0].B, bi, win.DIB_RGB_COLORS) {
+		if win.SetDIBits(hdc, bmp.hBmp, 0, uint32(bi.BmiHeader.BiHeight), &unsafe.SliceData(pixels).B, bi, win.DIB_RGB_COLORS) == 0 {
 			return newError("SetDIBits")
 		}
 
@@ -347,9 +346,7 @@ type bgraPixel struct {
 	A byte
 }
 
-const maxPixels = 2 << 27
-
-func (bmp *Bitmap) withPixels(f func(bi *win.BITMAPINFO, hdc win.HDC, pixels *[maxPixels]bgraPixel, pixelsLen int) error) error {
+func (bmp *Bitmap) withPixels(f func(bi *win.BITMAPINFO, hdc win.HDC, pixels []bgraPixel) error) error {
 	var bi win.BITMAPINFO
 	bi.BmiHeader.BiSize = uint32(unsafe.Sizeof(bi.BmiHeader))
 
@@ -366,16 +363,16 @@ func (bmp *Bitmap) withPixels(f func(bi *win.BITMAPINFO, hdc win.HDC, pixels *[m
 	hPixels := win.GlobalAlloc(win.GMEM_FIXED, uintptr(bi.BmiHeader.BiSizeImage))
 	defer win.GlobalFree(hPixels)
 
-	pixels := (*[maxPixels]bgraPixel)(unsafe.Pointer(uintptr(hPixels)))
+	pixels := unsafe.Slice(ptrFromUintptr[bgraPixel](uintptr(hPixels)), bi.BmiHeader.BiSizeImage/4)
 
 	bi.BmiHeader.BiCompression = win.BI_RGB
-	if ret := win.GetDIBits(hdc, bmp.hBmp, 0, uint32(bi.BmiHeader.BiHeight), &pixels[0].B, &bi, win.DIB_RGB_COLORS); ret == 0 {
+	if ret := win.GetDIBits(hdc, bmp.hBmp, 0, uint32(bi.BmiHeader.BiHeight), &unsafe.SliceData(pixels).B, &bi, win.DIB_RGB_COLORS); ret == 0 {
 		return newError("GetDIBits #2")
 	}
 
 	win.GdiFlush()
 
-	return f(&bi, hdc, pixels, int(bi.BmiHeader.BiSizeImage)/4)
+	return f(&bi, hdc, pixels)
 }
 
 func (bmp *Bitmap) Dispose() {
@@ -423,7 +420,7 @@ func (bmp *Bitmap) alphaBlendPart(hdc win.HDC, dst, src Rectangle, opacity byte)
 			}
 
 			if !transparent {
-				if 0 == win.SetStretchBltMode(hdc, win.HALFTONE) {
+				if win.SetStretchBltMode(hdc, win.HALFTONE) == 0 {
 					return newError("SetStretchBltMode")
 				}
 
@@ -551,7 +548,7 @@ func hBitmapFromImage(im image.Image, dpi int) (win.HBITMAP, error) {
 	}
 
 	// Fill the image
-	bitmap_array := (*[1 << 30]byte)(unsafe.Pointer(lpBits))
+	bitmap_array := unsafe.Slice((*byte)(lpBits), 4*im.Bounds().Dx()*im.Bounds().Dy())
 	i := 0
 	for y := im.Bounds().Min.Y; y != im.Bounds().Max.Y; y++ {
 		for x := im.Bounds().Min.X; x != im.Bounds().Max.X; x++ {

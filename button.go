@@ -13,10 +13,6 @@ import (
 	"github.com/lpintes/walk/internal/win"
 )
 
-type clickable interface {
-	raiseClicked()
-}
-
 type setCheckeder interface {
 	setChecked(checked bool)
 }

@@ -207,7 +207,7 @@ func (sv *ScrollView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 			sv.composite.WndProc(hwnd, msg, wParam, lParam)
 
 		case win.WM_WINDOWPOSCHANGED:
-			wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+			wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 			if wp.Flags&win.SWP_NOSIZE != 0 {
 				break

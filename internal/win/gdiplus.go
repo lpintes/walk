@@ -133,29 +133,15 @@ func init() {
 }
 
 func GdiplusShutdown() {
-	syscall.Syscall(gdiplusShutdown.Addr(), 1,
-		token,
-		0,
-		0)
+	syscall.SyscallN(gdiplusShutdown.Addr(),
+		token)
 }
 
 func GdiplusStartup(input *GdiplusStartupInput, output *GdiplusStartupOutput) GpStatus {
-	ret, _, _ := syscall.Syscall(gdiplusStartup.Addr(), 3,
+	ret, _, _ := syscall.SyscallN(gdiplusStartup.Addr(),
 		uintptr(unsafe.Pointer(&token)),
 		uintptr(unsafe.Pointer(input)),
 		uintptr(unsafe.Pointer(output)))
 
 	return GpStatus(ret)
 }
-
-/*GdipSaveImageToFile(image *GpImage, filename *uint16, clsidEncoder *CLSID, encoderParams *EncoderParameters) GpStatus {
-	ret, _, _ := syscall.Syscall6(gdipSaveImageToFile.Addr(), 4,
-		uintptr(unsafe.Pointer(image)),
-		uintptr(unsafe.Pointer(filename)),
-		uintptr(unsafe.Pointer(clsidEncoder)),
-		uintptr(unsafe.Pointer(encoderParams)),
-		0,
-		0)
-
-	return GpStatus(ret)
-}*/

@@ -241,19 +241,15 @@ func init() {
 }
 
 func SysAllocString(s string) *uint16 /*BSTR*/ {
-	ret, _, _ := syscall.Syscall(sysAllocString.Addr(), 1,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s))),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(sysAllocString.Addr(),
+		uintptr(unsafe.Pointer(StringToUTF16Ptr(s))))
 
 	return (*uint16) /*BSTR*/ (unsafe.Pointer(ret))
 }
 
 func SysStringLen(bstr *uint16 /*BSTR*/) uint32 {
-	ret, _, _ := syscall.Syscall(sysStringLen.Addr(), 1,
-		uintptr(unsafe.Pointer(bstr)),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(sysStringLen.Addr(),
+		uintptr(unsafe.Pointer(bstr)))
 
 	return uint32(ret)
 }

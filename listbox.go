@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
-	"syscall"
 	"time"
 	"unsafe"
 
@@ -130,7 +129,7 @@ func NewListBoxWithStyle(parent Container, style uint32) (*ListBox, error) {
 			index := -1
 
 			count := lb.model.ItemCount()
-			for i := 0; i < count; i++ {
+			for i := range count {
 				if lb.bindingValueProvider.BindingValue(i) == v {
 					index = i
 					break
@@ -207,7 +206,7 @@ func (lb *ListBox) itemString(index int) string {
 // insert one item from list model
 func (lb *ListBox) insertItemAt(index int) error {
 	str := lb.itemString(index)
-	lp := uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(str)))
+	lp := uintptr(unsafe.Pointer(win.StringToUTF16Ptr(str)))
 	ret := int(lb.SendMessage(win.LB_INSERTSTRING, uintptr(index), lp))
 	if ret == win.LB_ERRSPACE || ret == win.LB_ERR {
 		return newError("SendMessage(LB_INSERTSTRING)")
@@ -243,7 +242,7 @@ func (lb *ListBox) resetItems() error {
 
 	lb.lastWidthsMeasuredFor = make([]int, count)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if err := lb.insertItemAt(i); err != nil {
 			return err
 		}
@@ -275,7 +274,7 @@ func (lb *ListBox) ensureVisibleItemsHeightUpToDate() error {
 	}
 
 	topIndex := int(lb.SendMessage(win.LB_GETTOPINDEX, 0, 0))
-	offset := maxi(0, topIndex-10)
+	offset := max(0, topIndex-10)
 	count := lb.model.ItemCount()
 	var rc win.RECT
 	lb.SendMessage(win.LB_GETITEMRECT, uintptr(offset), uintptr(unsafe.Pointer(&rc)))
@@ -535,17 +534,17 @@ func (lb *ListBox) calculateMaxItemTextWidth() int {
 		return -1
 	}
 	count := lb.model.ItemCount()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		item := lb.itemString(i)
 		var s win.SIZE
-		str := syscall.StringToUTF16(item)
+		str := win.StringToUTF16(item)
 
 		if !win.GetTextExtentPoint32(hdc, &str[0], int32(len(str)-1), &s) {
 			newError("GetTextExtentPoint32 failed")
 			return -1
 		}
 
-		maxWidth = maxi(maxWidth, int(s.CX))
+		maxWidth = max(maxWidth, int(s.CX))
 	}
 
 	return maxWidth
@@ -560,7 +559,7 @@ func (lb *ListBox) idealSize() Size {
 	}
 
 	// FIXME: Use GetThemePartSize instead of guessing
-	w := maxi(defaultSize.Width, lb.maxItemTextWidth+IntFrom96DPI(24, lb.DPI()))
+	w := max(defaultSize.Width, lb.maxItemTextWidth+IntFrom96DPI(24, lb.DPI()))
 	h := defaultSize.Height + 1
 
 	return Size{w, h}
@@ -611,7 +610,7 @@ func (lb *ListBox) SelectedIndexes() []int {
 		return nil
 	} else {
 		indexes := make([]int, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			indexes[i] = int(index32[i])
 		}
 		return indexes
@@ -646,14 +645,14 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 			break
 		}
 
-		mis := (*win.MEASUREITEMSTRUCT)(unsafe.Pointer(lParam))
+		mis := ptrFromUintptr[win.MEASUREITEMSTRUCT](lParam)
 
 		mis.ItemHeight = uint32(lb.styler.DefaultItemHeight())
 
 		return win.TRUE
 
 	case win.WM_DRAWITEM:
-		dis := (*win.DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
+		dis := ptrFromUintptr[win.DRAWITEMSTRUCT](lParam)
 
 		if lb.styler == nil || dis.ItemID < 0 || dis.ItemAction != win.ODA_DRAWENTIRE {
 			return win.TRUE
@@ -670,7 +669,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 
 		var hTheme win.HTHEME
 		if !lb.style.highContrastActive {
-			if hTheme = win.OpenThemeData(lb.hWnd, syscall.StringToUTF16Ptr("Listview")); hTheme != 0 {
+			if hTheme = win.OpenThemeData(lb.hWnd, win.StringToUTF16Ptr("Listview")); hTheme != 0 {
 				defer win.CloseThemeData(hTheme)
 			}
 		}
@@ -718,7 +717,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		return win.TRUE
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

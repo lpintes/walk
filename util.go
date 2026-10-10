@@ -14,17 +14,16 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
 )
 
 var (
-	decimalSepB      byte
 	decimalSepUint16 uint16
 	decimalSepS      string
 	groupSepB        byte
 	groupSepUint16   uint16
-	groupSepS        string
 )
 
 func init() {
@@ -32,53 +31,27 @@ func init() {
 		var buf [4]uint16
 
 		win.GetLocaleInfo(win.LOCALE_USER_DEFAULT, win.LOCALE_SDECIMAL, &buf[0], int32(len(buf)))
-		decimalSepB = byte(buf[0])
 		decimalSepS = syscall.UTF16ToString(buf[0:1])
 		decimalSepUint16 = buf[0]
 
 		win.GetLocaleInfo(win.LOCALE_USER_DEFAULT, win.LOCALE_STHOUSAND, &buf[0], int32(len(buf)))
 		groupSepB = byte(buf[0])
-		groupSepS = syscall.UTF16ToString(buf[0:1])
 		groupSepUint16 = buf[0]
 	})
 }
 
-func maxi(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
-}
-
-func mini(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
-func boolToInt(value bool) int {
-	if value {
-		return 1
-	}
-
-	return 0
-}
-
-func uint16IndexUint16(s []uint16, v uint16) int {
-	for i, u := range s {
-		if u == v {
-			return i
-		}
-	}
-
-	return -1
-}
-
-func uint16ContainsUint16(s []uint16, v uint16) bool {
-	return uint16IndexUint16(s, v) != -1
+// ptrFromUintptr converts an address received from Windows as an integer,
+// such as the lParam of a window message or the result of
+// GetWindowLongPtr, to a typed pointer.
+//
+// The memory belongs to Windows or is kept alive by its owner for as long
+// as the caller uses the pointer (for example a struct passed with
+// SendMessage), so the conversion is safe, but go vet cannot prove that
+// for a uintptr variable. Reinterpreting the variable through a pointer
+// is equivalent to (*T)(unsafe.Pointer(p)) and keeps the one place where
+// walk does this documented.
+func ptrFromUintptr[T any](p uintptr) *T {
+	return *(**T)(unsafe.Pointer(&p))
 }
 
 func uint16CountUint16(s []uint16, v uint16) int {
@@ -172,11 +145,7 @@ func FormatFloat(f float64, prec int) string {
 }
 
 func FormatFloatGrouped(f float64, prec int) string {
-	return formatFloatString(strconv.FormatFloat(f, 'f', maxi(1, prec), 64), prec, true)
-}
-
-func formatBigRat(r *big.Rat, prec int) string {
-	return formatFloatString(r.FloatString(prec), prec, false)
+	return formatFloatString(strconv.FormatFloat(f, 'f', max(1, prec), 64), prec, true)
 }
 
 func formatBigRatGrouped(r *big.Rat, prec int) string {
@@ -203,7 +172,7 @@ func formatFloatString(s string, prec int, grouped bool) string {
 		s = s[1:]
 	}
 
-	intLen := len(s) - maxi(1, prec) - 1
+	intLen := len(s) - max(1, prec) - 1
 
 	n := intLen % 3
 	if n != 0 {

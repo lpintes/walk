@@ -20,7 +20,7 @@ func main() {
 
 	cfg := &MultiPageMainWindowConfig{
 		Name:    "mainWindow",
-		MinSize: Size{600, 400},
+		MinSize: Size{Width: 600, Height: 400},
 		MenuItems: []MenuItem{
 			Menu{
 				Text: "&Help",

@@ -91,7 +91,7 @@ func (p *goPackage) shapeOf(expr string) shape {
 // basic returns the predeclared type underlying a Go type expression, or
 // "" if it is not a predeclared type.
 func (p *goPackage) basic(expr string) string {
-	for depth := 0; depth < 10; depth++ {
+	for range 10 {
 		if types.Universe.Lookup(expr) != nil {
 			return expr
 		}

@@ -9,7 +9,6 @@ package walk
 import (
 	"image"
 	"path/filepath"
-	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -101,7 +100,7 @@ func NewIconFromResource(name string) (*Icon, error) {
 
 // NewIconFromResourceWithSize returns a new Icon of size size, using the specified icon resource.
 func NewIconFromResourceWithSize(name string, size Size) (*Icon, error) {
-	return newIconFromResource(syscall.StringToUTF16Ptr(name), size)
+	return newIconFromResource(win.StringToUTF16Ptr(name), size)
 }
 
 // NewIconFromResourceId returns a new Icon of default size, using the specified icon resource.
@@ -252,7 +251,7 @@ func (i *Icon) handleForDPIWithError(dpi int) (win.HICON, error) {
 			return 0, err
 		}
 
-		name = syscall.StringToUTF16Ptr(absFilePath)
+		name = win.StringToUTF16Ptr(absFilePath)
 	} else {
 		if !i.isStock {
 			if hInst = win.GetModuleHandle(nil); hInst == 0 {
@@ -284,13 +283,13 @@ func (i *Icon) handleForDPIWithError(dpi int) (win.HICON, error) {
 			return 0, newError("SHDefExtractIcon")
 		}
 	} else {
-		hr := win.HICON(win.LoadIconWithScaleDown(
+		hr := win.LoadIconWithScaleDown(
 			hInst,
 			name,
 			int32(size.Width),
 			int32(size.Height),
-			&hIcon))
-		if hr < 0 || hIcon == 0 {
+			&hIcon)
+		if win.FAILED(hr) || hIcon == 0 {
 			return 0, lastError("LoadIconWithScaleDown")
 		}
 	}
@@ -403,7 +402,7 @@ func sizeFromHICON(hIcon win.HICON) (Size, error) {
 		hBmp = ii.HbmMask
 	}
 
-	if 0 == win.GetObject(win.HGDIOBJ(hBmp), unsafe.Sizeof(bi), unsafe.Pointer(&bi)) {
+	if win.GetObject(win.HGDIOBJ(hBmp), unsafe.Sizeof(bi), unsafe.Pointer(&bi)) == 0 {
 		return Size{}, newError("GetObject")
 	}
 

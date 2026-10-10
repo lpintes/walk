@@ -7,6 +7,7 @@
 package walk
 
 import (
+	"slices"
 	"syscall"
 	"unsafe"
 )
@@ -93,10 +94,10 @@ func (sb *StatusBar) updateParts() error {
 		rightEdges[0] = -1
 	}
 
-	if 0 == sb.SendMessage(
+	if sb.SendMessage(
 		win.SB_SETPARTS,
 		uintptr(len(items)),
-		uintptr(unsafe.Pointer(rep))) {
+		uintptr(unsafe.Pointer(rep))) == 0 {
 
 		return newError("SB_SETPARTS")
 	}
@@ -107,11 +108,11 @@ func (sb *StatusBar) updateParts() error {
 func (sb *StatusBar) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 		switch nmhdr.Code {
 		case win.NM_CLICK:
-			lpnm := (*win.NMMOUSE)(unsafe.Pointer(lParam))
+			lpnm := ptrFromUintptr[win.NMMOUSE](lParam)
 			if n := int(lpnm.DwItemSpec); n >= 0 && n < sb.items.Len() {
 				sb.items.At(n).raiseClicked()
 			}
@@ -283,10 +284,10 @@ func (sbi *StatusBarItem) updateIcon(index int) error {
 		hIcon = sbi.icon.handleForDPI(sbi.sb.DPI())
 	}
 
-	if 0 == sbi.sb.SendMessage(
+	if sbi.sb.SendMessage(
 		win.SB_SETICON,
 		uintptr(index),
-		uintptr(hIcon)) {
+		uintptr(hIcon)) == 0 {
 
 		return newError("SB_SETICON")
 	}
@@ -300,10 +301,10 @@ func (sbi *StatusBarItem) updateText(index int) error {
 		return err
 	}
 
-	if 0 == sbi.sb.SendMessage(
+	if sbi.sb.SendMessage(
 		win.SB_SETTEXT,
 		uintptr(win.MAKEWORD(byte(index), 0)),
-		uintptr(unsafe.Pointer(utf16))) {
+		uintptr(unsafe.Pointer(utf16))) == 0 {
 
 		return newError("SB_SETTEXT")
 	}
@@ -393,7 +394,7 @@ func (l *StatusBarItemList) Insert(index int, item *StatusBarItem) error {
 	defer func() {
 		if !succeeded {
 			item.sb = nil
-			l.items = append(l.items[:index], l.items[index+1:]...)
+			l.items = slices.Delete(l.items, index, index+1)
 
 			l.sb.update()
 		}
@@ -425,7 +426,7 @@ func (l *StatusBarItemList) RemoveAt(index int) error {
 	item := l.items[index]
 	item.sb = nil
 
-	l.items = append(l.items[:index], l.items[index+1:]...)
+	l.items = slices.Delete(l.items, index, index+1)
 
 	succeeded := false
 	defer func() {

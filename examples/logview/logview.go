@@ -5,7 +5,6 @@ package main
 
 import (
 	"errors"
-	"syscall"
 	"unsafe"
 )
 
@@ -55,11 +54,11 @@ func (lv *LogView) textLength() int {
 func (lv *LogView) AppendText(value string) {
 	textLength := lv.textLength()
 	lv.setTextSelection(textLength, textLength)
-	lv.SendMessage(win.EM_REPLACESEL, 0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(value))))
+	lv.SendMessage(win.EM_REPLACESEL, 0, uintptr(unsafe.Pointer(win.StringToUTF16Ptr(value))))
 }
 
 func (lv *LogView) setReadOnly(readOnly bool) error {
-	if 0 == lv.SendMessage(win.EM_SETREADONLY, uintptr(win.BoolToBOOL(readOnly)), 0) {
+	if lv.SendMessage(win.EM_SETREADONLY, uintptr(win.BoolToBOOL(readOnly)), 0) == 0 {
 		return errors.New("fail to call EM_SETREADONLY")
 	}
 

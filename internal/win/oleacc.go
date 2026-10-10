@@ -18,10 +18,8 @@ const (
 )
 
 func (obj *IAccPropServices) Release() uint32 {
-	ret, _, _ := syscall.Syscall(obj.LpVtbl.Release, 1,
-		uintptr(unsafe.Pointer(obj)),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.Release,
+		uintptr(unsafe.Pointer(obj)))
 	return uint32(ret)
 }
 
@@ -32,7 +30,7 @@ func (obj *IAccPropServices) ClearHwndProps(hwnd HWND, idObject int32, idChild u
 	if idPropsLen != 0 {
 		idPropsPtr = unsafe.Pointer(&idProps[0])
 	}
-	ret, _, _ := syscall.Syscall6(obj.LpVtbl.ClearHwndProps, 6,
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.ClearHwndProps,
 		uintptr(unsafe.Pointer(obj)),
 		uintptr(hwnd),
 		uintptr(idObject),

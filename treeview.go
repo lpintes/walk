@@ -7,7 +7,6 @@
 package walk
 
 import (
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -220,7 +219,7 @@ func (tv *TreeView) SetCurrentItem(item TreeItem) error {
 		return err
 	}
 
-	if 0 == tv.SendMessage(win.TVM_SELECTITEM, win.TVGN_CARET, uintptr(handle)) {
+	if tv.SendMessage(win.TVM_SELECTITEM, win.TVGN_CARET, uintptr(handle)) == 0 {
 		return newError("SendMessage(TVM_SELECTITEM) failed")
 	}
 
@@ -295,7 +294,7 @@ func (tv *TreeView) resetItems() error {
 }
 
 func (tv *TreeView) clearItems() error {
-	if 0 == tv.SendMessage(win.TVM_DELETEITEM, 0, 0) {
+	if tv.SendMessage(win.TVM_DELETEITEM, 0, 0) == 0 {
 		return newError("SendMessage(TVM_DELETEITEM) failed")
 	}
 
@@ -431,7 +430,7 @@ func (tv *TreeView) updateItem(item TreeItem) error {
 
 	tv.setTVITEMImageInfo(tvi, item)
 
-	if 0 == tv.SendMessage(win.TVM_SETITEM, 0, uintptr(unsafe.Pointer(tvi))) {
+	if tv.SendMessage(win.TVM_SETITEM, 0, uintptr(unsafe.Pointer(tvi))) == 0 {
 		return newError("SendMessage(TVM_SETITEM) failed")
 	}
 
@@ -448,7 +447,7 @@ func (tv *TreeView) removeItem(item TreeItem) error {
 		return newError("invalid item")
 	}
 
-	if 0 == tv.SendMessage(win.TVM_DELETEITEM, 0, uintptr(info.handle)) {
+	if tv.SendMessage(win.TVM_DELETEITEM, 0, uintptr(info.handle)) == 0 {
 		return newError("SendMessage(TVM_DELETEITEM) failed")
 	}
 
@@ -462,7 +461,7 @@ func (tv *TreeView) removeItem(item TreeItem) error {
 }
 
 func (tv *TreeView) removeDescendants(parent TreeItem) error {
-	for item, _ := range tv.item2Info[parent].child2Handle {
+	for item := range tv.item2Info[parent].child2Handle {
 		if err := tv.removeItem(item); err != nil {
 			return err
 		}
@@ -511,7 +510,7 @@ func (tv *TreeView) Expanded(item TreeItem) bool {
 		StateMask: win.TVIS_EXPANDED,
 	}
 
-	if 0 == tv.SendMessage(win.TVM_GETITEM, 0, uintptr(unsafe.Pointer(tvi))) {
+	if tv.SendMessage(win.TVM_GETITEM, 0, uintptr(unsafe.Pointer(tvi))) == 0 {
 		newError("SendMessage(TVM_GETITEM) failed")
 	}
 
@@ -537,7 +536,7 @@ func (tv *TreeView) SetExpanded(item TreeItem, expanded bool) error {
 		action = win.TVE_COLLAPSE
 	}
 
-	if 0 == tv.SendMessage(win.TVM_EXPAND, action, uintptr(info.handle)) {
+	if tv.SendMessage(win.TVM_EXPAND, action, uintptr(info.handle)) == 0 {
 		return newError("SendMessage(TVM_EXPAND) failed")
 	}
 
@@ -564,20 +563,20 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		}
 
 	case win.WM_NOTIFY:
-		nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 		switch nmhdr.Code {
 		case win.TVN_GETDISPINFO:
-			nmtvdi := (*win.NMTVDISPINFO)(unsafe.Pointer(lParam))
+			nmtvdi := ptrFromUintptr[win.NMTVDISPINFO](lParam)
 			item := tv.handle2Item[nmtvdi.Item.HItem]
 
 			if nmtvdi.Item.Mask&win.TVIF_TEXT != 0 {
 				text := item.Text()
-				utf16 := syscall.StringToUTF16(text)
-				buf := (*[264]uint16)(unsafe.Pointer(nmtvdi.Item.PszText))
-				max := mini(len(utf16), int(nmtvdi.Item.CchTextMax))
-				copy((*buf)[:], utf16[:max])
-				(*buf)[max-1] = 0
+				utf16 := win.StringToUTF16(text)
+				buf := unsafe.Slice(ptrFromUintptr[uint16](nmtvdi.Item.PszText), nmtvdi.Item.CchTextMax)
+				max := min(len(utf16), len(buf))
+				copy(buf, utf16[:max])
+				buf[max-1] = 0
 			}
 			if nmtvdi.Item.Mask&win.TVIF_CHILDREN != 0 {
 				if hc, ok := item.(HasChilder); ok {
@@ -592,7 +591,7 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			}
 
 		case win.TVN_ITEMEXPANDING:
-			nmtv := (*win.NMTREEVIEW)(unsafe.Pointer(lParam))
+			nmtv := ptrFromUintptr[win.NMTREEVIEW](lParam)
 			item := tv.handle2Item[nmtv.ItemNew.HItem]
 
 			if nmtv.Action == win.TVE_EXPAND && tv.lazyPopulation {
@@ -603,7 +602,7 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			}
 
 		case win.TVN_ITEMEXPANDED:
-			nmtv := (*win.NMTREEVIEW)(unsafe.Pointer(lParam))
+			nmtv := ptrFromUintptr[win.NMTREEVIEW](lParam)
 			item := tv.handle2Item[nmtv.ItemNew.HItem]
 
 			switch nmtv.Action {
@@ -624,13 +623,13 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			tv.itemActivatedPublisher.Publish()
 
 		case win.TVN_KEYDOWN:
-			nmtvkd := (*win.NMTVKEYDOWN)(unsafe.Pointer(lParam))
+			nmtvkd := ptrFromUintptr[win.NMTVKEYDOWN](lParam)
 			if nmtvkd.WVKey == uint16(KeyReturn) {
 				tv.itemActivatedPublisher.Publish()
 			}
 
 		case win.TVN_SELCHANGED:
-			nmtv := (*win.NMTREEVIEW)(unsafe.Pointer(lParam))
+			nmtv := ptrFromUintptr[win.NMTREEVIEW](lParam)
 
 			tv.currItem = tv.handle2Item[nmtv.ItemNew.HItem]
 

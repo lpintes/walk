@@ -6,6 +6,8 @@
 
 package walk
 
+import "slices"
+
 type TableViewColumnList struct {
 	tv    *TableView
 	items []*TableViewColumn
@@ -41,7 +43,7 @@ func (l *TableViewColumnList) ByName(name string) *TableViewColumn {
 
 // Clear removes all TableViewColumns from the list.
 func (l *TableViewColumnList) Clear() error {
-	for _ = range l.items {
+	for range l.items {
 		if err := l.RemoveAt(0); err != nil {
 			return err
 		}
@@ -117,7 +119,7 @@ func (l *TableViewColumnList) RemoveAt(index int) error {
 
 	tvc.tv = nil
 
-	l.items = append(l.items[:index], l.items[index+1:]...)
+	l.items = slices.Delete(l.items, index, index+1)
 
 	return nil
 }

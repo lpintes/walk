@@ -43,6 +43,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -191,7 +192,7 @@ func markLive(dir, goarch string, live map[string]bool) error {
 		// Internal test files only; external tests import the package
 		// under test from export data, which go list -export -test
 		// provides only for the test variant. walk has none.
-		files := append(append([]string{}, p.GoFiles...), p.TestGoFiles...)
+		files := slices.Concat(p.GoFiles, p.TestGoFiles)
 		var afs []*ast.File
 		for _, f := range files {
 			af, err := parser.ParseFile(fset, filepath.Join(p.Dir, f), nil, parser.SkipObjectResolution)
@@ -324,12 +325,7 @@ func markLive(dir, goarch string, live map[string]bool) error {
 }
 
 func contains(list []string, s string) bool {
-	for _, x := range list {
-		if x == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, s)
 }
 
 // unit is a decl together with its syntax.

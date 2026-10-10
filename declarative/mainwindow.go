@@ -6,6 +6,8 @@
 
 package declarative
 
+import "maps"
+
 import "github.com/lpintes/walk"
 
 type MainWindow struct {
@@ -162,7 +164,7 @@ func (mw MainWindow) Create() error {
 			}
 		}
 
-		imageList, err := walk.NewImageListForDPI(walk.SizeFrom96DPI(walk.Size{16, 16}, builder.dpi), 0, builder.dpi)
+		imageList, err := walk.NewImageListForDPI(walk.SizeFrom96DPI(walk.Size{Width: 16, Height: 16}, builder.dpi), 0, builder.dpi)
 		if err != nil {
 			return err
 		}
@@ -177,9 +179,7 @@ func (mw MainWindow) Create() error {
 		// }
 
 		if mw.Expressions != nil {
-			for name, expr := range mw.Expressions() {
-				builder.expressions[name] = expr
-			}
+			maps.Copy(builder.expressions, mw.Expressions())
 		}
 		if mw.Functions != nil {
 			for name, fn := range mw.Functions {

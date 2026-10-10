@@ -28,7 +28,7 @@ func DrawThemeTextEx(hTheme HTHEME, hdc HDC, iPartId, iStateId int32, pszText *u
 	if drawThemeTextEx.Find() != nil {
 		return HRESULT(0)
 	}
-	ret, _, _ := syscall.Syscall9(drawThemeTextEx.Addr(), 9,
+	ret, _, _ := syscall.SyscallN(drawThemeTextEx.Addr(),
 		uintptr(hTheme),
 		uintptr(hdc),
 		uintptr(iPartId),

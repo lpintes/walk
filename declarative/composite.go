@@ -7,6 +7,8 @@
 package declarative
 
 import (
+	"maps"
+
 	"github.com/lpintes/walk"
 	"github.com/lpintes/walk/internal/win"
 )
@@ -83,9 +85,7 @@ func (c Composite) Create(builder *Builder) error {
 
 	return builder.InitWidget(c, w, func() error {
 		if c.Expressions != nil {
-			for name, expr := range c.Expressions() {
-				builder.expressions[name] = expr
-			}
+			maps.Copy(builder.expressions, c.Expressions())
 		}
 		if c.Functions != nil {
 			for name, fn := range c.Functions {

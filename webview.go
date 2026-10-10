@@ -8,7 +8,6 @@ package walk
 
 import (
 	"fmt"
-	"syscall"
 	"unsafe"
 )
 
@@ -119,7 +118,7 @@ func NewWebView(parent Container) (*WebView, error) {
 		return nil, errorFromHRESULT("IOleObject.SetClientSite", hr)
 	}
 
-	if hr := browserObject.SetHostNames(syscall.StringToUTF16Ptr("Walk.WebView"), nil); win.FAILED(hr) {
+	if hr := browserObject.SetHostNames(win.StringToUTF16Ptr("Walk.WebView"), nil); win.FAILED(hr) {
 		return nil, errorFromHRESULT("IOleObject.SetHostNames", hr)
 	}
 
@@ -492,7 +491,7 @@ func (wv *WebView) inPlaceActiveObjectSetFocus() win.HRESULT {
 func (wv *WebView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

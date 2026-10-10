@@ -8,7 +8,6 @@ package walk
 
 import (
 	"fmt"
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -154,7 +153,7 @@ func (tb *ToolBar) applyDefaultButtonWidth() error {
 	width := IntFrom96DPI(tb.defaultButtonWidth, dpi)
 
 	lParam := uintptr(win.MAKELONG(uint16(width), uint16(width)))
-	if 0 == tb.SendMessage(win.TB_SETBUTTONWIDTH, 0, lParam) {
+	if tb.SendMessage(win.TB_SETBUTTONWIDTH, 0, lParam) == 0 {
 		return newError("SendMessage(TB_SETBUTTONWIDTH)")
 	}
 
@@ -211,7 +210,7 @@ func (tb *ToolBar) MaxTextRows() int {
 }
 
 func (tb *ToolBar) SetMaxTextRows(maxTextRows int) error {
-	if 0 == tb.SendMessage(win.TB_SETMAXTEXTROWS, uintptr(maxTextRows), 0) {
+	if tb.SendMessage(win.TB_SETMAXTEXTROWS, uintptr(maxTextRows), 0) == 0 {
 		return newError("SendMessage(TB_SETMAXTEXTROWS)")
 	}
 
@@ -277,19 +276,19 @@ func (tb *ToolBar) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		}
 
 	case win.WM_NOTIFY:
-		nmhdr := (*win.NMHDR)(unsafe.Pointer(lParam))
+		nmhdr := ptrFromUintptr[win.NMHDR](lParam)
 
 		switch int32(nmhdr.Code) {
 		case win.TBN_DROPDOWN:
-			nmtb := (*win.NMTOOLBAR)(unsafe.Pointer(lParam))
+			nmtb := ptrFromUintptr[win.NMTOOLBAR](lParam)
 			actionId := uint16(nmtb.IItem)
 			if action := actionsById[actionId]; action != nil {
 				var r win.RECT
-				if 0 == tb.SendMessage(win.TB_GETRECT, uintptr(actionId), uintptr(unsafe.Pointer(&r))) {
+				if tb.SendMessage(win.TB_GETRECT, uintptr(actionId), uintptr(unsafe.Pointer(&r))) == 0 {
 					break
 				}
 
-				p := win.POINT{r.Left, r.Bottom}
+				p := win.POINT{X: r.Left, Y: r.Bottom}
 
 				if !win.ClientToScreen(tb.hWnd, &p) {
 					break
@@ -310,7 +309,7 @@ func (tb *ToolBar) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break
@@ -375,9 +374,9 @@ func (tb *ToolBar) initButtonForAction(action *Action, state, style *byte, image
 	}
 
 	if len(actionText) != 0 {
-		*text = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(actionText)))
+		*text = uintptr(unsafe.Pointer(win.StringToUTF16Ptr(actionText)))
 	} else if len(action.toolTip) != 0 {
-		*text = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(action.toolTip)))
+		*text = uintptr(unsafe.Pointer(win.StringToUTF16Ptr(action.toolTip)))
 	}
 
 	return
@@ -401,10 +400,10 @@ func (tb *ToolBar) onActionChanged(action *Action) error {
 		return err
 	}
 
-	if 0 == tb.SendMessage(
+	if tb.SendMessage(
 		win.TB_SETBUTTONINFO,
 		uintptr(action.id),
-		uintptr(unsafe.Pointer(&tbbi))) {
+		uintptr(unsafe.Pointer(&tbbi))) == 0 {
 
 		return newError("SendMessage(TB_SETBUTTONINFO) failed")
 	}
@@ -482,7 +481,7 @@ func (tb *ToolBar) removeAction(action *Action, visibleChanged bool) error {
 		action.removeChangedHandler(tb)
 	}
 
-	if 0 == tb.SendMessage(win.TB_DELETEBUTTON, uintptr(index), 0) {
+	if tb.SendMessage(win.TB_DELETEBUTTON, uintptr(index), 0) == 0 {
 		return newError("SendMessage(TB_DELETEBUTTON) failed")
 	}
 

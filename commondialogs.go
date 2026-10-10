@@ -37,7 +37,7 @@ func (dlg *FileDialog) show(owner Form, fun func(ofn *win.OPENFILENAME) bool, fl
 	}
 
 	filter := make([]uint16, len(dlg.Filter)+2)
-	copy(filter, syscall.StringToUTF16(dlg.Filter))
+	copy(filter, win.StringToUTF16(dlg.Filter))
 	// Replace '|' with the expected '\0'.
 	for i, c := range filter {
 		if byte(c) == '|' {
@@ -47,8 +47,8 @@ func (dlg *FileDialog) show(owner Form, fun func(ofn *win.OPENFILENAME) bool, fl
 	ofn.LpstrFilter = &filter[0]
 	ofn.NFilterIndex = uint32(dlg.FilterIndex)
 
-	ofn.LpstrInitialDir = syscall.StringToUTF16Ptr(dlg.InitialDirPath)
-	ofn.LpstrTitle = syscall.StringToUTF16Ptr(dlg.Title)
+	ofn.LpstrInitialDir = win.StringToUTF16Ptr(dlg.InitialDirPath)
+	ofn.LpstrTitle = win.StringToUTF16Ptr(dlg.Title)
 	ofn.Flags = win.OFN_FILEMUSTEXIST | flags | dlg.Flags
 
 	if !dlg.ShowReadOnlyCB {
@@ -60,7 +60,7 @@ func (dlg *FileDialog) show(owner Form, fun func(ofn *win.OPENFILENAME) bool, fl
 		fileBuf = make([]uint16, 65536)
 	} else {
 		fileBuf = make([]uint16, 1024)
-		copy(fileBuf, syscall.StringToUTF16(dlg.FilePath))
+		copy(fileBuf, win.StringToUTF16(dlg.FilePath))
 	}
 	ofn.LpstrFile = &fileBuf[0]
 	ofn.NMaxFile = uint32(len(fileBuf))
@@ -177,13 +177,13 @@ func (dlg *FileDialog) ShowBrowseFolder(owner Form) (accepted bool, err error) {
 	// We need to put the initial path into a buffer of at least MAX_LENGTH
 	// length, or we may get random crashes.
 	var buf [win.MAX_PATH]uint16
-	copy(buf[:], syscall.StringToUTF16(dlg.InitialDirPath))
+	copy(buf[:], win.StringToUTF16(dlg.InitialDirPath))
 
 	const BIF_NEWDIALOGSTYLE = 0x00000040
 
 	bi := win.BROWSEINFO{
 		HwndOwner: ownerHwnd,
-		LpszTitle: syscall.StringToUTF16Ptr(dlg.Title),
+		LpszTitle: win.StringToUTF16Ptr(dlg.Title),
 		UlFlags:   BIF_NEWDIALOGSTYLE,
 		Lpfn:      browseFolderCallbackPtr,
 	}

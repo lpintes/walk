@@ -21,7 +21,7 @@ func init() {
 
 		hwnd := win.CreateWindowEx(
 			0,
-			syscall.StringToUTF16Ptr(clipboardWindowClass),
+			win.StringToUTF16Ptr(clipboardWindowClass),
 			nil,
 			0,
 			0,
@@ -140,7 +140,7 @@ func (c *ClipboardService) SetText(s string) error {
 
 		win.GlobalUnlock(hMem)
 
-		if 0 == win.SetClipboardData(win.CF_UNICODETEXT, win.HANDLE(hMem)) {
+		if win.SetClipboardData(win.CF_UNICODETEXT, win.HANDLE(hMem)) == 0 {
 			// We need to free hMem.
 			defer win.GlobalFree(hMem)
 

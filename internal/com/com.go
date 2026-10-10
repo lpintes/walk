@@ -39,6 +39,7 @@ package com
 import (
 	"reflect"
 	"runtime"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -99,7 +100,7 @@ func NewVTable(vtbl any, iids ...*win.IID) *VTable {
 		t.Field(2).Name != "Release" {
 		panic(errNotPtrStruct)
 	}
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		if t.Field(i).Type.Kind() != reflect.Uintptr {
 			panic(errNotPtrStruct)
 		}
@@ -125,7 +126,7 @@ func NewVTable(vtbl any, iids ...*win.IID) *VTable {
 
 	return &VTable{
 		methods: methods,
-		iids:    append([]*win.IID(nil), iids...),
+		iids:    slices.Clone(iids),
 	}
 }
 
@@ -158,7 +159,7 @@ func NewObject(impl any, vtables ...*VTable) *Object {
 	o := &Object{
 		impl:    impl,
 		slots:   make([]This, len(vtables)),
-		vtables: append([]*VTable(nil), vtables...),
+		vtables: slices.Clone(vtables),
 	}
 	for i, vt := range vtables {
 		o.slots[i] = This{vtbl: vt.methods, object: o}

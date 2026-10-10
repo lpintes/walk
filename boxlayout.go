@@ -7,6 +7,7 @@
 package walk
 
 import (
+	"maps"
 	"math"
 	"sort"
 	"sync"
@@ -109,9 +110,7 @@ func (l *BoxLayout) CreateLayoutItem(ctx *LayoutContext) ContainerLayoutItem {
 		hwnd2StretchFactor: make(map[win.HWND]int),
 	}
 
-	for hwnd, sf := range l.hwnd2StretchFactor {
-		li.hwnd2StretchFactor[hwnd] = sf
-	}
+	maps.Copy(li.hwnd2StretchFactor, l.hwnd2StretchFactor)
 
 	return li
 }
@@ -209,11 +208,11 @@ func (li *boxLayoutItem) MinSizeForSize(size Size) Size {
 		item.Bounds.Width = min.Width
 
 		if li.orientation == Horizontal {
-			maxSecondary = maxi(maxSecondary, item.Bounds.Height)
+			maxSecondary = max(maxSecondary, item.Bounds.Height)
 
 			s.Width += item.Bounds.Width
 		} else {
-			maxSecondary = maxi(maxSecondary, item.Bounds.Width)
+			maxSecondary = max(maxSecondary, item.Bounds.Width)
 
 			s.Height += item.Bounds.Height
 		}
@@ -245,7 +244,7 @@ func boxLayoutFlags(orientation Orientation, children []LayoutItem) LayoutFlags 
 	}
 
 	var flags LayoutFlags
-	for i := 0; i < len(children); i++ {
+	for i := range children {
 		item := children[i]
 
 		if _, ok := item.(*splitterHandleLayoutItem); ok || !shouldLayoutItem(item) {
@@ -406,35 +405,35 @@ func boxLayoutItems(container ContainerLayoutItem, items []LayoutItem, orientati
 	offsets := [3]int{0, greedyNonSpacerCount, greedyNonSpacerCount + greedySpacerCount}
 	counts := [3]int{greedyNonSpacerCount, greedySpacerCount, len(items) - greedyNonSpacerCount - greedySpacerCount}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		stretchFactorsRemaining := stretchFactorsTotal[i]
 
-		for j := 0; j < counts[i]; j++ {
+		for j := range counts[i] {
 			info := sortedItemInfo[offsets[i]+j]
 			k := info.index
 
 			stretch := stretchFactors[k]
-			min := info.minSize
-			max := info.maxSize
+			minSize := info.minSize
+			maxSize := info.maxSize
 			var size int
 			var corrected bool
 			if shrinkableAmount1[k] > 0 {
 				size = info.prefSize
 				if excess < 0.0 {
-					size -= mini(shrinkableAmount1[k], int(math.Round(-excess/float64(shrinkableAmount1Total)*float64(shrinkableAmount1[k]))))
+					size -= min(shrinkableAmount1[k], int(math.Round(-excess/float64(shrinkableAmount1Total)*float64(shrinkableAmount1[k]))))
 					corrected = true
 				}
 			} else {
-				size = min
+				size = minSize
 			}
 
-			if !corrected && min < max {
+			if !corrected && minSize < maxSize {
 				excessSpace := float64(space1 - minSizesRemaining - spacingRemaining)
 				size += int(math.Round(excessSpace * float64(stretch) / float64(stretchFactorsRemaining)))
-				if size < min {
-					size = min
-				} else if size > max {
-					size = max
+				if size < minSize {
+					size = minSize
+				} else if size > maxSize {
+					size = maxSize
 				}
 			}
 
@@ -443,7 +442,7 @@ func boxLayoutItems(container ContainerLayoutItem, items []LayoutItem, orientati
 			if shrinkableAmount1[k] > 0 {
 				minSizesRemaining -= info.prefSize
 			} else {
-				minSizesRemaining -= min
+				minSizesRemaining -= minSize
 			}
 			stretchFactorsRemaining -= stretch
 			space1 -= (size + spacing)

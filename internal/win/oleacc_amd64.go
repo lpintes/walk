@@ -13,7 +13,7 @@ import (
 
 // SetHwndProp wraps SetPropValue, providing a convenient entry point for callers who are annotating HWND-based accessible elements. If the new value is a string, you can use SetHwndPropStr instead.
 func (obj *IAccPropServices) SetHwndProp(hwnd HWND, idObject int32, idChild uint32, idProp *MSAAPROPID, v *VARIANT) HRESULT {
-	ret, _, _ := syscall.Syscall6(obj.LpVtbl.SetHwndProp, 6,
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.SetHwndProp,
 		uintptr(unsafe.Pointer(obj)),
 		uintptr(hwnd),
 		uintptr(idObject),
@@ -29,7 +29,7 @@ func (obj *IAccPropServices) SetHwndPropStr(hwnd HWND, idObject int32, idChild u
 	if err != nil {
 		return -((E_INVALIDARG ^ 0xFFFFFFFF) + 1)
 	}
-	ret, _, _ := syscall.Syscall6(obj.LpVtbl.SetHwndPropStr, 6,
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.SetHwndPropStr,
 		uintptr(unsafe.Pointer(obj)),
 		uintptr(hwnd),
 		uintptr(idObject),

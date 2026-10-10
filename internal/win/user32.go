@@ -69,10 +69,8 @@ func AddClipboardFormatListener(hwnd HWND) bool {
 		return false
 	}
 
-	ret, _, _ := syscall.Syscall(addClipboardFormatListener.Addr(), 1,
-		uintptr(hwnd),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(addClipboardFormatListener.Addr(),
+		uintptr(hwnd))
 
 	return ret != 0
 }
@@ -85,19 +83,15 @@ func GetDpiForWindow(hwnd HWND) uint32 {
 		return uint32(GetDeviceCaps(hdc, LOGPIXELSY))
 	}
 
-	ret, _, _ := syscall.Syscall(getDpiForWindow.Addr(), 1,
-		uintptr(hwnd),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(getDpiForWindow.Addr(),
+		uintptr(hwnd))
 
 	return uint32(ret)
 }
 
 func GetSystemMetrics(nIndex int32) int32 {
-	ret, _, _ := syscall.Syscall(getSystemMetrics.Addr(), 1,
-		uintptr(nIndex),
-		0,
-		0)
+	ret, _, _ := syscall.SyscallN(getSystemMetrics.Addr(),
+		uintptr(nIndex))
 
 	return int32(ret)
 }
@@ -107,10 +101,9 @@ func GetSystemMetricsForDpi(nIndex int32, dpi uint32) int32 {
 		return GetSystemMetrics(nIndex)
 	}
 
-	ret, _, _ := syscall.Syscall(getSystemMetricsForDpi.Addr(), 2,
+	ret, _, _ := syscall.SyscallN(getSystemMetricsForDpi.Addr(),
 		uintptr(nIndex),
-		uintptr(dpi),
-		0)
+		uintptr(dpi))
 
 	return int32(ret)
 }

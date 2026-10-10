@@ -11,7 +11,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
 )
@@ -163,7 +162,6 @@ func (s *Splitter) updateMarginsForFocusEffect() {
 
 			default:
 				marginsNeeded = true
-				break
 			}
 		}
 
@@ -318,7 +316,7 @@ func (s *Splitter) SetFixed(widget Widget, fixed bool) error {
 func (s *Splitter) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break

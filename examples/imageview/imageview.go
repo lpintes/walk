@@ -44,7 +44,7 @@ func main() {
 
 	MainWindow{
 		Title:    "Walk ImageView Example",
-		Size:     Size{400, 600},
+		Size:     Size{Width: 400, Height: 600},
 		Layout:   Grid{Columns: 2},
 		Children: widgets,
 	}.Run()

@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -367,7 +368,7 @@ func (ne *NumberEdit) SetSpinButtonsVisible(visible bool) error {
 	if visible {
 		ne.hWndUpDown = win.CreateWindowEx(
 			0,
-			syscall.StringToUTF16Ptr("msctls_updown32"),
+			win.StringToUTF16Ptr("msctls_updown32"),
 			nil,
 			win.WS_CHILD|win.WS_VISIBLE|win.UDS_ALIGNRIGHT|win.UDS_ARROWKEYS|win.UDS_HOTTRACK,
 			0,
@@ -427,9 +428,9 @@ func (*NumberEdit) NeedsWmSize() bool {
 func (ne *NumberEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case win.WM_NOTIFY:
-		switch ((*win.NMHDR)(unsafe.Pointer(lParam))).Code {
+		switch ptrFromUintptr[win.NMHDR](lParam).Code {
 		case win.UDN_DELTAPOS:
-			nmud := (*win.NMUPDOWN)(unsafe.Pointer(lParam))
+			nmud := ptrFromUintptr[win.NMUPDOWN](lParam)
 			ne.edit.incrementValue(-float64(nmud.IDelta) * ne.edit.increment)
 		}
 
@@ -439,7 +440,7 @@ func (ne *NumberEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 		}
 
 	case win.WM_WINDOWPOSCHANGED:
-		wp := (*win.WINDOWPOS)(unsafe.Pointer(lParam))
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
 
 		if wp.Flags&win.SWP_NOSIZE != 0 {
 			break
@@ -615,12 +616,12 @@ func (nle *numberLineEdit) processChar(text []uint16, start, end int, key Key, c
 	case KeyBack:
 		if !hadSelection && start > 0 {
 			start -= 1
-			text = append(text[:start], text[start+1:]...)
+			text = slices.Delete(text, start, start+1)
 		}
 
 	case KeyDelete:
 		if !hadSelection && start < len(text) {
-			text = append(text[:start], text[start+1:]...)
+			text = slices.Delete(text, start, start+1)
 		}
 
 	default:
@@ -729,7 +730,7 @@ func (nle *numberLineEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uin
 		switch char {
 		case uint16('0'), uint16('1'), uint16('2'), uint16('3'), uint16('4'), uint16('5'), uint16('6'), uint16('7'), uint16('8'), uint16('9'):
 			if start == end && nle.decimals > 0 {
-				if i := uint16IndexUint16(text, decimalSepUint16); i > -1 && i < len(text)-nle.decimals && start > i {
+				if i := slices.Index(text, decimalSepUint16); i > -1 && i < len(text)-nle.decimals && start > i {
 					return 0
 				}
 			}
@@ -742,7 +743,7 @@ func (nle *numberLineEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uin
 				return 0
 			}
 
-			if start > 0 || uint16ContainsUint16(text, uint16('-')) && end == 0 {
+			if start > 0 || slices.Contains(text, uint16('-')) && end == 0 {
 				return 0
 			}
 
@@ -762,7 +763,7 @@ func (nle *numberLineEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uin
 				return 0
 			}
 
-			if i := uint16IndexUint16(text, decimalSepUint16); i > -1 && i <= start || i > end {
+			if i := slices.Index(text, decimalSepUint16); i > -1 && i <= start || i > end {
 				return 0
 			}
 
@@ -804,8 +805,8 @@ func (nle *numberLineEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uin
 			return 0
 
 		case KeyEnd:
-			start, end := nle.TextSelection()
-			end = len(nle.textUTF16()) - len(nle.suffix)
+			start, _ := nle.TextSelection()
+			end := len(nle.textUTF16()) - len(nle.suffix)
 			if !ShiftDown() {
 				start = end
 			}
@@ -813,8 +814,8 @@ func (nle *numberLineEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uin
 			return 0
 
 		case KeyHome:
-			start, end := nle.TextSelection()
-			start = len(nle.prefix)
+			_, end := nle.TextSelection()
+			start := len(nle.prefix)
 			if !ShiftDown() {
 				end = start
 			}

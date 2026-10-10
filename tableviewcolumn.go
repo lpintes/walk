@@ -7,7 +7,6 @@
 package walk
 
 import (
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -385,7 +384,7 @@ func (tvc *TableViewColumn) create() error {
 	dpi := tvc.tv.DPI()
 	lvc.Mask = win.LVCF_FMT | win.LVCF_WIDTH | win.LVCF_TEXT | win.LVCF_SUBITEM
 	lvc.ISubItem = index
-	lvc.PszText = syscall.StringToUTF16Ptr(tvc.TitleEffective())
+	lvc.PszText = win.StringToUTF16Ptr(tvc.TitleEffective())
 	if tvc.width > 0 {
 		lvc.Cx = int32(IntFrom96DPI(tvc.width, dpi))
 	} else {
@@ -400,7 +399,7 @@ func (tvc *TableViewColumn) create() error {
 		lvc.Fmt = 1
 	}
 
-	if -1 == int(tvc.sendMessage(win.LVM_INSERTCOLUMN, uintptr(index), uintptr(unsafe.Pointer(&lvc)))) {
+	if int(tvc.sendMessage(win.LVM_INSERTCOLUMN, uintptr(index), uintptr(unsafe.Pointer(&lvc)))) == -1 {
 		return newError("LVM_INSERTCOLUMN")
 	}
 
@@ -452,7 +451,7 @@ func (tvc *TableViewColumn) getLVCOLUMN() *win.LVCOLUMN {
 
 	lvc.Mask = win.LVCF_FMT | win.LVCF_WIDTH | win.LVCF_TEXT | win.LVCF_SUBITEM
 	lvc.ISubItem = int32(tvc.indexInListView())
-	lvc.PszText = syscall.StringToUTF16Ptr(tvc.TitleEffective())
+	lvc.PszText = win.StringToUTF16Ptr(tvc.TitleEffective())
 	lvc.Cx = int32(width)
 
 	switch tvc.alignment {

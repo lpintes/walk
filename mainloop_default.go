@@ -13,7 +13,7 @@ import (
 )
 
 func (fb *FormBase) mainLoop() int {
-	msg := (*win.MSG)(unsafe.Pointer(win.GlobalAlloc(0, unsafe.Sizeof(win.MSG{}))))
+	msg := ptrFromUintptr[win.MSG](uintptr(win.GlobalAlloc(0, unsafe.Sizeof(win.MSG{}))))
 	defer win.GlobalFree(win.HGLOBAL(unsafe.Pointer(msg)))
 
 	for fb.hWnd != 0 {

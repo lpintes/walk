@@ -112,7 +112,7 @@ func (le *LineEdit) CueBanner() string {
 }
 
 func (le *LineEdit) SetCueBanner(value string) error {
-	if win.FALSE == le.SendMessage(win.EM_SETCUEBANNER, win.FALSE, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(value)))) {
+	if win.FALSE == le.SendMessage(win.EM_SETCUEBANNER, win.FALSE, uintptr(unsafe.Pointer(win.StringToUTF16Ptr(value)))) {
 		return newError("EM_SETCUEBANNER failed")
 	}
 
@@ -229,7 +229,7 @@ func (le *LineEdit) ReadOnly() bool {
 }
 
 func (le *LineEdit) SetReadOnly(readOnly bool) error {
-	if 0 == le.SendMessage(win.EM_SETREADONLY, uintptr(win.BoolToBOOL(readOnly)), 0) {
+	if le.SendMessage(win.EM_SETREADONLY, uintptr(win.BoolToBOOL(readOnly)), 0) == 0 {
 		return newError("SendMessage(EM_SETREADONLY)")
 	}
 
@@ -246,10 +246,7 @@ func (le *LineEdit) SetReadOnly(readOnly bool) error {
 func (le *LineEdit) sizeHintForLimit(limit int) (size Size) {
 	size = le.dialogBaseUnitsToPixels(Size{50, 12})
 	le.initCharWidth()
-	n := le.MaxLength()
-	if n > limit {
-		n = limit
-	}
+	n := min(le.MaxLength(), limit)
 	size.Width = le.charWidth * (n + 1)
 	return
 }
