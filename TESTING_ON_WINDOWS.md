@@ -266,6 +266,45 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
   `tests/_wingui/ods/trace.patch`. It uses its own owner drawn `ListBox`
   inside a `Composite` instead of the example.
 
+## Task 5: step 6, COM objects of WebView on internal/com
+
+Step 6 added the package `internal/com`, which implements COM objects in
+Go: vtables built from the generated `win.*Vtbl` structs, real reference
+counting, `QueryInterface` from a table of interface IDs, and memory that
+COM points to pinned with `runtime.Pinner` while references exist. The
+old `WebView` (Internet Explorer `WebBrowser` control) now uses it for
+its site object (`IOleClientSite`, `IOleInPlaceSite`, `IDocHostUIHandler`
+and the `DWebBrowserEvents2` sink) and for a separate in-place frame
+object (`IOleInPlaceFrame`). Before, these were Go structs inside
+`WebView` found by pointer arithmetic, `AddRef` and `Release` always
+returned 1, and the frame answered every `QueryInterface` with
+`E_NOTIMPL`. Changes a user could notice:
+
+- `Dispose` now calls `IConnectionPoint.Unadvise` for the events sink and
+  releases the site and frame objects; they live on until the browser
+  releases its references too.
+- `IOleInPlaceSite.GetWindowContext` adds a reference to the frame it
+  returns, as COM requires.
+- The frame answers `QueryInterface` for `IUnknown`, `IOleWindow`,
+  `IOleInPlaceUIWindow` and `IOleInPlaceFrame`.
+- The `IDispatch` methods of the sink other than `Invoke` take their real
+  number of parameters, which matters for the stack on 386.
+
+How to test, on 386 and amd64:
+
+- `tests/_wingui/scripts/run.ps1 -Only com,webview` (after `build.ps1`).
+  `com` runs the unit tests of `internal/com`; `webview` loads two local
+  pages into a `WebView`, collects garbage while the browser holds the COM
+  objects, disposes it and loads a page into a new `WebView`, and checks
+  the `Navigating`, `DocumentCompleted`, `DocumentTitle`, `URL` and
+  `CanGoBack` results.
+- `examples/webview` and `examples/webview_events` (they need a network):
+  navigate, check that the events are logged, use the context menu with
+  `NativeContextMenuEnabled` on and off, and close the window. No crash
+  or hang may occur, also when closing during a page load.
+- With NVDA: the page can still be read as before. The known problem that
+  Tab and F6 do not move focus into the page is expected to stay.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

@@ -78,6 +78,15 @@ func (cp *IConnectionPoint) Advise(pUnkSink unsafe.Pointer, pdwCookie *uint32) H
 	return HRESULT(ret)
 }
 
+func (cp *IConnectionPoint) Unadvise(dwCookie uint32) HRESULT {
+	ret, _, _ := syscall.Syscall(cp.LpVtbl.Unadvise, 2,
+		uintptr(unsafe.Pointer(cp)),
+		uintptr(dwCookie),
+		0)
+
+	return HRESULT(ret)
+}
+
 func (cpc *IConnectionPointContainer) Release() uint32 {
 	ret, _, _ := syscall.Syscall(cpc.LpVtbl.Release, 1,
 		uintptr(unsafe.Pointer(cpc)),

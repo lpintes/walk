@@ -96,6 +96,18 @@ foreach ($n in "dragfinish", "hdn", "ods") {
 	Report $n $p (Stop-Test $p 30)
 }
 
+if (Want "webview") {
+	$p = Start-Test (Join-Path $root "webview") "webview"
+	Report "webview" $p (Stop-Test $p 90)
+}
+
+if (Want "com") {
+	# go test prints "--- PASS: TestX" lines, which only -Full shows; a
+	# failure gives a FAIL line and exit code 1.
+	$p = Start-Test (Join-Path $root "com") "com" @("-test.v")
+	Report "com" $p (Stop-Test $p 30)
+}
+
 if ($Drag -and (Want "olednd")) {
 	$dir = Join-Path $root "olednd"
 	$t = Start-Test $dir "target"

@@ -2,8 +2,11 @@
 
 Test programs and scripts that run walk on a real Windows desktop. They were
 written for the Windows tasks in `TESTING_ON_WINDOWS.md` (the smoke test of
-step 3 and the `DragFinish`, `HDN_*` and `ODS_*` bugs) and can be rerun as
-regression tests after changes to `internal/win` or the affected widgets.
+step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, and the COM objects of
+`WebView` in step 6) and can be rerun as regression tests after changes to
+`internal/win`, `internal/com` or the affected widgets. `com` is not a
+directory here: `build.ps1` builds the unit tests of `internal/com` into
+`tests\com\com.exe`.
 
 The directory name starts with an underscore, so `go build ./...`,
 `go vet ./...` and the other checks skip it. `hdn` and `ods` do not even

@@ -12,83 +12,73 @@ import (
 )
 
 import (
+	"github.com/lpintes/walk/internal/com"
 	"github.com/lpintes/walk/internal/win"
 )
 
-var webViewIOleClientSiteVtbl *win.IOleClientSiteVtbl
+var webViewIOleClientSiteVtbl *com.VTable
 
 func init() {
 	AppendToWalkInit(func() {
-		webViewIOleClientSiteVtbl = &win.IOleClientSiteVtbl{
-			syscall.NewCallback(webView_IOleClientSite_QueryInterface),
-			syscall.NewCallback(webView_IOleClientSite_AddRef),
-			syscall.NewCallback(webView_IOleClientSite_Release),
-			syscall.NewCallback(webView_IOleClientSite_SaveObject),
-			syscall.NewCallback(webView_IOleClientSite_GetMoniker),
-			syscall.NewCallback(webView_IOleClientSite_GetContainer),
-			syscall.NewCallback(webView_IOleClientSite_ShowObject),
-			syscall.NewCallback(webView_IOleClientSite_OnShowWindow),
-			syscall.NewCallback(webView_IOleClientSite_RequestNewObjectLayout),
-		}
+		webViewIOleClientSiteVtbl = com.NewVTable(&win.IOleClientSiteVtbl{
+			SaveObject:             syscall.NewCallback(webView_IOleClientSite_SaveObject),
+			GetMoniker:             syscall.NewCallback(webView_IOleClientSite_GetMoniker),
+			GetContainer:           syscall.NewCallback(webView_IOleClientSite_GetContainer),
+			ShowObject:             syscall.NewCallback(webView_IOleClientSite_ShowObject),
+			OnShowWindow:           syscall.NewCallback(webView_IOleClientSite_OnShowWindow),
+			RequestNewObjectLayout: syscall.NewCallback(webView_IOleClientSite_RequestNewObjectLayout),
+		}, &win.IID_IOleClientSite)
 	})
 }
 
-type webViewIOleClientSite struct {
-	win.IOleClientSite
-	inPlaceSite       webViewIOleInPlaceSite
-	docHostUIHandler  webViewIDocHostUIHandler
-	webBrowserEvents2 webViewDWebBrowserEvents2
+// newWebViewSite returns the COM object that hosts the browser of wv. It
+// implements IOleClientSite, IOleInPlaceSite, IDocHostUIHandler and the
+// DWebBrowserEvents2 sink.
+func newWebViewSite(wv *WebView) *com.Object {
+	return com.NewObject(wv,
+		webViewIOleClientSiteVtbl,
+		webViewIOleInPlaceSiteVtbl,
+		webViewIDocHostUIHandlerVtbl,
+		webViewDWebBrowserEvents2Vtbl)
 }
 
-func webView_IOleClientSite_QueryInterface(clientSite *webViewIOleClientSite, riid win.REFIID, ppvObject *unsafe.Pointer) uintptr {
-	if win.EqualREFIID(riid, &win.IID_IUnknown) {
-		*ppvObject = unsafe.Pointer(clientSite)
-	} else if win.EqualREFIID(riid, &win.IID_IOleClientSite) {
-		*ppvObject = unsafe.Pointer(clientSite)
-	} else if win.EqualREFIID(riid, &win.IID_IOleInPlaceSite) {
-		*ppvObject = unsafe.Pointer(&clientSite.inPlaceSite)
-	} else if win.EqualREFIID(riid, &win.IID_IDocHostUIHandler) {
-		*ppvObject = unsafe.Pointer(&clientSite.docHostUIHandler)
-	} else if win.EqualREFIID(riid, &win.DIID_DWebBrowserEvents2) {
-		*ppvObject = unsafe.Pointer(&clientSite.webBrowserEvents2)
-	} else {
-		*ppvObject = nil
-		return win.E_NOINTERFACE
-	}
+// Interfaces of the object newWebViewSite returns, in the order of its
+// vtables.
+const (
+	webViewSiteIOleClientSite = iota
+	webViewSiteIOleInPlaceSite
+	webViewSiteIDocHostUIHandler
+	webViewSiteDWebBrowserEvents2
+)
 
-	return win.S_OK
+// webViewFromThis returns the WebView that implements the COM object
+// this belongs to.
+func webViewFromThis(this *com.This) *WebView {
+	return this.Object().Impl().(*WebView)
 }
 
-func webView_IOleClientSite_AddRef(clientSite *webViewIOleClientSite) uintptr {
-	return 1
-}
-
-func webView_IOleClientSite_Release(clientSite *webViewIOleClientSite) uintptr {
-	return 1
-}
-
-func webView_IOleClientSite_SaveObject(clientSite *webViewIOleClientSite) uintptr {
+func webView_IOleClientSite_SaveObject(this *com.This) uintptr {
 	return win.E_NOTIMPL
 }
 
-func webView_IOleClientSite_GetMoniker(clientSite *webViewIOleClientSite, dwAssign, dwWhichMoniker uint32, ppmk *unsafe.Pointer) uintptr {
+func webView_IOleClientSite_GetMoniker(this *com.This, dwAssign, dwWhichMoniker uint32, ppmk *unsafe.Pointer) uintptr {
 	return win.E_NOTIMPL
 }
 
-func webView_IOleClientSite_GetContainer(clientSite *webViewIOleClientSite, ppContainer *unsafe.Pointer) uintptr {
+func webView_IOleClientSite_GetContainer(this *com.This, ppContainer *unsafe.Pointer) uintptr {
 	*ppContainer = nil
 
 	return win.E_NOINTERFACE
 }
 
-func webView_IOleClientSite_ShowObject(clientSite *webViewIOleClientSite) uintptr {
+func webView_IOleClientSite_ShowObject(this *com.This) uintptr {
 	return win.S_OK
 }
 
-func webView_IOleClientSite_OnShowWindow(clientSite *webViewIOleClientSite, fShow win.BOOL) uintptr {
+func webView_IOleClientSite_OnShowWindow(this *com.This, fShow win.BOOL) uintptr {
 	return win.E_NOTIMPL
 }
 
-func webView_IOleClientSite_RequestNewObjectLayout(clientSite *webViewIOleClientSite) uintptr {
+func webView_IOleClientSite_RequestNewObjectLayout(this *com.This) uintptr {
 	return win.E_NOTIMPL
 }
