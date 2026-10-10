@@ -125,6 +125,12 @@ checks, for a look with a screen reader; the scripts do not use it.
   -ReferencedAssemblies Accessibility` fails in PowerShell 7.6. The managed
   UI Automation client reports every Win32 control as `Pane` on the test
   machine, so the scripts use MSAA.
+- PowerShell passes `""`, not NULL, for a string P/Invoke parameter given
+  `$null`; pass `[NullString]::Value` instead (for example for the class
+  name of `FindWindow`).
+- The 386 builds of the examples are console programs, so
+  `Process.MainWindowHandle` is the console window; find the walk window
+  with `FindWindow` by its title.
 - `internal/win` declares only what walk uses. A test that needs other
   Win32 functions or constants declares them itself with
   `windows.NewLazySystemDLL` and plain constants.
