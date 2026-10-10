@@ -31,6 +31,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -91,7 +92,7 @@ func goList(goarch string, args ...string) ([]*listedPackage, error) {
 	dec := json.NewDecoder(bytes.NewReader(out))
 	for {
 		var p listedPackage
-		if err := dec.Decode(&p); err == io.EOF {
+		if err := dec.Decode(&p); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return nil, err
@@ -542,7 +543,7 @@ func remove(dir string, live map[string]bool) error {
 		}
 		formatted, err := format.Source(out)
 		if err != nil {
-			return fmt.Errorf("%s: %v", name, err)
+			return fmt.Errorf("%s: %w", name, err)
 		}
 		if err := os.WriteFile(name, formatted, 0o644); err != nil {
 			return err

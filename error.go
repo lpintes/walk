@@ -31,6 +31,12 @@ func (err *Error) Inner() error {
 	return err.inner
 }
 
+// Unwrap returns the wrapped error, so that errors.Is and errors.As look
+// through walk errors.
+func (err *Error) Unwrap() error {
+	return err.inner
+}
+
 func (err *Error) Message() string {
 	if err.message != "" {
 		return err.message

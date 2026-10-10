@@ -137,7 +137,7 @@ func (c *Canvas) Dispose() {
 			win.SelectObject(c.hdc, win.HGDIOBJ(c.hBmpStock))
 			win.DeleteDC(c.hdc)
 			if err := c.bitmap.postProcess(); err != nil {
-				log.Printf("*Canvas.Dispose - failed to post-process bitmap: %s", err.Error())
+				log.Printf("*Canvas.Dispose - failed to post-process bitmap: %s", err)
 			}
 		} else {
 			win.ReleaseDC(c.window.Handle(), c.hdc)
