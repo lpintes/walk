@@ -200,7 +200,7 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   (see its `README.md`); rerun them on Windows after changes to
   `internal/win`, `internal/com` or the affected widgets. The leading underscore keeps
   them out of `./...`.
-- Step 6: done in the cloud, pull request PRNUMBER, waiting for testing on
+- Step 6: done in the cloud, pull request lpintes/walk#7, waiting for testing on
   Windows (Task 5 of `TESTING_ON_WINDOWS.md`). Done before steps 4 and 5
   because it needs no live testing while it is written.
   - New package `internal/com` (see its package documentation):
