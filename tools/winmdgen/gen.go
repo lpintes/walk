@@ -501,7 +501,7 @@ func (g *generator) writeFunc(b *bytes.Buffer, f *genFunc) {
 func formatSource(name string, src []byte) ([]byte, error) {
 	out, err := format.Source(src)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %v\n%s", name, err, src)
+		return nil, fmt.Errorf("%s: %w\n%s", name, err, src)
 	}
 	return out, nil
 }

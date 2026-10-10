@@ -35,7 +35,7 @@ func (re *reflectExpression) Value() any {
 
 	_, val, err := reflectValueFromPath(reflect.ValueOf(rootVal), re.path)
 	if err != nil {
-		log.Print("walk - reflectExpression.Value - Error: ", err.Error())
+		log.Print("walk - reflectExpression.Value - Error: ", err)
 	}
 
 	if !val.IsValid() {
