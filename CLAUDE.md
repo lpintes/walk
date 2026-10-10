@@ -275,6 +275,10 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     transparent bitmap above 4 megapixels and a TableView or TreeView
     text above 264 characters with a larger buffer panicked.
   - The trace patches in `tests/_wingui/hdn` and `ods` were updated.
+  - Tested on Windows 11 (386 and amd64) with `tests/_wingui`: `build.ps1`,
+    `run.ps1` (all tests but `olednd`) and `examples.ps1` pass, with only
+    the known problems (`SetRole` on 386, `ListBox` `hoverIndex`,
+    `progressindicator` nil layout).
   - Left for later (each changes behavior or public text): the
     deprecated 96 DPI APIs still used by `declarative` (`NewCustomWidget`,
     `NewImageList`, `Resources.Bitmap`) and the examples; capitalized
