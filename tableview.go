@@ -2421,7 +2421,7 @@ func (tv *TableView) lvWndProc(origWndProcPtr uintptr, hwnd win.HWND, msg uint32
 
 			tv.itemActivatedPublisher.Publish()
 
-		case win.HDN_ITEMCHANGING:
+		case win.HDN_ITEMCHANGED:
 			tv.updateLVSizes()
 		}
 

@@ -165,9 +165,17 @@ Details and rationale for steps 4 to 9 are in "Candidate next steps" below.
   calls `shell32!DragFinish` instead of `DragAcceptFiles`, so the `HDROP`
   of dropped files is freed. Tested on Windows 11 (386 and amd64) with a
   posted `WM_DROPFILES` (`GlobalFlags` reports the handle freed) and with
-  a real OLE drag of shell files from another process (amd64). The `HDN_*` and `ODA_*`/`ODS_*` bugs are visual only and hard to
-  test with a screen reader, so they stay recorded until someone can check
-  the appearance. No GitHub issues were created for them.
+  a real OLE drag of shell files from another process (amd64). The `HDN_*`
+  bug is fixed without a change of behavior: `HDN_FIRST` and
+  `HDN_ITEMCHANGING` are gone, `HDN_ITEMCHANGED` (0xFFFFFEBF, the value
+  `TableView` always reacted to) is generated, and `TableView.lvWndProc`
+  uses it. Tested on Windows 11 (386 and amd64) with a `TableView` with a
+  frozen column: for `LVM_SETCOLUMNWIDTH` and a header divider drag (mouse
+  messages sent to the header window) on both headers, the header sends
+  `HDN_ITEMCHANGINGW` (0xFFFFFEC0) and `HDN_ITEMCHANGEDW`, `updateLVSizes`
+  runs once right after the latter, before and after the fix, and the
+  frozen and normal list views stay adjacent. The `ODA_*`/`ODS_*` bugs stay
+  recorded. No GitHub issues were created for them.
 - `TESTING_ON_WINDOWS.md` describes tasks for an agent on a Windows
   machine: a smoke test of step 3 (all three parts) and tests for these
   bugs. Finding while writing it: the `HDN_*` and `ODS_*` bugs can be fixed without any
@@ -294,12 +302,13 @@ and real dialogs all need new Win32/COM declarations.
   memory, and stay as they are. `go vet` also reports "struct literal
   uses unkeyed fields" for walk and the examples (for example unkeyed
   `win.RECT` and `win.POINT` literals); these are known too.
+- `TableView.updateLVSizes` sizes the frozen list view from the column
+  widths converted to 96 DPI and back, so at 150 % scaling it can be one
+  pixel wider than the frozen columns (column 220 pixels, list view 221).
+  Found while testing the `HDN_*` fix; inherited and cosmetic.
 - Bugs inherited from lxn/win, found by comparing with the metadata in
   step 3 and kept hand-written so that behavior does not change. Fixing
   them changes behavior and needs GUI testing:
-  - `HDN_FIRST` is `^uint32(300)` (that is -301) instead of -300, so every
-    `HDN_*` value is off by one. `HDN_ITEMCHANGING` is really
-    `HDN_ITEMCHANGEDW`; `TableView` relies on it.
   - `ODA_FOCUS` is 2 (really `ODA_SELECT`, `ODA_FOCUS` is 4) and
     `ODS_CHECKED` is 1 (really `ODS_SELECTED`, `ODS_CHECKED` is 8); used by
     `ListBox` owner drawing and `models.go`.

@@ -1078,6 +1078,7 @@ const (
 	HDM_HITTEST                         = 0x1206
 	HDM_LAYOUT                          = 0x1205
 	HDM_SETITEM                         = 0x120c
+	HDN_ITEMCHANGED              uint32 = 0xfffffebf
 	HDS_NOSIZING                        = 0x800
 	I_IMAGENONE                         = -2
 	LM_GETIDEALSIZE                     = 0x701

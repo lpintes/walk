@@ -19,8 +19,3 @@ type HDITEM struct {
 	Type       uint32
 	PvFilter   uintptr
 }
-
-const (
-	HDN_FIRST        = ^uint32(300)
-	HDN_ITEMCHANGING = HDN_FIRST - 20
-)
