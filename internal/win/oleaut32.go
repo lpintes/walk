@@ -242,7 +242,7 @@ func init() {
 
 func SysAllocString(s string) *uint16 /*BSTR*/ {
 	ret, _, _ := syscall.SyscallN(sysAllocString.Addr(),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(s))))
+		uintptr(unsafe.Pointer(StringToUTF16Ptr(s))))
 
 	return (*uint16) /*BSTR*/ (unsafe.Pointer(ret))
 }

@@ -266,7 +266,7 @@ func (cb *ComboBox) itemString(index int) string {
 
 func (cb *ComboBox) insertItemAt(index int) error {
 	str := cb.itemString(index)
-	lp := uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(str)))
+	lp := uintptr(unsafe.Pointer(win.StringToUTF16Ptr(str)))
 
 	if win.CB_ERR == cb.SendMessage(win.CB_INSERTSTRING, uintptr(index), lp) {
 		return newError("SendMessage(CB_INSERTSTRING)")
@@ -537,7 +537,7 @@ func (cb *ComboBox) calculateMaxItemTextWidth() int {
 	count := cb.model.ItemCount()
 	for i := range count {
 		var s win.SIZE
-		str := syscall.StringToUTF16(cb.itemString(i))
+		str := win.StringToUTF16(cb.itemString(i))
 
 		if !win.GetTextExtentPoint32(hdc, &str[0], int32(len(str)-1), &s) {
 			newError("GetTextExtentPoint32 failed")

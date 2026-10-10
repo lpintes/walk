@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
-	"syscall"
 	"time"
 	"unsafe"
 
@@ -207,7 +206,7 @@ func (lb *ListBox) itemString(index int) string {
 // insert one item from list model
 func (lb *ListBox) insertItemAt(index int) error {
 	str := lb.itemString(index)
-	lp := uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(str)))
+	lp := uintptr(unsafe.Pointer(win.StringToUTF16Ptr(str)))
 	ret := int(lb.SendMessage(win.LB_INSERTSTRING, uintptr(index), lp))
 	if ret == win.LB_ERRSPACE || ret == win.LB_ERR {
 		return newError("SendMessage(LB_INSERTSTRING)")
@@ -538,7 +537,7 @@ func (lb *ListBox) calculateMaxItemTextWidth() int {
 	for i := range count {
 		item := lb.itemString(i)
 		var s win.SIZE
-		str := syscall.StringToUTF16(item)
+		str := win.StringToUTF16(item)
 
 		if !win.GetTextExtentPoint32(hdc, &str[0], int32(len(str)-1), &s) {
 			newError("GetTextExtentPoint32 failed")
@@ -670,7 +669,7 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 
 		var hTheme win.HTHEME
 		if !lb.style.highContrastActive {
-			if hTheme = win.OpenThemeData(lb.hWnd, syscall.StringToUTF16Ptr("Listview")); hTheme != 0 {
+			if hTheme = win.OpenThemeData(lb.hWnd, win.StringToUTF16Ptr("Listview")); hTheme != 0 {
 				defer win.CloseThemeData(hTheme)
 			}
 		}

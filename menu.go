@@ -8,7 +8,6 @@ package walk
 
 import (
 	"fmt"
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -126,7 +125,7 @@ func (m *Menu) initMenuItemInfoFromAction(mii *win.MENUITEMINFO, action *Action)
 		} else {
 			text = action.text
 		}
-		mii.DwTypeData = syscall.StringToUTF16Ptr(text)
+		mii.DwTypeData = win.StringToUTF16Ptr(text)
 		mii.Cch = uint32(len([]rune(action.text)))
 	}
 	mii.WID = uint32(action.id)

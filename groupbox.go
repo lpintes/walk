@@ -7,7 +7,6 @@
 package walk
 
 import (
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -50,7 +49,7 @@ func NewGroupBox(parent Container) (*GroupBox, error) {
 	}()
 
 	gb.hWndGroupBox = win.CreateWindowEx(
-		0, syscall.StringToUTF16Ptr("BUTTON"), nil,
+		0, win.StringToUTF16Ptr("BUTTON"), nil,
 		win.WS_CHILD|win.WS_VISIBLE|win.BS_GROUPBOX,
 		0, 0, 80, 24, gb.hWnd, 0, 0, nil)
 	if gb.hWndGroupBox == 0 {

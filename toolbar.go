@@ -8,7 +8,6 @@ package walk
 
 import (
 	"fmt"
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -375,9 +374,9 @@ func (tb *ToolBar) initButtonForAction(action *Action, state, style *byte, image
 	}
 
 	if len(actionText) != 0 {
-		*text = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(actionText)))
+		*text = uintptr(unsafe.Pointer(win.StringToUTF16Ptr(actionText)))
 	} else if len(action.toolTip) != 0 {
-		*text = uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(action.toolTip)))
+		*text = uintptr(unsafe.Pointer(win.StringToUTF16Ptr(action.toolTip)))
 	}
 
 	return

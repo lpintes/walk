@@ -21,7 +21,7 @@ func init() {
 
 		hwnd := win.CreateWindowEx(
 			0,
-			syscall.StringToUTF16Ptr(clipboardWindowClass),
+			win.StringToUTF16Ptr(clipboardWindowClass),
 			nil,
 			0,
 			0,

@@ -112,7 +112,7 @@ func (le *LineEdit) CueBanner() string {
 }
 
 func (le *LineEdit) SetCueBanner(value string) error {
-	if win.FALSE == le.SendMessage(win.EM_SETCUEBANNER, win.FALSE, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(value)))) {
+	if win.FALSE == le.SendMessage(win.EM_SETCUEBANNER, win.FALSE, uintptr(unsafe.Pointer(win.StringToUTF16Ptr(value)))) {
 		return newError("EM_SETCUEBANNER failed")
 	}
 

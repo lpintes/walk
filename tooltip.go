@@ -94,7 +94,7 @@ func (tt *ToolTip) setTitle(title string, icon uintptr) error {
 		title = title[:99]
 	}
 
-	if win.FALSE == tt.SendMessage(win.TTM_SETTITLE, icon, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title)))) {
+	if win.FALSE == tt.SendMessage(win.TTM_SETTITLE, icon, uintptr(unsafe.Pointer(win.StringToUTF16Ptr(title)))) {
 		return newError("TTM_SETTITLE failed")
 	}
 
@@ -238,7 +238,7 @@ func (tt *ToolTip) setText(hwnd win.HWND, text string) error {
 		}
 	}
 
-	ti.LpszText = syscall.StringToUTF16Ptr(text)
+	ti.LpszText = win.StringToUTF16Ptr(text)
 
 	tt.SendMessage(win.TTM_SETTOOLINFO, 0, uintptr(unsafe.Pointer(ti)))
 

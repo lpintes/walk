@@ -233,7 +233,7 @@ func (te *TextEdit) SetTextSelection(start, end int) {
 func (te *TextEdit) ReplaceSelectedText(text string, canUndo bool) {
 	te.SendMessage(win.EM_REPLACESEL,
 		uintptr(win.BoolToBOOL(canUndo)),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(text))))
+		uintptr(unsafe.Pointer(win.StringToUTF16Ptr(text))))
 }
 
 func (te *TextEdit) AppendText(value string) {

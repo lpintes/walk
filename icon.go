@@ -9,7 +9,6 @@ package walk
 import (
 	"image"
 	"path/filepath"
-	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -101,7 +100,7 @@ func NewIconFromResource(name string) (*Icon, error) {
 
 // NewIconFromResourceWithSize returns a new Icon of size size, using the specified icon resource.
 func NewIconFromResourceWithSize(name string, size Size) (*Icon, error) {
-	return newIconFromResource(syscall.StringToUTF16Ptr(name), size)
+	return newIconFromResource(win.StringToUTF16Ptr(name), size)
 }
 
 // NewIconFromResourceId returns a new Icon of default size, using the specified icon resource.
@@ -252,7 +251,7 @@ func (i *Icon) handleForDPIWithError(dpi int) (win.HICON, error) {
 			return 0, err
 		}
 
-		name = syscall.StringToUTF16Ptr(absFilePath)
+		name = win.StringToUTF16Ptr(absFilePath)
 	} else {
 		if !i.isStock {
 			if hInst = win.GetModuleHandle(nil); hInst == 0 {

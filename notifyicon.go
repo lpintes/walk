@@ -133,7 +133,7 @@ func NewNotifyIcon(form Form) (*NotifyIcon, error) {
 }
 
 func (ni *NotifyIcon) DPI() int {
-	fakeWb := WindowBase{hWnd: win.FindWindow(syscall.StringToUTF16Ptr("Shell_TrayWnd"), syscall.StringToUTF16Ptr(""))}
+	fakeWb := WindowBase{hWnd: win.FindWindow(win.StringToUTF16Ptr("Shell_TrayWnd"), win.StringToUTF16Ptr(""))}
 	return fakeWb.DPI()
 }
 
@@ -352,7 +352,7 @@ func (ni *NotifyIcon) SetToolTip(toolTip string) error {
 
 	nid := ni.notifyIconData()
 	nid.UFlags = win.NIF_TIP
-	copy(nid.SzTip[:], syscall.StringToUTF16(toolTip))
+	copy(nid.SzTip[:], win.StringToUTF16(toolTip))
 
 	if !win.Shell_NotifyIcon(win.NIM_MODIFY, nid) {
 		return newError("Shell_NotifyIcon")

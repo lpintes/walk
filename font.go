@@ -7,10 +7,6 @@
 package walk
 
 import (
-	"syscall"
-)
-
-import (
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -105,7 +101,7 @@ func (f *Font) createForDPI(dpi int) (win.HFONT, error) {
 	lf.LfQuality = win.CLEARTYPE_QUALITY
 	lf.LfPitchAndFamily = win.VARIABLE_PITCH | win.FF_SWISS
 
-	src := syscall.StringToUTF16(f.family)
+	src := win.StringToUTF16(f.family)
 	dest := lf.LfFaceName[:]
 	copy(dest, src)
 

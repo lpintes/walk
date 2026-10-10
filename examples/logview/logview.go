@@ -5,7 +5,6 @@ package main
 
 import (
 	"errors"
-	"syscall"
 	"unsafe"
 )
 
@@ -55,7 +54,7 @@ func (lv *LogView) textLength() int {
 func (lv *LogView) AppendText(value string) {
 	textLength := lv.textLength()
 	lv.setTextSelection(textLength, textLength)
-	lv.SendMessage(win.EM_REPLACESEL, 0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(value))))
+	lv.SendMessage(win.EM_REPLACESEL, 0, uintptr(unsafe.Pointer(win.StringToUTF16Ptr(value))))
 }
 
 func (lv *LogView) setReadOnly(readOnly bool) error {

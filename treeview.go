@@ -7,7 +7,6 @@
 package walk
 
 import (
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -573,7 +572,7 @@ func (tv *TreeView) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 
 			if nmtvdi.Item.Mask&win.TVIF_TEXT != 0 {
 				text := item.Text()
-				utf16 := syscall.StringToUTF16(text)
+				utf16 := win.StringToUTF16(text)
 				buf := (*[264]uint16)(unsafe.Pointer(nmtvdi.Item.PszText))
 				max := min(len(utf16), int(nmtvdi.Item.CchTextMax))
 				copy((*buf)[:], utf16[:max])

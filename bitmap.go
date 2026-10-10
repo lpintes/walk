@@ -11,7 +11,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"syscall"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -134,7 +133,7 @@ func NewBitmapFromFileForDPI(filePath string, dpi int) (*Bitmap, error) {
 	defer win.GdiplusShutdown()
 
 	var gpBmp *win.GpBitmap
-	if status := win.GdipCreateBitmapFromFile(syscall.StringToUTF16Ptr(filePath), &gpBmp); status != win.Ok {
+	if status := win.GdipCreateBitmapFromFile(win.StringToUTF16Ptr(filePath), &gpBmp); status != win.Ok {
 		return nil, newError(fmt.Sprintf("GdipCreateBitmapFromFile failed with status '%s' for file '%s'", status, filePath))
 	}
 	defer win.GdipDisposeImage((*win.GpImage)(gpBmp))
@@ -168,12 +167,12 @@ func NewBitmapFromImageForDPI(im image.Image, dpi int) (*Bitmap, error) {
 //
 // Deprecated: Newer applications should use NewBitmapFromResourceForDPI.
 func NewBitmapFromResource(name string) (*Bitmap, error) {
-	return newBitmapFromResource(syscall.StringToUTF16Ptr(name), 96)
+	return newBitmapFromResource(win.StringToUTF16Ptr(name), 96)
 }
 
 // NewBitmapFromResourceForDPI creates a Bitmap at given DPI from resource by name.
 func NewBitmapFromResourceForDPI(name string, dpi int) (*Bitmap, error) {
-	return newBitmapFromResource(syscall.StringToUTF16Ptr(name), dpi)
+	return newBitmapFromResource(win.StringToUTF16Ptr(name), dpi)
 }
 
 // NewBitmapFromResourceId creates a Bitmap at 96dpi from resource by ID.

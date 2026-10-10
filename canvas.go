@@ -8,7 +8,6 @@ package walk
 
 import (
 	"log"
-	"syscall"
 	"unicode/utf8"
 	"unsafe"
 
@@ -571,7 +570,7 @@ func (c *Canvas) DrawTextPixels(text string, font *Font, color Color, bounds Rec
 		rect := bounds.toRECT()
 		ret := win.DrawTextEx(
 			c.hdc,
-			syscall.StringToUTF16Ptr(text),
+			win.StringToUTF16Ptr(text),
 			-1,
 			&rect,
 			uint32(format)|win.DT_EDITCONTROL,
@@ -603,7 +602,7 @@ func (c *Canvas) measureTextForDPI(text string, font *Font, bounds Rectangle, fo
 	var params win.DRAWTEXTPARAMS
 	params.CbSize = uint32(unsafe.Sizeof(params))
 
-	strPtr := syscall.StringToUTF16Ptr(text)
+	strPtr := win.StringToUTF16Ptr(text)
 	dtfmt := uint32(format) | win.DT_CALCRECT | win.DT_EDITCONTROL | win.DT_NOPREFIX | win.DT_WORDBREAK
 
 	height := win.DrawTextEx(
@@ -696,7 +695,7 @@ func (c *Canvas) measureAndModifyTextPixels(text string, font *Font, bounds Rect
 	var params win.DRAWTEXTPARAMS
 	params.CbSize = uint32(unsafe.Sizeof(params))
 
-	strPtr := syscall.StringToUTF16Ptr(text)
+	strPtr := win.StringToUTF16Ptr(text)
 	dtfmt := uint32(format) | win.DT_EDITCONTROL | win.DT_WORDBREAK
 
 	height := win.DrawTextEx(

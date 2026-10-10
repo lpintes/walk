@@ -9,7 +9,6 @@ package walk
 import (
 	"fmt"
 	"math"
-	"syscall"
 	"time"
 	"unsafe"
 
@@ -31,9 +30,9 @@ var (
 
 func init() {
 	AppendToWalkInit(func() {
-		syncMsgId = win.RegisterWindowMessage(syscall.StringToUTF16Ptr("WalkSync"))
-		taskbarButtonCreatedMsgId = win.RegisterWindowMessage(syscall.StringToUTF16Ptr("TaskbarButtonCreated"))
-		taskbarCreatedMsgId = win.RegisterWindowMessage(syscall.StringToUTF16Ptr("TaskbarCreated"))
+		syncMsgId = win.RegisterWindowMessage(win.StringToUTF16Ptr("WalkSync"))
+		taskbarButtonCreatedMsgId = win.RegisterWindowMessage(win.StringToUTF16Ptr("TaskbarButtonCreated"))
+		taskbarCreatedMsgId = win.RegisterWindowMessage(win.StringToUTF16Ptr("TaskbarCreated"))
 	})
 }
 
