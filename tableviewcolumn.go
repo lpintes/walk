@@ -399,7 +399,7 @@ func (tvc *TableViewColumn) create() error {
 		lvc.Fmt = 1
 	}
 
-	if -1 == int(tvc.sendMessage(win.LVM_INSERTCOLUMN, uintptr(index), uintptr(unsafe.Pointer(&lvc)))) {
+	if int(tvc.sendMessage(win.LVM_INSERTCOLUMN, uintptr(index), uintptr(unsafe.Pointer(&lvc)))) == -1 {
 		return newError("LVM_INSERTCOLUMN")
 	}
 

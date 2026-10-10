@@ -94,10 +94,10 @@ func (sb *StatusBar) updateParts() error {
 		rightEdges[0] = -1
 	}
 
-	if 0 == sb.SendMessage(
+	if sb.SendMessage(
 		win.SB_SETPARTS,
 		uintptr(len(items)),
-		uintptr(unsafe.Pointer(rep))) {
+		uintptr(unsafe.Pointer(rep))) == 0 {
 
 		return newError("SB_SETPARTS")
 	}
@@ -284,10 +284,10 @@ func (sbi *StatusBarItem) updateIcon(index int) error {
 		hIcon = sbi.icon.handleForDPI(sbi.sb.DPI())
 	}
 
-	if 0 == sbi.sb.SendMessage(
+	if sbi.sb.SendMessage(
 		win.SB_SETICON,
 		uintptr(index),
-		uintptr(hIcon)) {
+		uintptr(hIcon)) == 0 {
 
 		return newError("SB_SETICON")
 	}
@@ -301,10 +301,10 @@ func (sbi *StatusBarItem) updateText(index int) error {
 		return err
 	}
 
-	if 0 == sbi.sb.SendMessage(
+	if sbi.sb.SendMessage(
 		win.SB_SETTEXT,
 		uintptr(win.MAKEWORD(byte(index), 0)),
-		uintptr(unsafe.Pointer(utf16))) {
+		uintptr(unsafe.Pointer(utf16))) == 0 {
 
 		return newError("SB_SETTEXT")
 	}

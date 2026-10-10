@@ -128,7 +128,7 @@ func (de *DateEdit) setSystemTime(st *win.SYSTEMTIME) error {
 		wParam = win.GDT_NONE
 	}
 
-	if 0 == de.SendMessage(win.DTM_SETSYSTEMTIME, wParam, uintptr(unsafe.Pointer(st))) {
+	if de.SendMessage(win.DTM_SETSYSTEMTIME, wParam, uintptr(unsafe.Pointer(st))) == 0 {
 		return newError("SendMessage(DTM_SETSYSTEMTIME)")
 	}
 
@@ -146,7 +146,7 @@ func (de *DateEdit) Format() string {
 func (de *DateEdit) SetFormat(format string) error {
 	lp := uintptr(unsafe.Pointer(win.StringToUTF16Ptr(format)))
 
-	if 0 == de.SendMessage(win.DTM_SETFORMAT, 0, lp) {
+	if de.SendMessage(win.DTM_SETFORMAT, 0, lp) == 0 {
 		return newError("DTM_SETFORMAT failed")
 	}
 
@@ -193,7 +193,7 @@ func (de *DateEdit) SetRange(min, max time.Time) error {
 		st[1] = *de.timeToSystemTime(max)
 	}
 
-	if 0 == de.SendMessage(win.DTM_SETRANGE, wParam, uintptr(unsafe.Pointer(&st[0]))) {
+	if de.SendMessage(win.DTM_SETRANGE, wParam, uintptr(unsafe.Pointer(&st[0]))) == 0 {
 		return newError("SendMessage(DTM_SETRANGE)")
 	}
 

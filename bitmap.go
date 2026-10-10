@@ -331,7 +331,7 @@ func (bmp *Bitmap) postProcess() error {
 			}
 		}
 
-		if 0 == win.SetDIBits(hdc, bmp.hBmp, 0, uint32(bi.BmiHeader.BiHeight), &unsafe.SliceData(pixels).B, bi, win.DIB_RGB_COLORS) {
+		if win.SetDIBits(hdc, bmp.hBmp, 0, uint32(bi.BmiHeader.BiHeight), &unsafe.SliceData(pixels).B, bi, win.DIB_RGB_COLORS) == 0 {
 			return newError("SetDIBits")
 		}
 
@@ -420,7 +420,7 @@ func (bmp *Bitmap) alphaBlendPart(hdc win.HDC, dst, src Rectangle, opacity byte)
 			}
 
 			if !transparent {
-				if 0 == win.SetStretchBltMode(hdc, win.HALFTONE) {
+				if win.SetStretchBltMode(hdc, win.HALFTONE) == 0 {
 					return newError("SetStretchBltMode")
 				}
 
