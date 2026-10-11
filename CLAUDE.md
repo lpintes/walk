@@ -360,6 +360,12 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     Automation client `client` that plays the screen reader).
   - Not done yet: using `Announce` for validation errors (behavior
     change, decide after the screen reader test).
+- Review of the 27 open upstream lxn/walk pull requests (2026-10-11):
+  `opened-prs.md` (in Slovak). Recommended: #838 (file dialog filter
+  `|` bug), #771 (TreeView panic on root item insert), #552 (NotifyIcon
+  double click, extended with keyboard activation `NIN_SELECT` and
+  `NIN_KEYSELECT`), #393 (`PasswordMode` property) and #810 (README
+  grammar). Nothing ported yet.
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue
   (generic event types are step 9).
 
