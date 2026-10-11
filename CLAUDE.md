@@ -365,7 +365,27 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   `|` bug), #771 (TreeView panic on root item insert), #552 (NotifyIcon
   double click, extended with keyboard activation `NIN_SELECT` and
   `NIN_KEYSELECT`), #393 (`PasswordMode` property) and #810 (README
-  grammar). Nothing ported yet.
+  grammar).
+- Ported from open lxn/walk pull requests (one pull request, one commit
+  each, not yet tested on Windows; task 7 of `TESTING_ON_WINDOWS.md`,
+  test program `tests/_wingui/upstream`):
+  - #838: `FileDialog` filter compared only the low byte of each UTF-16
+    unit with `|` (broke "ż" U+017C, Korean).
+  - #771: `TreeView` panicked on `ItemInserted` of a root item; root items
+    now go to their model position (`RootCount`/`RootAt`).
+  - #552 extended: `NotifyIcon.Activated` (`NIN_SELECT` and
+    `NIN_KEYSELECT`, so keyboard users can activate the icon),
+    `NotifyIcon.MouseDoubleClick`; a keyboard context menu (shell
+    `WM_CONTEXTMENU`, sent only for Shift+F10 and the application key with
+    `NOTIFYICON_VERSION` 3) opens next to the icon
+    (`Shell_NotifyIconGetRect`), and `WM_NULL` is posted after
+    `TrackPopupMenuEx`. New in `internal/win`: `NIN_SELECT`, `NINF_KEY`,
+    `TPM_VERTICAL`, `WM_NULL`, `Shell_NotifyIconGetRect` (generated) and
+    hand-written `NOTIFYICONIDENTIFIER` (`#pragma pack(1)` on 386).
+  - #393: `LineEdit.PasswordMode` is a bindable property (declarative
+    field is now `Property`); a change redraws and raises
+    `EVENT_OBJECT_STATECHANGE`.
+  - Three doc comments naming the wrong method (found by #456).
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue
   (generic event types are step 9).
 

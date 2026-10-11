@@ -358,6 +358,59 @@ How to test, on 386 and amd64 (after `build.ps1`):
   note its version. NVDA reads plain Win32 controls through MSAA and may
   ignore UI Automation events from them.
 
+## Task 7: changes ported from lxn/walk pull requests
+
+`opened-prs.md` reviews the open pull requests of lxn/walk. These were
+ported:
+
+- lxn/walk#838: `FileDialog` replaced every UTF-16 character whose low
+  byte is 0x7C with NUL, not only `|`, so a filter containing for
+  example "ż" (U+017C) or Korean text was broken.
+- lxn/walk#771: `TreeView` panicked when the model published
+  `ItemInserted` for a root item; root items are now inserted at their
+  model position.
+- lxn/walk#552, extended for the keyboard: `NotifyIcon.Activated` is
+  published for a left click (`NIN_SELECT`) and for selection with the
+  keyboard (`NIN_KEYSELECT`, Enter or Space after Windows+B);
+  `NotifyIcon.MouseDoubleClick` for double clicks. A context menu
+  requested with the keyboard (Shift+F10 or the application key) opens
+  next to the icon instead of at the mouse cursor, and a `WM_NULL` is
+  posted after the menu as the `TrackPopupMenu` documentation asks.
+- lxn/walk#393: `LineEdit.PasswordMode` is a property, so it can be
+  bound (for example to a "Show password" `CheckBox`); a change redraws
+  the field and raises `EVENT_OBJECT_STATECHANGE`.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only upstream`. The notify icon
+  appears briefly, its context menu and an open file dialog open and
+  close by themselves. If `Shell_NotifyIconGetRect` fails (an INFO line
+  says so, for example when the icon is hidden in the overflow area),
+  the menu position cannot be checked; note it.
+- `examples.ps1` as usual (the `notifyicon` example now uses
+  `Activated`).
+- Manually with NVDA (and Narrator if possible), on amd64:
+  `tests\upstream\upstream.exe manual` in the build directory. Events
+  are shown in a polite live region at the top of the window, so NVDA
+  should read them.
+  - Press Windows+B, find "walk upstream test" with the arrow keys (it
+    may be in the overflow area, opened with Enter on the chevron
+    button), press Enter: "Notify icon activated" should be read. Note
+    whether Enter or Space sends one event or two (the log numbers
+    them).
+  - On the icon press Shift+F10 or the application key: the menu should
+    open, NVDA should announce it, and "Say hello" should work. Its
+    position is covered by the automatic check; do not ask the user
+    about it.
+  - Tab to "Show password" and check it: the password field should then
+    be read as "secret" instead of stars or "protected"; uncheck it and
+    the field should be protected again.
+  - "Add root item at the top" and "Add root item at the end" add items
+    to the tree view; no error may appear and the tree should read the
+    items in order.
+  - "Open file dialog": the file type list should offer "Súbory ż
+    (*.txt)" and "Všetky súbory (*.*)".
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
