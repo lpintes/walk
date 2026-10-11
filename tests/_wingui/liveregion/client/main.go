@@ -211,7 +211,7 @@ func main() {
 	windows.CloseHandle(ev)
 
 	live := map[win.HWND]int{}
-	var announced bool
+	var announced, editAnnounced bool
 	timeout := time.After(5 * time.Second)
 collect:
 	for {
@@ -227,6 +227,10 @@ collect:
 				live[e.hwnd]++
 			case e.display == "Announcement 1" && strings.HasPrefix(e.activity, "Walk.Announce."):
 				announced = true
+			case e.kind == "notification" && e.hwnd == editHwnd && e.display == "Error 1":
+				// A LineEdit live region announces its new text instead of
+				// raising the live region changed event.
+				editAnnounced = true
 			}
 		case <-timeout:
 			break collect
@@ -242,11 +246,12 @@ collect:
 	}{
 		{"Label", statusHwnd, true},
 		{"plain Label", plainHwnd, false},
-		{"LineEdit", editHwnd, true},
+		{"LineEdit", editHwnd, false},
 		{"StatusBar", barHwnd, true},
 	} {
 		check("UIA live region event "+w.name, (live[w.hwnd] > 0) == w.want, "%d events, want them: %v", live[w.hwnd], w.want)
 	}
+	check("UIA notification event LineEdit", editAnnounced, "Error 1 from the LineEdit received: %v", editAnnounced)
 	check("UIA notification event", announced, "Announcement 1 with activity Walk.Announce.<n> received: %v", announced)
 
 	if failed {

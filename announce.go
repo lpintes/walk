@@ -62,6 +62,10 @@ var announceSeq atomic.Uint64
 // later; on older versions it returns an error. It does nothing if no UI Automation client,
 // such as a screen reader, is listening. Screen readers differ in how they honor processing.
 func Announce(window Window, text string, processing AnnouncementProcessing) error {
+	return announce(window.Handle(), text, processing)
+}
+
+func announce(hwnd win.HWND, text string, processing AnnouncementProcessing) error {
 	if !win.UiaRaiseNotificationEventAvailable() {
 		return newError("UiaRaiseNotificationEvent not available (Windows 10 version 1709 or later needed)")
 	}
@@ -72,7 +76,7 @@ func Announce(window Window, text string, processing AnnouncementProcessing) err
 		return nil
 	}
 
-	provider := newAnnounceProvider(window.Handle())
+	provider := newAnnounceProvider(hwnd)
 	defer provider.Release()
 
 	displayString := win.SysAllocString(text)

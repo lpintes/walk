@@ -303,9 +303,31 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     needs a decision first.
   - Cloud checks only; no Windows test needed beyond a smoke run, as
     the only runtime change is the `errors.As` in the presenter.
-- Step 10: coded, draft pull request lpintes/walk#11, waiting for
-  task 6 of `TESTING_ON_WINDOWS.md` (386 and amd64, NVDA, Narrator,
-  JAWS if available).
+- Step 10: draft pull request lpintes/walk#11. Task 6 of
+  `TESTING_ON_WINDOWS.md` passed on Windows 11 with NVDA 2026.2:
+  `run.ps1 -Only part3,liveregion` on 386 and amd64, and the manual
+  test by ear on amd64 (the `LineEdit` also on 386). Narrator and JAWS
+  not tested yet. Findings fixed during the test:
+  - NVDA handles `EVENT_OBJECT_LIVEREGIONCHANGED` through MSAA and
+    speaks the MSAA name of the object, not its text or value, with
+    normal priority (it ignores the UIA `LiveSetting`).
+  - `StatusBar`: the window has no name, so NVDA said nothing.
+    `StatusBarItem.SetText` raises the event for the part (MSAA child
+    index+1, whose name is the text); UI Automation delivers it on the
+    part element. `updateText` no longer raises it, because it also
+    runs for every item on a DPI change.
+  - `LineEdit` and `TextEdit`: NVDA read only the name (the label),
+    and UI Automation does not pass the event on for edit controls at
+    all. `NotifyLiveRegionChanged` announces their text with
+    `Announce` instead (assertive: `AnnounceImportantMostRecent`,
+    polite: `AnnounceAll`) and raises the event only if that fails.
+  - Several quick `Announce` calls: NVDA spoke only the first two
+    (its UIA event limiter coalesces notifications with the same
+    sender, kind, processing and activity ID and keeps the oldest
+    queued one); fixed with a sequence number in the activity ID.
+  - A notification raised with the host provider from
+    `UiaHostProviderFromHwnd` returns `S_OK` but reaches no client, so
+    the own provider is needed.
   - Fixed the inherited 386 bug: `SetHwndProp` passes the 16-byte
     `VARIANT` by value as four stack words (`oleacc_32.go`), so
     `SetRole`, `SetState` and everything through `accSetPropertyInt`
@@ -335,11 +357,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `IRawElementProviderSimple.Release` and
     `UiaRaiseNotificationEventAvailable`.
   - Test programs: `tests/_wingui/liveregion` (`app` and a UI
-    Automation client `client` that plays the screen reader). Open
-    questions for the Windows test: whether NVDA reacts to live region
-    events of plain Win32 controls (it reads them through MSAA), and
-    whether the own provider is needed or the host provider alone
-    would do (the app has a button for each).
+    Automation client `client` that plays the screen reader).
   - Not done yet: using `Announce` for validation errors (behavior
     change, decide after the screen reader test).
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue

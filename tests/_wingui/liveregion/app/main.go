@@ -256,7 +256,8 @@ func runChecks() {
 			}{
 				{"Label", status.Handle(), true},
 				{"plain Label", plain.Handle(), false},
-				{"LineEdit", edit.Handle(), true},
+				// A LineEdit announces its text instead (see the client).
+				{"LineEdit", edit.Handle(), false},
 				{"StatusBar", mw.StatusBar().Handle(), true},
 			} {
 				n := liveEvents[w.hwnd]

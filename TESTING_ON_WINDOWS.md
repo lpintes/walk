@@ -315,7 +315,9 @@ moving focus:
   of the UI Automation `LiveSetting` property (`Off`, `Polite`,
   `Assertive`). `SetText` of a window (`Label`, `TextLabel`, `LineEdit`,
   `TextEdit`, ...) and `StatusBarItem.SetText` then raise
-  `EVENT_OBJECT_LIVEREGIONCHANGED` automatically;
+  `EVENT_OBJECT_LIVEREGIONCHANGED` automatically (for the `StatusBar`
+  on the changed part; `LineEdit` and `TextEdit` announce their text
+  with `Announce` instead);
   `Accessibility.NotifyLiveRegionChanged` raises it by hand.
 - `walk.Announce(window, text, processing)` speaks text without any
   control: `UiaRaiseNotificationEvent` with a minimal UI Automation

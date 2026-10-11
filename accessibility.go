@@ -208,7 +208,8 @@ func (a *Accessibility) LiveSetting() AccLiveSetting {
 // when it changes, without focus moving to it.
 //
 // Changing the text with SetText (Label, TextLabel, LineEdit, TextEdit and other windows) or
-// StatusBarItem.SetText for a StatusBar raises the live region changed event automatically.
+// StatusBarItem.SetText for a StatusBar raises the live region changed event automatically
+// (LineEdit and TextEdit announce the text instead, see NotifyLiveRegionChanged).
 // After changing the content of a live region in another way, call NotifyLiveRegionChanged.
 func (a *Accessibility) SetLiveSetting(setting AccLiveSetting) error {
 	if err := a.accSetPropertyInt(a.wb.hWnd, &win.LiveSetting_Property_GUID, 0, int32(setting)); err != nil {
@@ -221,7 +222,26 @@ func (a *Accessibility) SetLiveSetting(setting AccLiveSetting) error {
 // NotifyLiveRegionChanged raises the live region changed event (EVENT_OBJECT_LIVEREGIONCHANGED),
 // which tells screen readers to read the content of the live region again. It does nothing
 // unless the window is a live region (see SetLiveSetting).
+//
+// For a LineEdit or TextEdit it announces the text with Announce instead: UI Automation does
+// not pass the event on for edit controls, and NVDA reads only their name (the label), not the
+// new text. An assertive live region interrupts speech (AnnounceImportantMostRecent), a polite
+// one does not (AnnounceAll). Before Windows 10 version 1709 the event is raised as for other
+// windows.
 func (a *Accessibility) NotifyLiveRegionChanged() {
+	if a.liveSetting == AccLiveSettingOff {
+		return
+	}
+	switch a.wb.window.(type) {
+	case *LineEdit, *TextEdit:
+		processing := AnnounceAll
+		if a.liveSetting == AccLiveSettingAssertive {
+			processing = AnnounceImportantMostRecent
+		}
+		if announce(a.wb.hWnd, windowText(a.wb.hWnd), processing) == nil {
+			return
+		}
+	}
 	a.notifyLiveRegionChangedChild(win.CHILDID_SELF)
 }
 
