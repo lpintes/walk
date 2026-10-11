@@ -233,6 +233,20 @@ type IAccPropServices struct {
 	LpVtbl *IAccPropServicesVtbl
 }
 
+type IRawElementProviderSimpleVtbl struct {
+	QueryInterface             uintptr
+	AddRef                     uintptr
+	Release                    uintptr
+	Get_ProviderOptions        uintptr
+	GetPatternProvider         uintptr
+	GetPropertyValue           uintptr
+	Get_HostRawElementProvider uintptr
+}
+
+type IRawElementProviderSimple struct {
+	LpVtbl *IRawElementProviderSimpleVtbl
+}
+
 // Windows.Win32.UI.Shell
 
 type DWebBrowserEvents2Vtbl struct {

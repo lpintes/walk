@@ -85,6 +85,9 @@ try {
 	foreach ($n in "source", "target") {
 		Build "./tests/_wingui/olednd/$n" (Join-Path $dest "tests\olednd") $n
 	}
+	foreach ($n in "app", "client") {
+		Build "./tests/_wingui/liveregion/$n" (Join-Path $dest "tests\liveregion") $n
+	}
 	foreach ($n in "hdn", "ods") {
 		BuildPatched $n
 	}

@@ -166,13 +166,16 @@ func (s *static) setText(text string) (changed bool, err error) {
 		return false, nil
 	}
 
-	if err := s.WidgetBase.setText(text); err != nil {
+	if err := setWindowText(s.hWnd, text); err != nil {
 		return false, err
 	}
 
 	if err := setWindowText(s.hwndStatic, text); err != nil {
 		return false, err
 	}
+
+	// Only now that the static control shows the new text too.
+	s.notifyLiveRegionChanged()
 
 	s.RequestLayout()
 

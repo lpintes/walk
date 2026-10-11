@@ -462,6 +462,10 @@ func (b *Builder) initAccessibility(d Widget, w walk.Window) error {
 			w.Accessibility().SetHelp(a.Help)
 		}
 
+		if a.LiveSetting > 0 {
+			w.Accessibility().SetLiveSetting(walk.AccLiveSetting(a.LiveSetting))
+		}
+
 		if a.Name != "" {
 			w.Accessibility().SetName(a.Name)
 		}

@@ -23,6 +23,7 @@ dll msimg32.dll libmsimg32
 dll ole32.dll libole32
 dll oleaut32.dll liboleaut32
 dll shell32.dll libshell32
+dll uiautomationcore.dll libuiautomationcore
 dll user32.dll libuser32
 dll uxtheme.dll libuxtheme
 
@@ -239,6 +240,7 @@ const EVENT_OBJECT_DEFACTIONCHANGE
 const EVENT_OBJECT_DESCRIPTIONCHANGE
 const EVENT_OBJECT_END
 const EVENT_OBJECT_HELPCHANGE
+const EVENT_OBJECT_LIVEREGIONCHANGED
 const EVENT_OBJECT_NAMECHANGE
 const EVENT_OBJECT_STATECHANGE
 const FALSE
@@ -513,6 +515,12 @@ const NM_CUSTOMDRAW uint32
 const NM_DBLCLK uint32
 const NM_RETURN uint32
 const NOTIFYICON_VERSION
+const NotificationKind_Other
+const NotificationProcessing_All
+const NotificationProcessing_CurrentThenMostRecent
+const NotificationProcessing_ImportantAll
+const NotificationProcessing_ImportantMostRecent
+const NotificationProcessing_MostRecent
 const OBJID_CLIENT int32
 const ODA_DRAWENTIRE
 const ODS_SELECTED
@@ -554,6 +562,8 @@ const PS_JOIN_ROUND
 const PS_NULL
 const PS_SOLID
 const PS_USERSTYLE
+const ProviderOptions_ServerSideProvider
+const ProviderOptions_UseComThreading
 const RGN_DIFF
 const RGN_OR
 const ROLE_SYSTEM_ALERT
@@ -1262,6 +1272,9 @@ func TrackMouseEvent
 func TrackPopupMenuEx rawbool
 func TranslateMessage
 func TransparentBlt
+func UiaClientsAreListening
+func UiaHostProviderFromHwnd
+func UiaRaiseNotificationEvent
 func UpdateWindow
 func WindowFromDC
 
@@ -1350,9 +1363,11 @@ guid IID_IOleInPlaceSite
 guid IID_IOleInPlaceUIWindow
 guid IID_IOleObject
 guid IID_IOleWindow
+guid IID_IRawElementProviderSimple
 guid IID_ITaskbarList3
 guid IID_IUnknown
 guid IID_IWebBrowser2
+guid LiveSetting_Property_GUID MSAAPROPID
 guid PROPID_ACC_DEFAULTACTION MSAAPROPID
 guid PROPID_ACC_DESCRIPTION MSAAPROPID
 guid PROPID_ACC_HELP MSAAPROPID
@@ -1380,6 +1395,7 @@ interface IOleInPlaceFrame
 interface IOleInPlaceObject
 interface IOleInPlaceSite
 interface IOleObject
+interface IRawElementProviderSimple
 interface ITaskbarList3
 interface IUnknown
 interface IWebBrowser2

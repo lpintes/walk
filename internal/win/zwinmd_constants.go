@@ -457,6 +457,20 @@ const (
 	NIS_HIDDEN = 1
 )
 
+// NotificationKind
+const (
+	NotificationKind_Other = 4
+)
+
+// NotificationProcessing
+const (
+	NotificationProcessing_All                   = 2
+	NotificationProcessing_CurrentThenMostRecent = 4
+	NotificationProcessing_ImportantAll          = 0
+	NotificationProcessing_ImportantMostRecent   = 1
+	NotificationProcessing_MostRecent            = 3
+)
+
 // OBJECT_IDENTIFIER
 const (
 	OBJID_CLIENT int32 = -4
@@ -515,6 +529,12 @@ const (
 // PUSHBUTTONSTATES
 const (
 	PBS_NORMAL = 1
+)
+
+// ProviderOptions
+const (
+	ProviderOptions_ServerSideProvider = 2
+	ProviderOptions_UseComThreading    = 0x20
 )
 
 // REG_SAM_FLAGS
@@ -1317,6 +1337,7 @@ const (
 	EVENT_OBJECT_DESCRIPTIONCHANGE      = 0x800d
 	EVENT_OBJECT_END                    = 0x80ff
 	EVENT_OBJECT_HELPCHANGE             = 0x8010
+	EVENT_OBJECT_LIVEREGIONCHANGED      = 0x8019
 	EVENT_OBJECT_NAMECHANGE             = 0x800c
 	EVENT_OBJECT_STATECHANGE            = 0x800a
 	HTCLIENT                            = 1

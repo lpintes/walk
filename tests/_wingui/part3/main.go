@@ -9,13 +9,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"os"
-	"runtime"
-	"strings"
 	"time"
 	"unsafe"
 
@@ -161,16 +158,7 @@ func main() {
 	acc := pb.Accessibility()
 	errName := acc.SetName("Annotated name")
 	errRole := acc.SetRole(walk.AccRoleLink)
-	// walk reports the HRESULT only in the error message.
-	const invalidArg = "-2147024809" // E_INVALIDARG
-	var walkErr *walk.Error
-	if runtime.GOARCH == "386" && errName == nil && errors.As(errRole, &walkErr) && strings.HasSuffix(walkErr.Message(), invalidArg) {
-		// SetHwndProp passes a *VARIANT, but on 386 the VARIANT is passed
-		// by value. Inherited from lxn/win, see "Known issues" in CLAUDE.md.
-		fmt.Printf("KNOWN IAccPropServices: SetRole %s\n", walkErr.Message())
-	} else {
-		check("IAccPropServices", errName == nil && errRole == nil, "SetName %v, SetRole %v", errName, errRole)
-	}
+	check("IAccPropServices", errName == nil && errRole == nil, "SetName %v, SetRole %v", errName, errRole)
 	fmt.Printf("BUTTON_HWND %d\n", pb.Handle())
 
 	testBitmaps()

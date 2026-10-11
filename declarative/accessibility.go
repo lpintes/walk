@@ -51,6 +51,16 @@ const (
 	AccStateValid           = AccState(walk.AccStateValid)
 )
 
+// AccLiveSetting enum defines how screen readers report changes of a live region.
+type AccLiveSetting int32
+
+// Live region settings
+const (
+	AccLiveSettingOff       = AccLiveSetting(walk.AccLiveSettingOff)
+	AccLiveSettingPolite    = AccLiveSetting(walk.AccLiveSettingPolite)
+	AccLiveSettingAssertive = AccLiveSetting(walk.AccLiveSettingAssertive)
+)
+
 // AccRole enum defines the role of the window/control in UI.
 type AccRole int32
 
@@ -128,6 +138,7 @@ type Accessibility struct {
 	DefaultAction string
 	Description   string
 	Help          string
+	LiveSetting   AccLiveSetting
 	Name          string
 	Role          AccRole
 	RoleMap       string
