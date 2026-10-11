@@ -386,6 +386,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     field is now `Property`); a change redraws and raises
     `EVENT_OBJECT_STATECHANGE`.
   - Three doc comments naming the wrong method (found by #456).
+  - #810: README grammar.
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue
   (generic event types are step 9).
 
