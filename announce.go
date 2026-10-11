@@ -7,8 +7,10 @@
 package walk
 
 import (
+	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/lpintes/walk/internal/com"
@@ -42,9 +44,14 @@ const (
 	AnnounceCurrentThenMostRecent AnnouncementProcessing = win.NotificationProcessing_CurrentThenMostRecent
 )
 
-// announceActivityID identifies announcements made with Announce to screen readers, which may
-// use it to group or filter them.
+// announceActivityID is the prefix of the activity IDs of announcements made with Announce;
+// each announcement gets "Walk.Announce.<n>" with a sequence number n.
 const announceActivityID = "Walk.Announce"
+
+// announceSeq numbers announcements. NVDA coalesces notification events with the same sender,
+// kind, processing and activity ID that arrive in quick succession and then speaks only the
+// first two, so each announcement gets its own activity ID.
+var announceSeq atomic.Uint64
 
 // Announce asks screen readers to speak text without moving focus and without a visible
 // control, for example to report that a background task finished or that input is invalid.
@@ -70,7 +77,7 @@ func Announce(window Window, text string, processing AnnouncementProcessing) err
 
 	displayString := win.SysAllocString(text)
 	defer win.SysFreeString(displayString)
-	activityID := win.SysAllocString(announceActivityID)
+	activityID := win.SysAllocString(announceActivityID + "." + strconv.FormatUint(announceSeq.Add(1), 10))
 	defer win.SysFreeString(activityID)
 
 	hr := win.UiaRaiseNotificationEvent(

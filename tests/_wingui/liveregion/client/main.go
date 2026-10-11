@@ -14,6 +14,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -224,7 +225,7 @@ collect:
 				live[barHwnd]++
 			case e.kind == "live":
 				live[e.hwnd]++
-			case e.display == "Announcement 1" && e.activity == "Walk.Announce":
+			case e.display == "Announcement 1" && strings.HasPrefix(e.activity, "Walk.Announce."):
 				announced = true
 			}
 		case <-timeout:
@@ -246,7 +247,7 @@ collect:
 	} {
 		check("UIA live region event "+w.name, (live[w.hwnd] > 0) == w.want, "%d events, want them: %v", live[w.hwnd], w.want)
 	}
-	check("UIA notification event", announced, "Announcement 1 with activity Walk.Announce received: %v", announced)
+	check("UIA notification event", announced, "Announcement 1 with activity Walk.Announce.<n> received: %v", announced)
 
 	if failed {
 		os.Exit(1)

@@ -320,7 +320,9 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - Part B: `walk.Announce(window, text, processing)` with
     `AnnouncementProcessing` (the `NotificationProcessing` values). It
     raises `UiaRaiseNotificationEvent` (kind Other, activity ID
-    `Walk.Announce`) from a minimal `IRawElementProviderSimple` made
+    `Walk.Announce.<n>` with a sequence number, because NVDA coalesces
+    quick notifications with the same activity ID and then speaks only
+    the first two) from a minimal `IRawElementProviderSimple` made
     with `internal/com` (server side, COM threading, host provider from
     `UiaHostProviderFromHwnd`); it returns an error before Windows 10
     1709 and does nothing when `UiaClientsAreListening` is false.
