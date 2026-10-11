@@ -7,6 +7,8 @@
 package walk
 
 import (
+	"errors"
+
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -100,7 +102,8 @@ func (ttep *ToolTipErrorPresenter) PresentError(err error, widget Widget) {
 			ttep.untrack()
 		}
 
-		if ve, ok := err.(*ValidationError); ok {
+		var ve *ValidationError
+		if errors.As(err, &ve) {
 			ttep.toolTip.SetErrorTitle(ve.title)
 			ttep.toolTip.SetText(widget, ve.message)
 		} else {

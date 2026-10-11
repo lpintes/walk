@@ -285,8 +285,26 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     error strings in walk and `internal/win`; dot imports in the
     examples; call sites that could return an error instead of
     panicking on strings with NUL.
-- Steps 4, 5, 7, 9, 10 and 11: not started; step 8 can continue (for
-  example `errors.Is` and `errors.As`, generic event types are step 9).
+- Step 8, part 2: pull request lpintes/walk#10, errors.
+  - `*Error` has an `Unwrap` method returning the wrapped error, so
+    `errors.Is` and `errors.As` look through walk errors (a public
+    addition, nothing removed or changed). `ToolTipErrorPresenter`
+    finds a `ValidationError` with `errors.As`, so a wrapped one still
+    shows its title and message; unwrapped ones behave as before.
+  - `%w` instead of `%s`/`%v` for wrapped causes (`declarative`
+    invalid expression panic, the tools), `errors.Is(err, io.EOF)` in
+    `prune`, and log calls pass the error instead of `err.Error()`;
+    all texts are unchanged.
+  - Kept on purpose: the exact type assertions in `error.go`
+    (`wrapErr` must not unwrap an `*Error` wrapped by someone else).
+    `lastError` and `errorFromHRESULT` could carry the `syscall.Errno`
+    or `HRESULT` as the inner error so callers can test it with
+    `errors.Is`; that changes what the public `Inner` returns, so it
+    needs a decision first.
+  - Cloud checks only; no Windows test needed beyond a smoke run, as
+    the only runtime change is the `errors.As` in the presenter.
+- Steps 4, 5, 7, 9, 10 and 11: not started; step 8 can continue
+  (generic event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
 

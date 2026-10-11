@@ -702,7 +702,7 @@ func (b *Builder) conditionOrProperty(data Property) any {
 
 		expr, err := govaluate.NewEvaluableExpressionWithFunctions(text, b.functions)
 		if err != nil {
-			panic(fmt.Errorf(`invalid expression "%s": %s`, e.text, err.Error()))
+			panic(fmt.Errorf(`invalid expression "%s": %w`, e.text, err))
 		}
 
 		for _, token := range expr.Tokens() {
@@ -763,7 +763,7 @@ func (e *expression) String() string {
 func (e *expression) Value() any {
 	val, err := e.expr.Eval(e.subExprsByPath)
 	if err != nil {
-		log.Printf(`walk - failed to evaluate expression "%s": %s`, e.text, err.Error())
+		log.Printf(`walk - failed to evaluate expression "%s": %s`, e.text, err)
 	}
 
 	e.lastReportedValue = val
