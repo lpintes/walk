@@ -305,6 +305,57 @@ How to test, on 386 and amd64:
 - With NVDA: the page can still be read as before. The known problem that
   Tab and F6 do not move focus into the page is expected to stay.
 
+## Task 6: step 10, live regions and announcements
+
+Step 10 lets a program have a screen reader read changed text without
+moving focus:
+
+- `Accessibility.SetLiveSetting` (and `LiveSetting` in the declarative
+  `Accessibility` struct) makes a window a live region: Dynamic Annotation
+  of the UI Automation `LiveSetting` property (`Off`, `Polite`,
+  `Assertive`). `SetText` of a window (`Label`, `TextLabel`, `LineEdit`,
+  `TextEdit`, ...) and `StatusBarItem.SetText` then raise
+  `EVENT_OBJECT_LIVEREGIONCHANGED` automatically;
+  `Accessibility.NotifyLiveRegionChanged` raises it by hand.
+- `walk.Announce(window, text, processing)` speaks text without any
+  control: `UiaRaiseNotificationEvent` with a minimal UI Automation
+  provider implemented with `internal/com` (its host is
+  `UiaHostProviderFromHwnd` of the window).
+- `SetHwndProp` now passes the `VARIANT` by value on 386, so
+  `Accessibility.SetRole`, `SetState` and `SetLiveSetting` work there
+  (they failed with `E_INVALIDARG`).
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only part3,liveregion`. `part3` must
+  now pass the `SetRole` check on 386 too (no KNOWN line), and the
+  script checks the annotated MSAA role. `liveregion` starts `app` and
+  `client`; the client is a UI Automation client like a screen reader: it
+  reads `LiveSetting` of the windows, subscribes to the live region
+  changed and notification events and checks that they arrive for the
+  live regions, not for the plain label, and that the announcement
+  arrives with its text.
+- Manually, with NVDA, Narrator and, if available, JAWS:
+  `tests\liveregion\app.exe manual` (in the build directory). Tab to
+  each button and press Space; note for each screen reader what is said
+  and whether speech is interrupted:
+  - "Change status (polite label)": the new status text should be read
+    after the button name, without moving focus.
+  - "Show error (assertive line edit)": the error text should interrupt.
+  - "Change status bar (polite)": the status bar text should be read.
+  - "Change plain label (not announced)": nothing should be read.
+  - "Announce": "Announcement N: download finished" should be read.
+  - "Announce three times, most recent only" and "Announce three times,
+    all": compare which of the three texts are read.
+  - "Announce through the host provider": the same through the host
+    provider of the window instead of walk's own provider; tells whether
+    the own provider is needed. Errors appear in the plain label and on
+    standard output.
+- If a screen reader stays silent although `liveregion` passes, the
+  events reach UI Automation and the difference is in the screen reader;
+  note its version. NVDA reads plain Win32 controls through MSAA and may
+  ignore UI Automation events from them.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

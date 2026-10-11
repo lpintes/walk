@@ -2,11 +2,11 @@
 
 Test programs and scripts that run walk on a real Windows desktop. They were
 written for the Windows tasks in `TESTING_ON_WINDOWS.md` (the smoke test of
-step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, and the COM objects of
-`WebView` in step 6) and can be rerun as regression tests after changes to
-`internal/win`, `internal/com` or the affected widgets. `com` is not a
-directory here: `build.ps1` builds the unit tests of `internal/com` into
-`tests\com\com.exe`.
+step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, the COM objects of
+`WebView` in step 6 and the live regions of step 10) and can be rerun as
+regression tests after changes to `internal/win`, `internal/com` or the
+affected widgets. `com` is not a directory here: `build.ps1` builds the
+unit tests of `internal/com` into `tests\com\com.exe`.
 
 The directory name starts with an underscore, so `go build ./...`,
 `go vet ./...` and the other checks skip it. `hdn` and `ods` do not even
@@ -70,8 +70,19 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   (`Accessibility.SetName` and `SetRole`; `run.ps1` reads the annotated
   name back through MSAA) and, with the argument `browse`,
   `SHBrowseForFolder` and `SHGetPathFromIDList` (the dialog is accepted with
-  a message to it, the returned path must be the initial one). KNOWN on 386:
-  `SetRole` fails with `E_INVALIDARG`.
+  a message to it, the returned path must be the initial one). `run.ps1`
+  also checks the annotated role (`ROLE_SYSTEM_LINK`); `SetRole` failed
+  on 386 before step 10.
+- `liveregion`: `liveregion/app` is a walk window with live regions (a
+  polite `Label`, an assertive read-only `LineEdit`, the `StatusBar`), a
+  plain `Label` and buttons that change them or call `walk.Announce`.
+  `liveregion/client` is a UI Automation client: it reads the
+  `LiveSetting` property of these windows, subscribes to the live region
+  changed and notification events of the main window, signals the app
+  (named event `Local\walk-liveregion-run`) to change the texts and
+  announce, and checks the events. The app checks with a WinEvent hook
+  that `EVENT_OBJECT_LIVEREGIONCHANGED` is raised. `app.exe manual`
+  only shows the window, for a test with a screen reader.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

@@ -12,18 +12,19 @@ import (
 )
 
 var (
-	libadvapi32 = windows.NewLazySystemDLL("advapi32.dll")
-	libcomctl32 = windows.NewLazySystemDLL("comctl32.dll")
-	libcomdlg32 = windows.NewLazySystemDLL("comdlg32.dll")
-	libgdi32    = windows.NewLazySystemDLL("gdi32.dll")
-	libgdiplus  = windows.NewLazySystemDLL("gdiplus.dll")
-	libkernel32 = windows.NewLazySystemDLL("kernel32.dll")
-	libmsimg32  = windows.NewLazySystemDLL("msimg32.dll")
-	libole32    = windows.NewLazySystemDLL("ole32.dll")
-	liboleaut32 = windows.NewLazySystemDLL("oleaut32.dll")
-	libshell32  = windows.NewLazySystemDLL("shell32.dll")
-	libuser32   = windows.NewLazySystemDLL("user32.dll")
-	libuxtheme  = windows.NewLazySystemDLL("uxtheme.dll")
+	libadvapi32         = windows.NewLazySystemDLL("advapi32.dll")
+	libcomctl32         = windows.NewLazySystemDLL("comctl32.dll")
+	libcomdlg32         = windows.NewLazySystemDLL("comdlg32.dll")
+	libgdi32            = windows.NewLazySystemDLL("gdi32.dll")
+	libgdiplus          = windows.NewLazySystemDLL("gdiplus.dll")
+	libkernel32         = windows.NewLazySystemDLL("kernel32.dll")
+	libmsimg32          = windows.NewLazySystemDLL("msimg32.dll")
+	libole32            = windows.NewLazySystemDLL("ole32.dll")
+	liboleaut32         = windows.NewLazySystemDLL("oleaut32.dll")
+	libshell32          = windows.NewLazySystemDLL("shell32.dll")
+	libuiautomationcore = windows.NewLazySystemDLL("uiautomationcore.dll")
+	libuser32           = windows.NewLazySystemDLL("user32.dll")
+	libuxtheme          = windows.NewLazySystemDLL("uxtheme.dll")
 
 	procAddFontMemResourceEx        = libgdi32.NewProc("AddFontMemResourceEx")
 	procAlphaBlend                  = libmsimg32.NewProc("AlphaBlend")
@@ -217,6 +218,9 @@ var (
 	procTrackPopupMenuEx            = libuser32.NewProc("TrackPopupMenuEx")
 	procTranslateMessage            = libuser32.NewProc("TranslateMessage")
 	procTransparentBlt              = libmsimg32.NewProc("TransparentBlt")
+	procUiaClientsAreListening      = libuiautomationcore.NewProc("UiaClientsAreListening")
+	procUiaHostProviderFromHwnd     = libuiautomationcore.NewProc("UiaHostProviderFromHwnd")
+	procUiaRaiseNotificationEvent   = libuiautomationcore.NewProc("UiaRaiseNotificationEvent")
 	procUpdateWindow                = libuser32.NewProc("UpdateWindow")
 	procWindowFromDC                = libuser32.NewProc("WindowFromDC")
 )
@@ -1182,6 +1186,21 @@ func TranslateMessage(lpMsg *MSG) bool {
 func TransparentBlt(hdcDest HDC, xoriginDest int32, yoriginDest int32, wDest int32, hDest int32, hdcSrc HDC, xoriginSrc int32, yoriginSrc int32, wSrc int32, hSrc int32, crTransparent uint32) bool {
 	r1, _, _ := syscall.SyscallN(procTransparentBlt.Addr(), uintptr(hdcDest), uintptr(xoriginDest), uintptr(yoriginDest), uintptr(wDest), uintptr(hDest), uintptr(hdcSrc), uintptr(xoriginSrc), uintptr(yoriginSrc), uintptr(wSrc), uintptr(hSrc), uintptr(crTransparent))
 	return r1 != 0
+}
+
+func UiaClientsAreListening() bool {
+	r1, _, _ := syscall.SyscallN(procUiaClientsAreListening.Addr())
+	return r1 != 0
+}
+
+func UiaHostProviderFromHwnd(hwnd HWND, ppProvider **IRawElementProviderSimple) HRESULT {
+	r1, _, _ := syscall.SyscallN(procUiaHostProviderFromHwnd.Addr(), uintptr(hwnd), uintptr(unsafe.Pointer(ppProvider)))
+	return HRESULT(r1)
+}
+
+func UiaRaiseNotificationEvent(provider *IRawElementProviderSimple, notificationKind int32, notificationProcessing int32, displayString *uint16, activityId *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(procUiaRaiseNotificationEvent.Addr(), uintptr(unsafe.Pointer(provider)), uintptr(notificationKind), uintptr(notificationProcessing), uintptr(unsafe.Pointer(displayString)), uintptr(unsafe.Pointer(activityId)))
+	return HRESULT(r1)
 }
 
 func UpdateWindow(hWnd HWND) bool {

@@ -309,6 +309,8 @@ func (sbi *StatusBarItem) updateText(index int) error {
 		return newError("SB_SETTEXT")
 	}
 
+	sbi.sb.notifyLiveRegionChanged()
+
 	return nil
 }
 

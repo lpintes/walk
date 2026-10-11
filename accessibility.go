@@ -120,9 +120,28 @@ const (
 	AccRoleOutlineButton      AccRole = win.ROLE_SYSTEM_OUTLINEBUTTON
 )
 
+// AccLiveSetting enum defines how screen readers report changes of a live region. The values
+// are those of the UI Automation LiveSetting property.
+type AccLiveSetting int32
+
+// Live region settings
+const (
+	// AccLiveSettingOff makes the window an ordinary window again: changes are not reported.
+	AccLiveSettingOff AccLiveSetting = 0
+
+	// AccLiveSettingPolite asks screen readers to report changes without interrupting
+	// speech, for example a status line or a search result count.
+	AccLiveSettingPolite AccLiveSetting = 1
+
+	// AccLiveSettingAssertive asks screen readers to report changes immediately,
+	// interrupting speech, for example an error message.
+	AccLiveSettingAssertive AccLiveSetting = 2
+)
+
 // Accessibility provides basic Dynamic Annotation of windows and controls.
 type Accessibility struct {
-	wb *WindowBase
+	wb          *WindowBase
+	liveSetting AccLiveSetting
 }
 
 // SetAccelerator sets window accelerator name using Dynamic Annotation.
@@ -177,6 +196,36 @@ func (a *Accessibility) SetStateMap(stateMap string) error {
 // the window is created and is not to be modified later.
 func (a *Accessibility) SetValueMap(valueMap string) error {
 	return a.accSetPropertyStr(a.wb.hWnd, &win.PROPID_ACC_VALUEMAP, 0, valueMap)
+}
+
+// LiveSetting returns the live region setting set with SetLiveSetting.
+func (a *Accessibility) LiveSetting() AccLiveSetting {
+	return a.liveSetting
+}
+
+// SetLiveSetting makes the window a live region using Dynamic Annotation of the UI Automation
+// LiveSetting property (Windows 8 and later). Screen readers then read the window's new text
+// when it changes, without focus moving to it.
+//
+// Changing the text with SetText (Label, TextLabel, LineEdit, TextEdit and other windows) or
+// StatusBarItem.SetText for a StatusBar raises the live region changed event automatically.
+// After changing the content of a live region in another way, call NotifyLiveRegionChanged.
+func (a *Accessibility) SetLiveSetting(setting AccLiveSetting) error {
+	if err := a.accSetPropertyInt(a.wb.hWnd, &win.LiveSetting_Property_GUID, 0, int32(setting)); err != nil {
+		return err
+	}
+	a.liveSetting = setting
+	return nil
+}
+
+// NotifyLiveRegionChanged raises the live region changed event (EVENT_OBJECT_LIVEREGIONCHANGED),
+// which tells screen readers to read the content of the live region again. It does nothing
+// unless the window is a live region (see SetLiveSetting).
+func (a *Accessibility) NotifyLiveRegionChanged() {
+	if a.liveSetting == AccLiveSettingOff {
+		return
+	}
+	win.NotifyWinEvent(win.EVENT_OBJECT_LIVEREGIONCHANGED, a.wb.hWnd, win.OBJID_CLIENT, win.CHILDID_SELF)
 }
 
 // accSetPropertyInt sets integer window property for Dynamic Annotation.

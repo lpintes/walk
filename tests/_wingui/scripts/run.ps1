@@ -80,8 +80,9 @@ if (Want "part3") {
 	$m = Wait-Line $p "(?s)BUTTON_HWND (\d+).*READY" 20
 	if ($m) {
 		$acc = [WinTest]::Acc([IntPtr][int64]$m[1], [WinTest]::OBJID_CLIENT)
-		$ok = $acc -match "name='Annotated name'"
-		$extra += "$(if ($ok) { 'PASS' } else { 'FAIL' }) MSAA name of the button: $acc"
+		# SetRole(AccRoleLink) annotated ROLE_SYSTEM_LINK (30).
+		$ok = $acc -match "\(30\) name='Annotated name'"
+		$extra += "$(if ($ok) { 'PASS' } else { 'FAIL' }) MSAA name and role of the button: $acc"
 		$p.Refresh()
 		[WinTest]::Close($p.MainWindowHandle)
 	} else {
@@ -106,6 +107,30 @@ if (Want "com") {
 	# failure gives a FAIL line and exit code 1.
 	$p = Start-Test (Join-Path $root "com") "com" @("-test.v")
 	Report "com" $p (Stop-Test $p 30)
+}
+
+if (Want "liveregion") {
+	# client plays the screen reader: it reads LiveSetting through UI
+	# Automation, subscribes to the events and then lets app run its checks.
+	$dir = Join-Path $root "liveregion"
+	$a = Start-Test $dir "app"
+	$extra = @()
+	$m = Wait-Line $a "HANDLES (\d+) (\d+) (\d+) (\d+) (\d+)" 20
+	if ($m) {
+		$c = Start-Test $dir "client" @($m[1], $m[2], $m[3], $m[4], $m[5])
+		$stop = Stop-Test $c 60
+		$extra += "--- client: $stop"
+		$out = Read-Out $c
+		if ($out) { $extra += $out.TrimEnd() -split "`r?`n" }
+		if ($stop -ne "exit 0") { $extra += "FAIL client: $stop" }
+		if (-not (Wait-Line $a "CHECKS DONE" 30)) { $extra += "FAIL app printed no CHECKS DONE" }
+		# The main window handle, not MainWindowHandle: the 386 build is a
+		# console program.
+		[WinTest]::Close([IntPtr][int64]$m[1])
+	} else {
+		$extra += "FAIL app printed no HANDLES"
+	}
+	Report "liveregion" $a (Stop-Test $a 10) $extra
 }
 
 if ($Drag -and (Want "olednd")) {

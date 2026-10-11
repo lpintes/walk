@@ -303,7 +303,44 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     needs a decision first.
   - Cloud checks only; no Windows test needed beyond a smoke run, as
     the only runtime change is the `errors.As` in the presenter.
-- Steps 4, 5, 7, 9, 10 and 11: not started; step 8 can continue
+- Step 10: coded, draft pull request lpintes/walk#11, waiting for
+  task 6 of `TESTING_ON_WINDOWS.md` (386 and amd64, NVDA, Narrator,
+  JAWS if available).
+  - Fixed the inherited 386 bug: `SetHwndProp` passes the 16-byte
+    `VARIANT` by value as four stack words (`oleacc_32.go`), so
+    `SetRole`, `SetState` and everything through `accSetPropertyInt`
+    work on 386. `part3` lost its KNOWN case; `run.ps1` checks the
+    annotated MSAA role too.
+  - Part A: `AccLiveSetting`, `Accessibility.SetLiveSetting`,
+    `LiveSetting` and `NotifyLiveRegionChanged`; declarative
+    `Accessibility.LiveSetting`. `WindowBase.setText` (every `SetText`
+    of a window; `static` raises it after updating its inner control)
+    and `StatusBarItem.SetText` raise `EVENT_OBJECT_LIVEREGIONCHANGED`
+    when a live setting is set. The property is cleared on dispose.
+  - Part B: `walk.Announce(window, text, processing)` with
+    `AnnouncementProcessing` (the `NotificationProcessing` values). It
+    raises `UiaRaiseNotificationEvent` (kind Other, activity ID
+    `Walk.Announce`) from a minimal `IRawElementProviderSimple` made
+    with `internal/com` (server side, COM threading, host provider from
+    `UiaHostProviderFromHwnd`); it returns an error before Windows 10
+    1709 and does nothing when `UiaClientsAreListening` is false.
+  - New in `internal/win` (generated): `uiautomationcore.dll`,
+    `UiaRaiseNotificationEvent`, `UiaHostProviderFromHwnd`,
+    `UiaClientsAreListening`, `IRawElementProviderSimple` and its IID,
+    `LiveSetting_Property_GUID`, `EVENT_OBJECT_LIVEREGIONCHANGED` and
+    the `NotificationKind`, `NotificationProcessing` and
+    `ProviderOptions` constants; hand-written
+    `IRawElementProviderSimple.Release` and
+    `UiaRaiseNotificationEventAvailable`.
+  - Test programs: `tests/_wingui/liveregion` (`app` and a UI
+    Automation client `client` that plays the screen reader). Open
+    questions for the Windows test: whether NVDA reacts to live region
+    events of plain Win32 controls (it reads them through MSAA), and
+    whether the own provider is needed or the host provider alone
+    would do (the app has a button for each).
+  - Not done yet: using `Announce` for validation errors (behavior
+    change, decide after the screen reader test).
+- Steps 4, 5, 7, 9 and 11: not started; step 8 can continue
   (generic event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
@@ -432,8 +469,8 @@ and real dialogs all need new Win32/COM declarations.
   an automatic live region changed event when the text of a widget with
   a live setting changes (at least `Label`, `TextLabel`, `LineEdit` read
   only, `StatusBarItem`), and a `LiveSetting` property in `declarative`.
-  The 386 bug of `SetHwndProp` (see "Known issues") must be fixed first,
-  because `LiveSetting` is an integer `VARIANT`.
+  The 386 bug of `SetHwndProp` had to be fixed first, because
+  `LiveSetting` is an integer `VARIANT` (done in step 10).
 - Part B, one-off announcements: `UiaRaiseNotificationEvent`
   (Windows 10 1709 and later, `uiautomationcore.dll`) speaks any text
   without a visible control, with a priority (`NotificationProcessing`).
@@ -490,10 +527,6 @@ and real dialogs all need new Win32/COM declarations.
   - A `MainWindow` or dialog without a layout panics in `SetVisible` (nil
     layout in `ContainerBase.CreateLayoutItem`, `container.go`); this
     breaks `examples/progressindicator`.
-  - `Accessibility.SetRole` and everything else going through
-    `accSetPropertyInt` fails on 386 with `E_INVALIDARG`: `SetHwndProp`
-    in `internal/win/oleacc_32.go` passes a `*VARIANT`, but on 386 the
-    16-byte `VARIANT` is passed by value. amd64 and arm64 work.
   - An owner drawn `ListBox` created directly in a `MainWindow` sends
     `WM_DRAWITEM` to the form window, which does not forward it, so the
     styler is never called; inside a `Composite` it works (as in

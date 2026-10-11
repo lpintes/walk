@@ -1220,7 +1220,16 @@ func (wb *WindowBase) setText(text string) error {
 		return err
 	}
 
+	wb.notifyLiveRegionChanged()
+
 	return nil
+}
+
+// notifyLiveRegionChanged raises the live region changed event if the window is a live region.
+func (wb *WindowBase) notifyLiveRegionChanged() {
+	if wb.acc != nil {
+		wb.acc.NotifyLiveRegionChanged()
+	}
 }
 
 func windowText(hwnd win.HWND) string {
