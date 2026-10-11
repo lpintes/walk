@@ -172,12 +172,17 @@ func (tv *TreeView) SetModel(model TreeModel) error {
 			tv.SetSuspended(true)
 			defer tv.SetSuspended(false)
 
+			// Root items have no parent; find their siblings through the model.
+			count, at := model.RootCount, model.RootAt
+			if parent := item.Parent(); parent != nil {
+				count, at = parent.ChildCount, parent.ChildAt
+			}
+
 			var hInsertAfter win.HTREEITEM
-			parent := item.Parent()
-			for i := parent.ChildCount() - 1; i >= 0; i-- {
-				if parent.ChildAt(i) == item {
+			for i := count() - 1; i >= 0; i-- {
+				if at(i) == item {
 					if i > 0 {
-						hInsertAfter = tv.item2Info[parent.ChildAt(i-1)].handle
+						hInsertAfter = tv.item2Info[at(i-1)].handle
 					} else {
 						hInsertAfter = win.TVI_FIRST
 					}
