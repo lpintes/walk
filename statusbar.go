@@ -185,7 +185,19 @@ func (sbi *StatusBarItem) SetText(text string) error {
 	old := sbi.text
 	sbi.text = text
 
-	return sbi.maybeTry(sbi.updateText, func() { sbi.text = old })
+	return sbi.maybeTry(func(index int) error {
+		if err := sbi.updateText(index); err != nil {
+			return err
+		}
+
+		// The text is in the part, the MSAA child index+1; the status bar window itself
+		// has no name, so screen readers reading the window would say nothing.
+		if sbi.sb.acc != nil {
+			sbi.sb.acc.notifyLiveRegionChangedChild(int32(index + 1))
+		}
+
+		return nil
+	}, func() { sbi.text = old })
 }
 
 // ToolTipText returns the tool tip text of the StatusBarItem.
@@ -308,8 +320,6 @@ func (sbi *StatusBarItem) updateText(index int) error {
 
 		return newError("SB_SETTEXT")
 	}
-
-	sbi.sb.notifyLiveRegionChanged()
 
 	return nil
 }

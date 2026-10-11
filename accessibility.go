@@ -222,10 +222,16 @@ func (a *Accessibility) SetLiveSetting(setting AccLiveSetting) error {
 // which tells screen readers to read the content of the live region again. It does nothing
 // unless the window is a live region (see SetLiveSetting).
 func (a *Accessibility) NotifyLiveRegionChanged() {
+	a.notifyLiveRegionChangedChild(win.CHILDID_SELF)
+}
+
+// notifyLiveRegionChangedChild raises the live region changed event for the MSAA child
+// childID of the window, for windows whose text is in child elements (StatusBar parts).
+func (a *Accessibility) notifyLiveRegionChangedChild(childID int32) {
 	if a.liveSetting == AccLiveSettingOff {
 		return
 	}
-	win.NotifyWinEvent(win.EVENT_OBJECT_LIVEREGIONCHANGED, a.wb.hWnd, win.OBJID_CLIENT, win.CHILDID_SELF)
+	win.NotifyWinEvent(win.EVENT_OBJECT_LIVEREGIONCHANGED, a.wb.hWnd, win.OBJID_CLIENT, childID)
 }
 
 // accSetPropertyInt sets integer window property for Dynamic Annotation.

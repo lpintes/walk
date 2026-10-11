@@ -218,6 +218,10 @@ collect:
 		case e := <-events:
 			fmt.Printf("EVENT %s hwnd %d name %q display %q activity %q\n", e.kind, e.hwnd, e.name, e.display, e.activity)
 			switch {
+			case e.kind == "live" && e.hwnd == 0 && e.name == "Bar 1":
+				// The StatusBar raises the event for the part, which has no window
+				// of its own; its name is the new text.
+				live[barHwnd]++
 			case e.kind == "live":
 				live[e.hwnd]++
 			case e.display == "Announcement 1" && e.activity == "Walk.Announce":
