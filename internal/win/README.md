@@ -52,8 +52,10 @@ cover:
 - the GUID variables walk uses (`IID_*`, `CLSID_*`, `PROPID_ACC_*`;
   `zwinmd_guids.go`),
 - the vtable structs of the COM interfaces walk uses, with the structs
-  standing for interface pointers (`zwinmd_interfaces.go`). The methods
-  calling through the vtables stay hand-written.
+  standing for interface pointers (`zwinmd_interfaces.go`). For the
+  interfaces marked `methods` in `winmd.txt` (`IFileDialog`,
+  `IShellItem`) the methods calling through the vtable are generated
+  too; for the others they stay hand-written.
 
 Everything else is still hand-written: structs that are unions, contain
 anonymous unions, are declared with `#pragma pack`, differ between

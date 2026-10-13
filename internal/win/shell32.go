@@ -9,7 +9,6 @@ package win
 import (
 	"golang.org/x/sys/windows"
 	"syscall"
-	"unsafe"
 )
 
 type CSIDL uint32
@@ -44,14 +43,12 @@ type SHFILEINFO struct {
 var (
 
 	// Functions
-	dragAcceptFiles    *windows.LazyProc
-	shParseDisplayName *windows.LazyProc
+	dragAcceptFiles *windows.LazyProc
 )
 
 func init() {
 	// Functions
 	dragAcceptFiles = libshell32.NewProc("DragAcceptFiles")
-	shParseDisplayName = libshell32.NewProc("SHParseDisplayName")
 }
 
 func DragAcceptFiles(hWnd HWND, fAccept bool) bool {
@@ -60,15 +57,4 @@ func DragAcceptFiles(hWnd HWND, fAccept bool) bool {
 		uintptr(BoolToBOOL(fAccept)))
 
 	return ret != 0
-}
-
-func SHParseDisplayName(pszName *uint16, pbc uintptr, ppidl *uintptr, sfgaoIn uint32, psfgaoOut *uint32) HRESULT {
-	ret, _, _ := syscall.SyscallN(shParseDisplayName.Addr(),
-		uintptr(unsafe.Pointer(pszName)),
-		pbc,
-		uintptr(unsafe.Pointer(ppidl)),
-		0,
-		uintptr(unsafe.Pointer(psfgaoOut)))
-
-	return HRESULT(ret)
 }

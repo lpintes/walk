@@ -68,6 +68,12 @@ type interfaceSpec struct {
 	name  string            // Go type name
 	entry string            // metadata interface name, empty means name
 	names map[string]string // metadata method name -> Go vtable field name
+
+	// methods generates a Go method calling through the vtable for
+	// every method of the interface except those in skip.
+	methods bool
+	skip    map[string]bool              // metadata method names
+	params  map[string]map[string]string // metadata method name -> parameter name -> Go type
 }
 
 func (s *interfaceSpec) metaName() string {
@@ -190,14 +196,26 @@ func parseSpec(path string) (*spec, error) {
 			if len(fields) < 2 {
 				return nil, errorf("want: interface NAME [OPTION...]")
 			}
-			is := &interfaceSpec{line: line, name: fields[1], names: make(map[string]string)}
+			is := &interfaceSpec{line: line, name: fields[1], names: make(map[string]string),
+				skip: make(map[string]bool), params: make(map[string]map[string]string)}
 			for _, opt := range fields[2:] {
 				switch {
+				case opt == "methods":
+					is.methods = true
+				case strings.HasPrefix(opt, "-") && len(opt) > 1:
+					is.skip[opt[1:]] = true
 				case strings.HasPrefix(opt, "entry="):
 					is.entry = strings.TrimPrefix(opt, "entry=")
 				case strings.Contains(opt, "="):
 					i := strings.IndexByte(opt, '=')
 					is.names[opt[:i]] = opt[i+1:]
+				case strings.Contains(opt, ":") && strings.Contains(opt[:strings.IndexByte(opt, ':')], "."):
+					i := strings.IndexByte(opt, ':')
+					meth, param, _ := strings.Cut(opt[:i], ".")
+					if is.params[meth] == nil {
+						is.params[meth] = make(map[string]string)
+					}
+					is.params[meth][param] = opt[i+1:]
 				default:
 					return nil, errorf("unknown option %q", opt)
 				}
@@ -212,6 +230,11 @@ func parseSpec(path string) (*spec, error) {
 	}
 	if s.metaVersion == "" {
 		return nil, fmt.Errorf("%s: missing metadata directive", path)
+	}
+	for _, is := range s.interfaces {
+		if !is.methods && (len(is.skip) > 0 || len(is.params) > 0) {
+			return nil, fmt.Errorf("%s:%d: -METHOD and METHOD.PARAM:TYPE need the methods option", path, is.line)
+		}
 	}
 	return s, nil
 }

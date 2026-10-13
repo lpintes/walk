@@ -208,6 +208,20 @@ func (m *metadata) base(td *typeDef) (*typeDef, error) {
 // vtable returns the method names of an interface in vtable order,
 // including the methods of its base interfaces.
 func (m *metadata) vtable(td *typeDef) ([]string, error) {
+	defs, err := m.vtableMethods(td)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(defs))
+	for i, d := range defs {
+		names[i] = d.Name.String()
+	}
+	return names, nil
+}
+
+// vtableMethods returns the methods of an interface in vtable order,
+// including the methods of its base interfaces.
+func (m *metadata) vtableMethods(td *typeDef) ([]*winmd.MethodDef, error) {
 	var chain []*typeDef
 	for t := td; t != nil; {
 		chain = append(chain, t)
@@ -220,7 +234,7 @@ func (m *metadata) vtable(td *typeDef) ([]string, error) {
 		}
 		t = b
 	}
-	var names []string
+	var defs []*winmd.MethodDef
 	for i := len(chain) - 1; i >= 0; i-- {
 		def := chain[i].def
 		for j := def.MethodList.Start; j < def.MethodList.End; j++ {
@@ -228,10 +242,10 @@ func (m *metadata) vtable(td *typeDef) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			names = append(names, md.Name.String())
+			defs = append(defs, md)
 		}
 	}
-	return names, nil
+	return defs, nil
 }
 
 // genInterface is a COM interface ready to be written.
@@ -239,6 +253,7 @@ type genInterface struct {
 	spec      *interfaceSpec
 	namespace string
 	fields    []genField // vtable fields
+	methods   []*genFunc // Go methods calling through the vtable
 }
 
 // vtableDecl returns the Go struct type of the vtable.
@@ -257,14 +272,15 @@ func (g *generator) interfaceDef(is *interfaceSpec) (*genInterface, error) {
 	if err != nil {
 		return nil, err
 	}
-	methods, err := g.m.vtable(td)
+	defs, err := g.m.vtableMethods(td)
 	if err != nil {
 		return nil, err
 	}
 	gi := &genInterface{spec: is, namespace: td.namespace()}
 	seen := make(map[string]bool)
 	used := make(map[string]bool)
-	for _, meta := range methods {
+	for _, def := range defs {
+		meta := def.Name.String()
 		if seen[meta] {
 			return nil, fmt.Errorf("method %s appears twice in the vtable", meta)
 		}
@@ -278,13 +294,76 @@ func (g *generator) interfaceDef(is *interfaceSpec) (*genInterface, error) {
 		}
 		used[f.name] = true
 		gi.fields = append(gi.fields, f)
+		if is.methods && !is.skip[meta] {
+			gf, err := g.interfaceMethod(is, def, f.name)
+			if err != nil {
+				return nil, fmt.Errorf("method %s: %w", meta, err)
+			}
+			gi.methods = append(gi.methods, gf)
+		}
 	}
-	for meta := range is.names {
-		if !seen[meta] {
-			return nil, fmt.Errorf("no method %s", meta)
+	for _, names := range []map[string]bool{keys(is.names), is.skip, keys(is.params)} {
+		for meta := range names {
+			if !seen[meta] {
+				return nil, fmt.Errorf("no method %s", meta)
+			}
 		}
 	}
 	return gi, nil
+}
+
+func keys[V any](m map[string]V) map[string]bool {
+	k := make(map[string]bool, len(m))
+	for name := range m {
+		k[name] = true
+	}
+	return k
+}
+
+// interfaceMethod translates a method of an interface to a Go method of
+// the interface pointer struct. The receiver is passed as the first
+// argument; the parameters follow the rules for functions.
+func (g *generator) interfaceMethod(is *interfaceSpec, def *winmd.MethodDef, goName string) (*genFunc, error) {
+	fs := &funcSpec{line: is.line, name: goName, params: is.params[def.Name.String()]}
+	if fs.params == nil {
+		fs.params = make(map[string]string)
+	}
+	md := &method{def: def}
+	var f *genFunc
+	for _, an := range archNames {
+		tm := &typeMapper{m: g.m, arch: an.arch, pkg: g.pkg}
+		sig, err := tm.signature(md)
+		if err != nil {
+			return nil, err
+		}
+		af, err := g.project(fs, md, sig, an.arch)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", an.name, err)
+		}
+		if f == nil {
+			f = af
+			continue
+		}
+		if af.goSignature() != f.goSignature() || fmt.Sprint(af.byValue) != fmt.Sprint(f.byValue) {
+			return nil, fmt.Errorf("signature differs between architectures")
+		}
+	}
+	for name := range fs.params {
+		found := false
+		for _, p := range f.params {
+			found = found || p.name == name
+		}
+		if !found {
+			return nil, fmt.Errorf("no parameter %s", name)
+		}
+	}
+	for i := range f.params {
+		f.params[i].name = goParamName(f.params[i].name)
+		if f.params[i].name == "obj" {
+			f.params[i].name = "obj_"
+		}
+	}
+	return f, nil
 }
 
 // interfaces generates the vtable structs of COM interfaces and the
@@ -310,15 +389,27 @@ func (g *generator) interfaces() []byte {
 		groups[gi.namespace] = append(groups[gi.namespace], gi)
 	}
 	sort.Strings(namespaces)
-	var b bytes.Buffer
-	header(&b, g.s)
+	var body bytes.Buffer
 	for _, ns := range namespaces {
-		fmt.Fprintf(&b, "// %s\n\n", ns)
+		fmt.Fprintf(&body, "// %s\n\n", ns)
 		for _, gi := range groups[ns] {
 			name := gi.spec.name
-			fmt.Fprintf(&b, "type %sVtbl %s\n\n", name, gi.vtableDecl())
-			fmt.Fprintf(&b, "type %s struct {\n\tLpVtbl *%sVtbl\n}\n\n", name, name)
+			fmt.Fprintf(&body, "type %sVtbl %s\n\n", name, gi.vtableDecl())
+			fmt.Fprintf(&body, "type %s struct {\n\tLpVtbl *%sVtbl\n}\n\n", name, name)
+			for _, f := range gi.methods {
+				g.writeMethod(&body, name, f)
+			}
 		}
 	}
+	var b bytes.Buffer
+	var imports []string
+	if bytes.Contains(body.Bytes(), []byte("syscall.")) {
+		imports = append(imports, "syscall")
+	}
+	if bytes.Contains(body.Bytes(), []byte("unsafe.")) {
+		imports = append(imports, "unsafe")
+	}
+	header(&b, g.s, imports...)
+	b.Write(body.Bytes())
 	return b.Bytes()
 }

@@ -71,6 +71,13 @@ The `LICENSE` and `AUTHORS` files must be preserved.
    before it starts.
 10. Live regions and screen reader announcements (queued 2026-10-10).
 11. MDI windows (queued 2026-10-10).
+12. Shell integration (queued 2026-10-13): the folder picker of the
+    system file dialog first, then known folders, Recycle Bin, shortcuts
+    and the taskbar. Needs COM client methods from the generator.
+13. UI Automation client as a public package (candidate, 2026-10-13).
+
+Steps 12 and 13 come from the review of Windows API areas outside the
+GUI, `windows-api-oblasti.md` in the project files (in Slovak).
 
 Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
 
@@ -132,13 +139,14 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `richole.go` and `tom.go`); the hand-written code of `internal/win`
     went from about 11300 to about 2000 lines, and `apidump` only lost
     lines.
-  - Still hand-written by design: COM interface methods, macros and
+  - Still hand-written by design: COM interface methods (except for
+    interfaces generated with `methods` since step 12), macros and
     helpers (`LOWORD`, `MAKEINTRESOURCE`, `BoolToBOOL`, ...), functions
     with a fallback for older Windows versions (`GetDpiForWindow`, ...),
     functions returning pointers (`GlobalLock`, `LockResource`), the
     function with a known bug (`DragAcceptFiles`) and
-    deliberately different bodies (`OleInitialize`, `GdiplusStartup`,
-    `SHParseDisplayName`, which passes 0 for `sfgaoIn`), and the
+    deliberately different bodies (`OleInitialize`, `GdiplusStartup`;
+    `SHParseDisplayName` was one until step 12 removed it), and the
     constants listed under "Known issues". New Win32 symbols go into
     `winmd.txt`, not into hand-written code.
   - Procedure used for parts 1 to 3, repeat it when replacing more
@@ -366,7 +374,24 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   double click, extended with keyboard activation `NIN_SELECT` and
   `NIN_KEYSELECT`), #393 (`PasswordMode` property) and #810 (README
   grammar). Nothing ported yet.
-- Steps 4, 5, 7, 9 and 11: not started; step 8 can continue
+- Step 12, part 1: pull request on branch
+  `claude/project-thread-ssstd5`, not yet tested on Windows (task 8 of
+  `TESTING_ON_WINDOWS.md`).
+  - Generator: the `methods` option of the `interface` directive
+    generates Go methods calling through the vtable (`-METHOD` skips a
+    method, `METHOD.PARAM:TYPE` overrides a parameter type); interfaces
+    the Go package does not define need a type override, like undefined
+    structs. Generated for `IFileDialog` and `IShellItem`; the other
+    interfaces keep their hand-written methods.
+  - `FileDialog.ShowBrowseFolder` uses `IFileDialog` with
+    `FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM` instead of
+    `SHBrowseForFolder`. Intended changes: `InitialDirPath` is the start
+    folder, not the root of the tree; `Title` is the window caption.
+    `SHBrowseForFolder`, `SHGetPathFromIDList`, `SHParseDisplayName` and
+    `BROWSEINFO` are gone. New hand-written macro `HRESULT_FROM_WIN32`.
+  - Open and save already show the modern dialog: `GetOpenFileName`
+    without hooks or templates uses it since Windows Vista.
+- Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
   (generic event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)

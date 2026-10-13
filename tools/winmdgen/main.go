@@ -86,11 +86,23 @@
 // one uintptr field per method in vtable order, including the methods of
 // the base interfaces, and the struct NAME with the single field
 // LpVtbl *NAMEVtbl. Field names are the method names with the first letter
-// in upper case, so get_Name becomes Get_Name. Methods calling through the
-// vtable stay hand-written. Options:
+// in upper case, so get_Name becomes Get_Name. Options:
 //
 //	entry=NAME    use the metadata interface NAME
 //	METHOD=NAME   use NAME as the Go name of the vtable field of METHOD
+//	methods       also generate a Go method of the struct NAME for every
+//	              method of the vtable, named like its vtable field, which
+//	              calls through the vtable with the receiver as first
+//	              argument; parameters and results follow the rules for
+//	              functions
+//	-METHOD       with methods: do not generate the Go method of METHOD,
+//	              for example because a parameter type is not supported
+//	METHOD.PARAM:TYPE
+//	              with methods: use TYPE for the parameter PARAM of METHOD
+//
+// Without methods, the methods calling through the vtable are
+// hand-written. An interface pointer to an interface the Go package does
+// not define needs a type override, like a pointer to an undefined struct.
 //
 // # Migration
 //

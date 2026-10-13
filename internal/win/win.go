@@ -32,6 +32,15 @@ func FAILED(hr HRESULT) bool {
 	return hr < 0
 }
 
+// HRESULT_FROM_WIN32 converts a Win32 error code to an HRESULT.
+func HRESULT_FROM_WIN32(x uint32) HRESULT {
+	if int32(x) <= 0 {
+		return HRESULT(int32(x))
+	}
+	const facilityWin32 = 7
+	return HRESULT(int32(x&0xffff | facilityWin32<<16 | 0x80000000))
+}
+
 func MAKEWORD(lo, hi byte) uint16 {
 	return uint16(uint16(lo) | ((uint16(hi)) << 8))
 }

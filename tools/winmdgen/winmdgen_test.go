@@ -159,6 +159,7 @@ func TestParseSpecErrors(t *testing.T) {
 		{"metadata 1\n", "want: metadata"},
 		{"metadata 1 sha256:x\nguid A B C\n", "want: guid"},
 		{"metadata 1 sha256:x\ninterface I x:y\n", "unknown option"},
+		{"metadata 1 sha256:x\ninterface I -Show\n", "need the methods option"},
 	} {
 		path := writeFile(t, t.TempDir(), "winmd.txt", tc.spec)
 		_, err := parseSpec(path)
@@ -262,6 +263,47 @@ func TestWriteFunc(t *testing.T) {
 	want := `func EnableWindow(hWnd HWND, bEnable bool, lpRect *RECT, pv unsafe.Pointer, lParam uintptr, ftn BLENDFUNCTION) bool {
 	r1, _, _ := syscall.SyscallN(procEnableWindow.Addr(), uintptr(hWnd), uintptr(BoolToBOOL(bEnable)), uintptr(unsafe.Pointer(lpRect)), uintptr(pv), lParam, uintptr(*(*uint32)(unsafe.Pointer(&ftn))))
 	return r1 != 0
+}
+
+`
+	if got := b.String(); got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestParseInterfaceMethods(t *testing.T) {
+	path := writeFile(t, t.TempDir(), "winmd.txt", `
+metadata 1.2.3 sha256:abcd
+interface IFileDialog methods -Advise -SetFilter Show.hwndOwner:uintptr
+`)
+	s, err := parseSpec(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	is := s.interfaces[0]
+	if !is.methods || len(is.skip) != 2 || !is.skip["Advise"] || !is.skip["SetFilter"] ||
+		is.params["Show"]["hwndOwner"] != "uintptr" || len(is.names) != 0 {
+		t.Errorf("IFileDialog = %+v", is)
+	}
+}
+
+func TestWriteMethod(t *testing.T) {
+	f := &genFunc{
+		spec: &funcSpec{name: "GetDisplayName"},
+		params: []param{
+			{name: "sigdnName", typ: goType{name: "int32"}},
+			{name: "ppszName", typ: goType{name: "**uint16"}},
+		},
+		shapes:  []shape{shapeScalar, shapePointer},
+		byValue: []int{0, 0},
+		result:  "HRESULT",
+		rshape:  shapeScalar,
+	}
+	var b bytes.Buffer
+	(&generator{}).writeMethod(&b, "IShellItem", f)
+	want := `func (obj *IShellItem) GetDisplayName(sigdnName int32, ppszName **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetDisplayName, uintptr(unsafe.Pointer(obj)), uintptr(sigdnName), uintptr(unsafe.Pointer(ppszName)))
+	return HRESULT(r1)
 }
 
 `

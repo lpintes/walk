@@ -170,7 +170,9 @@ func (tm *typeMapper) named(ci winmd.CodedIndex) (goType, error) {
 
 	switch {
 	case tm.m.isInterface(td):
-		return goType{name: "*" + name, kind: kindInterface, size: tm.arch.ptrSize()}, nil
+		// An interface the Go package does not define needs a type
+		// override, like a pointer to an undefined struct.
+		return goType{name: "*" + name, kind: kindInterface, size: tm.arch.ptrSize(), undefined: !tm.pkg.hasType(name)}, nil
 	case tm.m.isDelegate(td):
 		// Callbacks are passed as uintptr values created by
 		// syscall.NewCallback.
