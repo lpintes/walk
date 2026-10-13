@@ -374,9 +374,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   double click, extended with keyboard activation `NIN_SELECT` and
   `NIN_KEYSELECT`), #393 (`PasswordMode` property) and #810 (README
   grammar). Nothing ported yet.
-- Step 12, part 1: pull request on branch
-  `claude/project-thread-ssstd5`, not yet tested on Windows (task 8 of
-  `TESTING_ON_WINDOWS.md`).
+- Step 12, part 1: draft pull request lpintes/walk#14, not yet tested
+  on Windows (task 8 of `TESTING_ON_WINDOWS.md`).
   - Generator: the `methods` option of the `interface` directive
     generates Go methods calling through the vtable (`-METHOD` skips a
     method, `METHOD.PARAM:TYPE` overrides a parameter type); interfaces
