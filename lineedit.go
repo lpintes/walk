@@ -30,12 +30,13 @@ const (
 
 type LineEdit struct {
 	WidgetBase
-	editingFinishedPublisher EventPublisher
-	readOnlyChangedPublisher EventPublisher
-	textChangedPublisher     EventPublisher
-	charWidthFont            *Font
-	charWidth                int // in native pixels
-	textColor                Color
+	editingFinishedPublisher     EventPublisher
+	readOnlyChangedPublisher     EventPublisher
+	textChangedPublisher         EventPublisher
+	passwordModeChangedPublisher EventPublisher
+	charWidthFont                *Font
+	charWidth                    int // in native pixels
+	textColor                    Color
 }
 
 func newLineEdit(parent Window) (*LineEdit, error) {
@@ -70,6 +71,16 @@ func newLineEdit(parent Window) (*LineEdit, error) {
 			return le.SetText(assertStringOr(v, ""))
 		},
 		le.textChangedPublisher.Event()))
+
+	le.MustRegisterProperty("PasswordMode", NewProperty(
+		func() any {
+			return le.PasswordMode()
+		},
+		func(v any) error {
+			le.SetPasswordMode(v.(bool))
+			return nil
+		},
+		le.passwordModeChangedPublisher.Event()))
 
 	return le, nil
 }
@@ -215,13 +226,31 @@ func (le *LineEdit) PasswordMode() bool {
 	return le.SendMessage(win.EM_GETPASSWORDCHAR, 0, 0) != 0
 }
 
+// SetPasswordMode sets whether the LineEdit hides its text behind '*'
+// characters.
+//
+// The PasswordMode property can be bound, for example to a "Show password"
+// CheckBox, so that users of a screen reader can check what they typed.
 func (le *LineEdit) SetPasswordMode(value bool) {
 	var c uintptr
 	if value {
 		c = uintptr('*')
 	}
 
+	changed := value != le.PasswordMode()
+
+	// A zero character also removes the ES_PASSWORD style, so the
+	// accessible "protected" state follows the mode.
 	le.SendMessage(win.EM_SETPASSWORDCHAR, c, 0)
+
+	if !changed {
+		return
+	}
+
+	le.Invalidate()
+	win.NotifyWinEvent(win.EVENT_OBJECT_STATECHANGE, le.hWnd, win.OBJID_CLIENT, win.CHILDID_SELF)
+
+	le.passwordModeChangedPublisher.Publish()
 }
 
 func (le *LineEdit) ReadOnly() bool {

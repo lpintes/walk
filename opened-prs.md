@@ -3,7 +3,10 @@
 Stav k 11. 10. 2026. Pôvodný repozitár lxn/walk má 27 otvorených pull
 requestov. Každý som prešiel (kód z vetvy `refs/pull/N/head`) a porovnal
 s aktuálnym masterom forku lpintes/walk (commit 8fa8f08, po kroku 10).
-Žiadny kód som zatiaľ neprebral, toto je iba odporúčanie.
+Pôvodne išlo iba o odporúčanie. Všetkých päť odporúčaných PR je už
+prevzatých (#552 rozšírený o aktiváciu klávesnicou) spolu s tromi
+opravami komentárov z #456; pozri stav v `CLAUDE.md` a úlohu 7 v
+`TESTING_ON_WINDOWS.md`.
 
 Súhrn:
 

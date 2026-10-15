@@ -27,42 +27,36 @@ func notifyIconWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (resul
 	case win.WM_LBUTTONUP:
 		ni.publishMouseEvent(&ni.mouseUpPublisher, LeftButton)
 
+	case win.WM_LBUTTONDBLCLK:
+		ni.publishMouseEvent(&ni.mouseDoubleClickPublisher, LeftButton)
+
 	case win.WM_RBUTTONDOWN:
 		ni.publishMouseEvent(&ni.mouseDownPublisher, RightButton)
 
 	case win.WM_RBUTTONUP:
 		ni.publishMouseEvent(&ni.mouseUpPublisher, RightButton)
 
-		win.SendMessage(hwnd, msg, wParam, win.WM_CONTEXTMENU)
-
-	case win.WM_CONTEXTMENU:
-		if ni.contextMenu.Actions().Len() == 0 {
-			break
-		}
-
-		win.SetForegroundWindow(hwnd)
-
-		var p win.POINT
-		if !win.GetCursorPos(&p) {
-			lastError("GetCursorPos")
-		}
-
-		ni.applyDPI()
-
-		actionId := uint16(win.TrackPopupMenuEx(
-			ni.contextMenu.hMenu,
-			win.TPM_NOANIMATION|win.TPM_RETURNCMD,
-			p.X,
-			p.Y,
-			hwnd,
-			nil))
-		if actionId != 0 {
-			if action, ok := actionsById[actionId]; ok {
-				action.raiseTriggered()
-			}
-		}
+		ni.showContextMenu(false)
 
 		return 0
+
+	case win.WM_RBUTTONDBLCLK:
+		ni.publishMouseEvent(&ni.mouseDoubleClickPublisher, RightButton)
+
+	case win.WM_CONTEXTMENU:
+		// With NOTIFYICON_VERSION 3 the shell sends WM_CONTEXTMENU only when
+		// the menu is requested with the keyboard (Shift+F10 or the
+		// application key).
+		ni.showContextMenu(true)
+
+		return 0
+
+	case win.NIN_SELECT, win.NIN_SELECT | win.NINF_KEY:
+		// NIN_SELECT follows a left click, NIN_SELECT | NINF_KEY (NIN_KEYSELECT)
+		// is sent when the icon is selected with the keyboard (Enter or Space,
+		// for example after Windows+B).
+		ni.activatedPublisher.Publish()
+
 	case win.NIN_BALLOONUSERCLICK:
 		ni.messageClickedPublisher.Publish()
 	}
@@ -72,16 +66,18 @@ func notifyIconWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (resul
 
 // NotifyIcon represents an icon in the taskbar notification area.
 type NotifyIcon struct {
-	id                      uint32
-	hWnd                    win.HWND
-	lastDPI                 int
-	contextMenu             *Menu
-	icon                    Image
-	toolTip                 string
-	visible                 bool
-	mouseDownPublisher      MouseEventPublisher
-	mouseUpPublisher        MouseEventPublisher
-	messageClickedPublisher EventPublisher
+	id                        uint32
+	hWnd                      win.HWND
+	lastDPI                   int
+	contextMenu               *Menu
+	icon                      Image
+	toolTip                   string
+	visible                   bool
+	mouseDownPublisher        MouseEventPublisher
+	mouseUpPublisher          MouseEventPublisher
+	mouseDoubleClickPublisher MouseEventPublisher
+	activatedPublisher        EventPublisher
+	messageClickedPublisher   EventPublisher
 }
 
 // NewNotifyIcon creates and returns a new NotifyIcon.
@@ -390,6 +386,68 @@ func (ni *NotifyIcon) SetVisible(visible bool) error {
 	return nil
 }
 
+// showContextMenu shows the context menu at the mouse cursor, or next to the
+// icon when byKeyboard is true and the icon position is known.
+func (ni *NotifyIcon) showContextMenu(byKeyboard bool) {
+	if ni.contextMenu.Actions().Len() == 0 {
+		return
+	}
+
+	win.SetForegroundWindow(ni.hWnd)
+
+	ni.applyDPI()
+
+	flags := uint32(win.TPM_NOANIMATION | win.TPM_RETURNCMD)
+	var p win.POINT
+	var tpm *win.TPMPARAMS
+	if byKeyboard {
+		if rect, ok := ni.iconRect(); ok {
+			// Open the menu at the icon without covering it.
+			p = win.POINT{X: rect.Left, Y: rect.Top}
+			tpm = &win.TPMPARAMS{RcExclude: rect}
+			tpm.CbSize = uint32(unsafe.Sizeof(*tpm))
+			flags |= win.TPM_VERTICAL
+		}
+	}
+	if tpm == nil && !win.GetCursorPos(&p) {
+		lastError("GetCursorPos")
+	}
+
+	actionId := uint16(win.TrackPopupMenuEx(
+		ni.contextMenu.hMenu,
+		flags,
+		p.X,
+		p.Y,
+		ni.hWnd,
+		tpm))
+
+	// The TrackPopupMenu documentation asks for this, so that the next menu
+	// works when this one was dismissed by switching to another task.
+	win.PostMessage(ni.hWnd, win.WM_NULL, 0, 0)
+
+	if actionId != 0 {
+		if action, ok := actionsById[actionId]; ok {
+			action.raiseTriggered()
+		}
+	}
+}
+
+// iconRect returns the screen rectangle of the icon.
+func (ni *NotifyIcon) iconRect() (win.RECT, bool) {
+	nii := win.NOTIFYICONIDENTIFIER{
+		HWnd: ni.hWnd,
+		UID:  ni.id,
+	}
+	nii.CbSize = uint32(unsafe.Sizeof(nii))
+
+	var rect win.RECT
+	if win.FAILED(win.Shell_NotifyIconGetRect(&nii, &rect)) {
+		return win.RECT{}, false
+	}
+
+	return rect, true
+}
+
 func (ni *NotifyIcon) publishMouseEvent(publisher *MouseEventPublisher, button MouseButton) {
 	var p win.POINT
 	if !win.GetCursorPos(&p) {
@@ -405,10 +463,26 @@ func (ni *NotifyIcon) MouseDown() *MouseEvent {
 	return ni.mouseDownPublisher.Event()
 }
 
-// MouseDown returns the event that is published when a mouse button is released
+// MouseUp returns the event that is published when a mouse button is released
 // while the cursor is over the NotifyIcon.
 func (ni *NotifyIcon) MouseUp() *MouseEvent {
 	return ni.mouseUpPublisher.Event()
+}
+
+// MouseDoubleClick returns the event that is published when a mouse button is
+// double clicked while the cursor is over the NotifyIcon.
+func (ni *NotifyIcon) MouseDoubleClick() *MouseEvent {
+	return ni.mouseDoubleClickPublisher.Event()
+}
+
+// Activated returns the event that is published when the user selects the
+// NotifyIcon, either with a left click or with the keyboard (Enter or Space,
+// for example after moving to the notification area with Windows+B).
+//
+// Prefer it to MouseDown or MouseUp for the main action of the icon, so that
+// keyboard and screen reader users can trigger it too.
+func (ni *NotifyIcon) Activated() *Event {
+	return ni.activatedPublisher.Event()
 }
 
 // MessageClicked occurs when the user clicks a message shown with ShowMessage or
