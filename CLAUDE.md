@@ -403,8 +403,14 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `EVENT_OBJECT_STATECHANGE`.
   - Three doc comments naming the wrong method (found by #456).
   - #810: README grammar.
-- Step 12, part 1: draft pull request lpintes/walk#14, not yet tested
-  on Windows (task 8 of `TESTING_ON_WINDOWS.md`).
+- Step 12, part 1: pull request lpintes/walk#14. Task 8 of
+  `TESTING_ON_WINDOWS.md` passed on Windows 11 (386 and amd64):
+  `run.ps1` (`part3` with `browse`) and `examples.ps1` with only the
+  known problems, and the manual test with NVDA on amd64 (the dialog
+  behaves like the standard one, typing a path in the address bar
+  navigates, Select Folder returns the folder, Escape returns `false`
+  with no error). Without `InitialDirPath` the dialog starts in the
+  folder the shell chooses (Documents on the test machine).
   - Generator: the `methods` option of the `interface` directive
     generates Go methods calling through the vtable (`-METHOD` skips a
     method, `METHOD.PARAM:TYPE` overrides a parameter type); interfaces
