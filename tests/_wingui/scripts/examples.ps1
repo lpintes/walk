@@ -63,11 +63,6 @@ foreach ($d in $dirs) {
 	$p.WaitForExit(2000) | Out-Null
 	$e = Get-Content $err -TotalCount 15 -ErrorAction SilentlyContinue
 	if ($e) { $lines += "stderr:"; $lines += $e }
-	if ($n -eq "progressindicator" -and $result -match "^FAIL" -and ($e -match "CreateLayoutItem")) {
-		# Inherited: a dialog without a layout panics in SetVisible, see
-		# "Known issues" in CLAUDE.md.
-		$result = "KNOWN nil layout panic in CreateLayoutItem"
-	}
 	$lines += $result
 	$lines | Add-Content $log
 	$summary += "$result $n"

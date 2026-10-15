@@ -676,6 +676,14 @@ func (fb *FormBase) startLayout() bool {
 		return false
 	}
 
+	if fb.Layout() == nil {
+		// Without a layout the children keep the bounds the program gave
+		// them; only the client composite follows the client area.
+		fb.clientComposite.SetBoundsPixels(fb.window.ClientBoundsPixels())
+
+		return false
+	}
+
 	cs := fb.clientSizeFromSizePixels(fb.proposedSize)
 	min := CreateLayoutItemsForContainer(fb.clientComposite).MinSizeForSize(fb.proposedSize)
 
@@ -785,6 +793,10 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 
 		if wp.Flags&win.SWP_SHOWWINDOW != 0 {
 			fb.startLayout()
+		}
+
+		if wp.Flags&win.SWP_NOSIZE == 0 && fb.Layout() == nil && !fb.Suspended() && fb.clientComposite != nil {
+			fb.clientComposite.SetBoundsPixels(fb.window.ClientBoundsPixels())
 		}
 
 		if wp.Flags&win.SWP_NOSIZE != 0 || fb.Layout() == nil || fb.Suspended() {

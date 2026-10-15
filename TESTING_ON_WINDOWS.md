@@ -194,8 +194,6 @@ checked against the metadata (`Microsoft.Windows.SDK.Win32Metadata`
     hangs, so the source posts `WM_MOUSEMOVE` to its own thread with
     `PostThreadMessage` every 50 ms. Restore the pointer position at the
     end, also from a watchdog.
-  - A `MainWindow` without a layout panics in `SetVisible` (nil layout in
-    `ContainerBase.CreateLayoutItem`), so give test windows a layout.
   - Test programs: `tests/_wingui/dragfinish` (steps 1 to 3) and
     `tests/_wingui/olednd` (step 4, `run.ps1 -Drag`).
 

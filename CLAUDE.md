@@ -425,6 +425,15 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `BROWSEINFO` are gone. New hand-written macro `HRESULT_FROM_WIN32`.
   - Open and save already show the modern dialog: `GetOpenFileName`
     without hooks or templates uses it since Windows Vista.
+- Fixed inherited problem (2026-10-15, committed to `master`): a
+  `MainWindow` or dialog without a layout no longer panics in
+  `SetVisible`. `FormBase.startLayout` skips the layout and only sizes
+  the client composite to the client area, and `WM_WINDOWPOSCHANGED`
+  does the same on resize; the children keep the bounds the program
+  gave them. Tested on Windows 11: `examples/progressindicator` (386)
+  passes `examples.ps1` (composite 598 x 300 like the client area), and
+  a `MainWindow` without a layout (amd64) shows its button and keeps
+  the composite equal to the client area after a resize.
 - Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
   (generic event types are step 9).
 
@@ -609,9 +618,6 @@ and real dialogs all need new Win32/COM declarations.
   Found while testing the `HDN_*` fix; inherited and cosmetic.
 - Inherited problems found while testing step 3 on Windows 11 (all are
   the same on a build from before step 3):
-  - A `MainWindow` or dialog without a layout panics in `SetVisible` (nil
-    layout in `ContainerBase.CreateLayoutItem`, `container.go`); this
-    breaks `examples/progressindicator`.
   - An owner drawn `ListBox` created directly in a `MainWindow` sends
     `WM_DRAWITEM` to the form window, which does not forward it, so the
     styler is never called; inside a `Composite` it works (as in
