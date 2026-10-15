@@ -74,6 +74,7 @@ func NewListBoxWithStyle(parent Container, style uint32) (*ListBox, error) {
 	lb.setTheme("Explorer")
 
 	lb.style.dpi = lb.DPI()
+	lb.style.hoverIndex = -1
 
 	lb.ApplySysColors()
 

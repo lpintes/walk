@@ -121,8 +121,7 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   mouse and key messages, focus is moved away and back; for every step the
   pixel colors (`GetPixel`) and the theme state chosen for each item must
   match the selection and focus. Needs `ods/trace.patch` (hook
-  `ODSTrace`). KNOWN: item 0 is drawn hot at first, because `ListBox`
-  starts with `hoverIndex` 0.
+  `ODSTrace`).
 
 With the argument `manual`, `hdn` and `ods` keep the window open after the
 checks, for a look with a screen reader; the scripts do not use it.

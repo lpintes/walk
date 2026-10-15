@@ -5,10 +5,6 @@
 // It needs trace hooks in walk: apply trace.patch from this directory
 // before building and revert it afterwards (see ../README.md). With the
 // argument "manual" the window stays open after the checks.
-//
-// One bug is known and inherited: item 0 is drawn in the hot state at first,
-// because ListBox starts with hoverIndex 0 instead of -1. Its checks print
-// KNOWN instead of FAIL.
 package main
 
 import (
@@ -37,16 +33,6 @@ func check(name string, ok bool, format string, args ...any) {
 	}
 	failed = true
 	fmt.Printf("FAIL %s: %s\n", name, fmt.Sprintf(format, args...))
-}
-
-// checkKnown is check for a known inherited bug: a failure prints KNOWN and
-// does not fail the test.
-func checkKnown(name string, ok bool, format string, args ...any) {
-	if ok {
-		fmt.Printf("PASS %s\n", name)
-		return
-	}
-	fmt.Printf("KNOWN %s: %s\n", name, fmt.Sprintf(format, args...))
 }
 
 func makeLParam(x, y int32) uintptr {
@@ -158,11 +144,6 @@ func main() {
 			}
 		}
 		for i := range items {
-			check := check
-			if step == "focus list" && i == 0 {
-				// hoverIndex starts at 0, so item 0 is hot at first.
-				check = checkKnown
-			}
 			px := pixel(i)
 			wantSel := i == sel
 			if wantSel {

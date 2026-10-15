@@ -434,6 +434,11 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   passes `examples.ps1` (composite 598 x 300 like the client area), and
   a `MainWindow` without a layout (amd64) shows its button and keeps
   the composite equal to the client area after a resize.
+- Fixed inherited problem (2026-10-15, committed to `master`): `ListBox`
+  starts with `style.hoverIndex` -1, so item 0 is no longer drawn in the
+  hot state until the mouse leaves the list once. The `ods` test lost
+  its KNOWN case. Tested on Windows 11 (386 and amd64): `run.ps1` and
+  `examples.ps1` pass with no KNOWN line.
 - Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
   (generic event types are step 9).
 
@@ -622,8 +627,6 @@ and real dialogs all need new Win32/COM declarations.
     `WM_DRAWITEM` to the form window, which does not forward it, so the
     styler is never called; inside a `Composite` it works (as in
     `examples/listbox_ownerdrawing`).
-  - `ListBox` starts with `style.hoverIndex` 0 instead of -1, so item 0
-    is drawn in the hot state until the mouse leaves the list once.
   - `WebView`: the keyboard (Tab, F6) cannot move focus into the web
     content; NVDA can still read the page.
   - Seen with NVDA: when a window opens, only its title is announced, not
