@@ -124,6 +124,14 @@ const (
 	TTI_WARNING = 2
 )
 
+// FILEOPENDIALOGOPTIONS
+const (
+	FOS_FORCEFILESYSTEM = 0x40
+	FOS_NOCHANGEDIR     = 8
+	FOS_PATHMUSTEXIST   = 0x800
+	FOS_PICKFOLDERS     = 0x20
+)
+
 // FONT_CHARSET
 const (
 	DEFAULT_CHARSET = 1
@@ -606,6 +614,11 @@ const (
 	SW_SHOWNA = 8
 )
 
+// SIGDN
+const (
+	SIGDN_FILESYSPATH = -2147123200
+)
+
 // STATIC_STYLES
 const (
 	SS_CENTER       = 1
@@ -899,6 +912,7 @@ const (
 
 // WIN32_ERROR
 const (
+	ERROR_CANCELLED         = 0x4c7
 	ERROR_INVALID_PARAMETER = 0x57
 	ERROR_SUCCESS           = 0
 )

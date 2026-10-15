@@ -4,6 +4,11 @@
 
 package win
 
+import (
+	"syscall"
+	"unsafe"
+)
+
 // Windows.Win32.System.Com
 
 type IClassFactoryVtbl struct {
@@ -261,6 +266,210 @@ type DWebBrowserEvents2Vtbl struct {
 
 type DWebBrowserEvents2 struct {
 	LpVtbl *DWebBrowserEvents2Vtbl
+}
+
+type IFileDialogVtbl struct {
+	QueryInterface      uintptr
+	AddRef              uintptr
+	Release             uintptr
+	Show                uintptr
+	SetFileTypes        uintptr
+	SetFileTypeIndex    uintptr
+	GetFileTypeIndex    uintptr
+	Advise              uintptr
+	Unadvise            uintptr
+	SetOptions          uintptr
+	GetOptions          uintptr
+	SetDefaultFolder    uintptr
+	SetFolder           uintptr
+	GetFolder           uintptr
+	GetCurrentSelection uintptr
+	SetFileName         uintptr
+	GetFileName         uintptr
+	SetTitle            uintptr
+	SetOkButtonLabel    uintptr
+	SetFileNameLabel    uintptr
+	GetResult           uintptr
+	AddPlace            uintptr
+	SetDefaultExtension uintptr
+	Close               uintptr
+	SetClientGuid       uintptr
+	ClearClientData     uintptr
+	SetFilter           uintptr
+}
+
+type IFileDialog struct {
+	LpVtbl *IFileDialogVtbl
+}
+
+func (obj *IFileDialog) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IFileDialog) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IFileDialog) Show(hwndOwner HWND) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Show, uintptr(unsafe.Pointer(obj)), uintptr(hwndOwner))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetFileTypeIndex(iFileType uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetFileTypeIndex, uintptr(unsafe.Pointer(obj)), uintptr(iFileType))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) GetFileTypeIndex(piFileType *uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetFileTypeIndex, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(piFileType)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) Unadvise(dwCookie uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Unadvise, uintptr(unsafe.Pointer(obj)), uintptr(dwCookie))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetOptions(fos uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetOptions, uintptr(unsafe.Pointer(obj)), uintptr(fos))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) GetOptions(pfos *uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetOptions, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pfos)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetDefaultFolder(psi *IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetDefaultFolder, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(psi)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetFolder(psi *IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetFolder, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(psi)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) GetFolder(ppsi **IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetFolder, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(ppsi)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) GetCurrentSelection(ppsi **IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentSelection, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(ppsi)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetFileName(pszName *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetFileName, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszName)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) GetFileName(pszName **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetFileName, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszName)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetTitle(pszTitle *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetTitle, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszTitle)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetOkButtonLabel(pszText *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetOkButtonLabel, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszText)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetFileNameLabel(pszLabel *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetFileNameLabel, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszLabel)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) GetResult(ppsi **IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetResult, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(ppsi)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) AddPlace(psi *IShellItem, fdap int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddPlace, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(psi)), uintptr(fdap))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetDefaultExtension(pszDefaultExtension *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetDefaultExtension, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszDefaultExtension)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) Close(hr HRESULT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Close, uintptr(unsafe.Pointer(obj)), uintptr(hr))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) SetClientGuid(guid *syscall.GUID) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetClientGuid, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(guid)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileDialog) ClearClientData() HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.ClearClientData, uintptr(unsafe.Pointer(obj)))
+	return HRESULT(r1)
+}
+
+type IShellItemVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+	BindToHandler  uintptr
+	GetParent      uintptr
+	GetDisplayName uintptr
+	GetAttributes  uintptr
+	Compare        uintptr
+}
+
+type IShellItem struct {
+	LpVtbl *IShellItemVtbl
+}
+
+func (obj *IShellItem) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellItem) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IShellItem) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IShellItem) GetParent(ppsi **IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetParent, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(ppsi)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellItem) GetDisplayName(sigdnName int32, ppszName **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetDisplayName, uintptr(unsafe.Pointer(obj)), uintptr(sigdnName), uintptr(unsafe.Pointer(ppszName)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellItem) GetAttributes(sfgaoMask uint32, psfgaoAttribs *uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetAttributes, uintptr(unsafe.Pointer(obj)), uintptr(sfgaoMask), uintptr(unsafe.Pointer(psfgaoAttribs)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellItem) Compare(psi *IShellItem, hint uint32, piOrder *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Compare, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(psi)), uintptr(hint), uintptr(unsafe.Pointer(piOrder)))
+	return HRESULT(r1)
 }
 
 type ITaskbarList3Vtbl struct {

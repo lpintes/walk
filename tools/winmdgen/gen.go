@@ -355,7 +355,7 @@ func (g *generator) project(fs *funcSpec, md *method, sig *signature, a arch) (*
 		if o, ok := fs.params[p.name]; ok {
 			name = o
 		} else if p.typ.undefined {
-			return nil, fmt.Errorf("parameter %s: %s refers to a struct the Go package does not define", p.name, name)
+			return nil, fmt.Errorf("parameter %s: %s refers to a struct or interface the Go package does not define", p.name, name)
 		}
 		sh := g.pkg.shapeOf(name)
 		if err := g.checkShape(p.typ, name, sh); err != nil {
@@ -385,7 +385,7 @@ func (g *generator) project(fs *funcSpec, md *method, sig *signature, a arch) (*
 	if fs.result != "" {
 		f.result = fs.result
 	} else if r.undefined {
-		return nil, fmt.Errorf("result: %s refers to a struct the Go package does not define", r.name)
+		return nil, fmt.Errorf("result: %s refers to a struct or interface the Go package does not define", r.name)
 	}
 	f.rshape = g.pkg.shapeOf(f.result)
 	if err := g.checkShape(r, f.result, f.rshape); err != nil {
@@ -464,8 +464,24 @@ func (g *generator) writeFunc(b *bytes.Buffer, f *genFunc) {
 		params = append(params, p.name+" "+p.typ.name)
 	}
 	fmt.Fprintf(b, "func %s(%s) %s {\n", f.spec.name, strings.Join(params, ", "), f.result)
+	writeCall(b, f, append([]string{f.proc + ".Addr()"}, callArgs(f)...))
+}
 
-	args := []string{f.proc + ".Addr()"}
+// writeMethod writes a method of the interface pointer struct iface
+// calling through its vtable.
+func (g *generator) writeMethod(b *bytes.Buffer, iface string, f *genFunc) {
+	var params []string
+	for _, p := range f.params {
+		params = append(params, p.name+" "+p.typ.name)
+	}
+	fmt.Fprintf(b, "func (obj *%s) %s(%s) %s {\n", iface, f.spec.name, strings.Join(params, ", "), f.result)
+	writeCall(b, f, append([]string{"obj.LpVtbl." + f.spec.name, "uintptr(unsafe.Pointer(obj))"}, callArgs(f)...))
+}
+
+// callArgs returns the arguments of syscall.SyscallN for the parameters
+// of a function.
+func callArgs(f *genFunc) []string {
+	var args []string
 	for i, p := range f.params {
 		switch {
 		case f.byValue[i] > 0:
@@ -482,6 +498,12 @@ func (g *generator) writeFunc(b *bytes.Buffer, f *genFunc) {
 			args = append(args, "uintptr("+p.name+")")
 		}
 	}
+	return args
+}
+
+// writeCall writes the call of syscall.SyscallN, the result conversion
+// and the end of the function.
+func writeCall(b *bytes.Buffer, f *genFunc, args []string) {
 	call := "syscall.SyscallN(" + strings.Join(args, ", ") + ")"
 	switch {
 	case f.result == "":

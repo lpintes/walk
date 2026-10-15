@@ -14,6 +14,8 @@ import (
 )
 
 import (
+	"golang.org/x/sys/windows"
+
 	"github.com/lpintes/walk/internal/win"
 )
 
@@ -127,76 +129,72 @@ func (dlg *FileDialog) ShowSave(owner Form) (accepted bool, err error) {
 	return dlg.show(owner, win.GetSaveFileName, win.OFN_NOCHANGEDIR)
 }
 
-func pathFromPIDL(pidl uintptr) (string, error) {
-	var path [win.MAX_PATH]uint16
-	if !win.SHGetPathFromIDList(pidl, &path[0]) {
-		return "", newError("SHGetPathFromIDList failed")
-	}
-
-	return syscall.UTF16ToString(path[:]), nil
-}
-
-// We use this callback to disable the OK button in case of "invalid" selections.
-func browseFolderCallback(hwnd win.HWND, msg uint32, lp, wp uintptr) uintptr {
-	const BFFM_SELCHANGED = 2
-	if msg == BFFM_SELCHANGED {
-		_, err := pathFromPIDL(lp)
-		var enabled uintptr
-		if err == nil {
-			enabled = 1
-		}
-
-		const BFFM_ENABLEOK = win.WM_USER + 101
-
-		win.SendMessage(hwnd, BFFM_ENABLEOK, 0, enabled)
-	}
-
-	return 0
-}
-
-var browseFolderCallbackPtr uintptr
-
-func init() {
-	AppendToWalkInit(func() {
-		browseFolderCallbackPtr = syscall.NewCallback(browseFolderCallback)
-	})
-}
-
+// ShowBrowseFolder shows the folder picker of the system file dialog and
+// stores the chosen folder in FilePath. The dialog starts in
+// InitialDirPath and has the caption Title if they are not empty.
 func (dlg *FileDialog) ShowBrowseFolder(owner Form) (accepted bool, err error) {
-	// Calling OleInitialize (or similar) is required for BIF_NEWDIALOGSTYLE.
 	if hr := win.OleInitialize(); hr != win.S_OK && hr != win.S_FALSE {
 		return false, newError(fmt.Sprint("OleInitialize Error: ", hr))
 	}
 	defer win.OleUninitialize()
+
+	var fdPtr unsafe.Pointer
+	if hr := win.CoCreateInstance(&win.CLSID_FileOpenDialog, nil, win.CLSCTX_INPROC_SERVER, &win.IID_IFileDialog, &fdPtr); win.FAILED(hr) {
+		return false, errorFromHRESULT("CoCreateInstance", hr)
+	}
+	fd := (*win.IFileDialog)(fdPtr)
+	defer fd.Release()
+
+	var options uint32
+	if hr := fd.GetOptions(&options); win.FAILED(hr) {
+		return false, errorFromHRESULT("IFileDialog.GetOptions", hr)
+	}
+	options |= win.FOS_PICKFOLDERS | win.FOS_FORCEFILESYSTEM | win.FOS_PATHMUSTEXIST | win.FOS_NOCHANGEDIR
+	if hr := fd.SetOptions(options); win.FAILED(hr) {
+		return false, errorFromHRESULT("IFileDialog.SetOptions", hr)
+	}
+
+	if dlg.Title != "" {
+		if hr := fd.SetTitle(win.StringToUTF16Ptr(dlg.Title)); win.FAILED(hr) {
+			return false, errorFromHRESULT("IFileDialog.SetTitle", hr)
+		}
+	}
+
+	if dlg.InitialDirPath != "" {
+		// A folder that does not exist is ignored, the dialog then starts
+		// in its default folder.
+		var itemPtr unsafe.Pointer
+		if hr := win.SHCreateItemFromParsingName(win.StringToUTF16Ptr(dlg.InitialDirPath), nil, &win.IID_IShellItem, &itemPtr); win.SUCCEEDED(hr) {
+			item := (*win.IShellItem)(itemPtr)
+			fd.SetFolder(item)
+			item.Release()
+		}
+	}
 
 	var ownerHwnd win.HWND
 	if owner != nil {
 		ownerHwnd = owner.Handle()
 	}
 
-	// We need to put the initial path into a buffer of at least MAX_LENGTH
-	// length, or we may get random crashes.
-	var buf [win.MAX_PATH]uint16
-	copy(buf[:], win.StringToUTF16(dlg.InitialDirPath))
-
-	const BIF_NEWDIALOGSTYLE = 0x00000040
-
-	bi := win.BROWSEINFO{
-		HwndOwner: ownerHwnd,
-		LpszTitle: win.StringToUTF16Ptr(dlg.Title),
-		UlFlags:   BIF_NEWDIALOGSTYLE,
-		Lpfn:      browseFolderCallbackPtr,
-	}
-
-	win.SHParseDisplayName(&buf[0], 0, &bi.PidlRoot, 0, nil)
-
-	pidl := win.SHBrowseForFolder(&bi)
-	if pidl == 0 {
+	switch hr := fd.Show(ownerHwnd); {
+	case hr == win.HRESULT_FROM_WIN32(win.ERROR_CANCELLED):
 		return false, nil
+	case win.FAILED(hr):
+		return false, errorFromHRESULT("IFileDialog.Show", hr)
 	}
-	defer win.CoTaskMemFree(pidl)
 
-	dlg.FilePath, err = pathFromPIDL(pidl)
-	accepted = dlg.FilePath != ""
-	return
+	var item *win.IShellItem
+	if hr := fd.GetResult(&item); win.FAILED(hr) {
+		return false, errorFromHRESULT("IFileDialog.GetResult", hr)
+	}
+	defer item.Release()
+
+	var path *uint16
+	if hr := item.GetDisplayName(win.SIGDN_FILESYSPATH, &path); win.FAILED(hr) {
+		return false, errorFromHRESULT("IShellItem.GetDisplayName", hr)
+	}
+	defer win.CoTaskMemFree(uintptr(unsafe.Pointer(path)))
+
+	dlg.FilePath = windows.UTF16PtrToString(path)
+	return dlg.FilePath != "", nil
 }

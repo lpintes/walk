@@ -70,8 +70,9 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   (progress and overlay icon of the taskbar button), `IAccPropServices`
   (`Accessibility.SetName` and `SetRole`; `run.ps1` reads the annotated
   name back through MSAA) and, with the argument `browse`,
-  `SHBrowseForFolder` and `SHGetPathFromIDList` (the dialog is accepted with
-  a message to it, the returned path must be the initial one). `run.ps1`
+  `FileDialog.ShowBrowseFolder` (the folder picker of the system file
+  dialog, `IFileDialog`, since the shell dialogs step; it is accepted
+  with a message to it, the returned path must be the initial one). `run.ps1`
   also checks the annotated role (`ROLE_SYSTEM_LINK`); `SetRole` failed
   on 386 before step 10.
 - `liveregion`: `liveregion/app` is a walk window with live regions (a

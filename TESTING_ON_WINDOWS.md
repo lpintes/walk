@@ -414,6 +414,35 @@ How to test, on 386 and amd64 (after `build.ps1`):
   - "Open file dialog": the file type list should offer "Súbory ż
     (*.txt)" and "Všetky súbory (*.*)".
 
+## Task 8: shell dialogs, the folder picker
+
+`FileDialog.ShowBrowseFolder` no longer uses the old folder tree
+(`SHBrowseForFolder`) but the folder picker of the system file dialog
+(`IFileDialog` with `FOS_PICKFOLDERS`), the same dialog as File Open in
+Explorer-style programs, with an address bar, a folder name field and
+search. Differences on purpose:
+
+- `InitialDirPath` is the folder the dialog starts in. The old dialog
+  used it as the root of the tree, so nothing above it could be chosen.
+- `Title` is the caption of the dialog window. The old dialog showed it
+  as a text above the tree under the caption "Browse For Folder".
+- Only file system folders can be chosen (`FOS_FORCEFILESYSTEM`), as
+  before, where the OK button was disabled for other items.
+- Cancel returns `false` and no error, as before.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only part3` with the browse check (the
+  script passes the argument `browse`): the dialog must be found, accepted
+  with a message, and the returned path must be the initial folder.
+- Manually, with NVDA: `tests\part3\part3.exe browsemanual` (in the
+  build directory) opens the folder dialog and prints what it returned
+  on standard output. Check that NVDA announces the dialog and
+  its title, that the folder name field and the address bar can be
+  reached with Tab and F4 or Alt+D, that typing a path and pressing Enter
+  navigates, that "Select Folder" returns the chosen folder, and that
+  Escape cancels.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

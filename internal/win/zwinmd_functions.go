@@ -175,10 +175,9 @@ var (
 	procRemoveFontMemResourceEx     = libgdi32.NewProc("RemoveFontMemResourceEx")
 	procRemoveMenu                  = libuser32.NewProc("RemoveMenu")
 	procRoundRect                   = libgdi32.NewProc("RoundRect")
-	procSHBrowseForFolderW          = libshell32.NewProc("SHBrowseForFolderW")
+	procSHCreateItemFromParsingName = libshell32.NewProc("SHCreateItemFromParsingName")
 	procSHDefExtractIconW           = libshell32.NewProc("SHDefExtractIconW")
 	procSHGetFileInfoW              = libshell32.NewProc("SHGetFileInfoW")
-	procSHGetPathFromIDListW        = libshell32.NewProc("SHGetPathFromIDListW")
 	procSHGetSpecialFolderPathW     = libshell32.NewProc("SHGetSpecialFolderPathW")
 	procScreenToClient              = libuser32.NewProc("ScreenToClient")
 	procSelectObject                = libgdi32.NewProc("SelectObject")
@@ -971,9 +970,9 @@ func RoundRect(hdc HDC, left int32, top int32, right int32, bottom int32, width 
 	return r1 != 0
 }
 
-func SHBrowseForFolder(lpbi *BROWSEINFO) uintptr {
-	r1, _, _ := syscall.SyscallN(procSHBrowseForFolderW.Addr(), uintptr(unsafe.Pointer(lpbi)))
-	return r1
+func SHCreateItemFromParsingName(pszPath *uint16, pbc unsafe.Pointer, riid REFIID, ppv *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(procSHCreateItemFromParsingName.Addr(), uintptr(unsafe.Pointer(pszPath)), uintptr(pbc), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppv)))
+	return HRESULT(r1)
 }
 
 func SHDefExtractIcon(pszIconFile *uint16, iIndex int32, uFlags uint32, phiconLarge *HICON, phiconSmall *HICON, nIconSize uint32) HRESULT {
@@ -984,11 +983,6 @@ func SHDefExtractIcon(pszIconFile *uint16, iIndex int32, uFlags uint32, phiconLa
 func SHGetFileInfo(pszPath *uint16, dwFileAttributes uint32, psfi *SHFILEINFO, cbFileInfo uint32, uFlags uint32) uintptr {
 	r1, _, _ := syscall.SyscallN(procSHGetFileInfoW.Addr(), uintptr(unsafe.Pointer(pszPath)), uintptr(dwFileAttributes), uintptr(unsafe.Pointer(psfi)), uintptr(cbFileInfo), uintptr(uFlags))
 	return r1
-}
-
-func SHGetPathFromIDList(pidl uintptr, pszPath *uint16) bool {
-	r1, _, _ := syscall.SyscallN(procSHGetPathFromIDListW.Addr(), pidl, uintptr(unsafe.Pointer(pszPath)))
-	return r1 != 0
 }
 
 func SHGetSpecialFolderPath(hwnd HWND, pszPath *uint16, csidl CSIDL, fCreate bool) bool {

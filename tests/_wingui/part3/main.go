@@ -1,11 +1,14 @@
 // Command part3 checks on Windows the functions generated in step 3 part 3:
-// GetObject, AlphaBlend, ITaskbarList3, IAccPropServices and
-// SHBrowseForFolder with SHGetPathFromIDList.
+// GetObject, AlphaBlend, ITaskbarList3, IAccPropServices and the folder
+// picker of FileDialog.ShowBrowseFolder (IFileDialog since the shell
+// dialogs step).
 //
 // With the argument "browse" it also opens the folder dialog and accepts it
-// with a message to the dialog. It prints "BUTTON_HWND <n>" so that a script
-// can check the annotated MSAA name, and "READY" when all checks are done;
-// the window stays open until it gets WM_CLOSE.
+// with a message to the dialog. With "browsemanual" it opens the folder
+// dialog for a manual test and prints what it returned. It prints
+// "BUTTON_HWND <n>" so that a script can check the annotated MSAA name, and
+// "READY" when all checks are done; the window stays open until it gets
+// WM_CLOSE.
 package main
 
 import (
@@ -143,7 +146,7 @@ func testBrowseFolder(mw *walk.MainWindow) {
 	}()
 	dlg := walk.FileDialog{InitialDirPath: dir, Title: "walk part3 test"}
 	ok, err := dlg.ShowBrowseFolder(mw)
-	check("SHBrowseForFolder", err == nil && ok && dlg.FilePath == dir, "accepted %v, err %v, path %q, want %q", ok, err, dlg.FilePath, dir)
+	check("ShowBrowseFolder", err == nil && ok && dlg.FilePath == dir, "accepted %v, err %v, path %q, want %q", ok, err, dlg.FilePath, dir)
 }
 
 func main() {
@@ -171,6 +174,11 @@ func main() {
 			testTaskbar(mw)
 			if len(os.Args) > 1 && os.Args[1] == "browse" {
 				testBrowseFolder(mw)
+			}
+			if len(os.Args) > 1 && os.Args[1] == "browsemanual" {
+				dlg := walk.FileDialog{Title: "walk part3 manual test"}
+				ok, err := dlg.ShowBrowseFolder(mw)
+				fmt.Printf("ShowBrowseFolder: accepted %v, err %v, path %q\n", ok, err, dlg.FilePath)
 			}
 			fmt.Println("READY")
 		})

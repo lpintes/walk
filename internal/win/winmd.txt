@@ -223,6 +223,7 @@ const EM_SETREADONLY
 const EM_SETSEL
 const EM_SETWORDBREAKPROC
 const EN_CHANGE
+const ERROR_CANCELLED
 const ERROR_INVALID_PARAMETER
 const ERROR_SUCCESS
 const ES_AUTOHSCROLL
@@ -245,6 +246,10 @@ const EVENT_OBJECT_NAMECHANGE
 const EVENT_OBJECT_STATECHANGE
 const FALSE
 const FF_SWISS
+const FOS_FORCEFILESYSTEM
+const FOS_NOCHANGEDIR
+const FOS_PATHMUSTEXIST
+const FOS_PICKFOLDERS
 const FW_BOLD
 const FW_NORMAL
 const GA_PARENT
@@ -657,6 +662,7 @@ const SIF_PAGE
 const SIF_POS
 const SIF_RANGE
 const SIF_TRACKPOS
+const SIGDN_FILESYSPATH
 const SM_CXSMICON
 const SM_CXVSCROLL
 const SM_CYCAPTION
@@ -1232,10 +1238,9 @@ func ReleaseDC result=bool
 func RemoveFontMemResourceEx
 func RemoveMenu
 func RoundRect
-func SHBrowseForFolder result=uintptr
+func SHCreateItemFromParsingName pbc:unsafe.Pointer riid:REFIID
 func SHDefExtractIcon
 func SHGetFileInfo
-func SHGetPathFromIDList pidl:uintptr
 func SHGetSpecialFolderPath csidl:CSIDL
 func ScreenToClient
 func SelectObject
@@ -1288,7 +1293,6 @@ func WindowFromDC
 struct BITMAP
 struct BITMAPINFOHEADER
 struct BLENDFUNCTION
-struct BROWSEINFO pidlRoot:uintptr
 struct CIEXYZ
 struct CIEXYZTRIPLE
 struct DIBSECTION
@@ -1353,6 +1357,7 @@ struct WNDCLASSEX
 # GUIDs
 
 guid CLSID_AccPropServices
+guid CLSID_FileOpenDialog
 guid CLSID_TaskbarList
 guid CLSID_WebBrowser
 guid DIID_DWebBrowserEvents2
@@ -1360,6 +1365,7 @@ guid IID_IAccPropServices
 guid IID_IClassFactory
 guid IID_IConnectionPointContainer
 guid IID_IDocHostUIHandler
+guid IID_IFileDialog
 guid IID_IOleClientSite
 guid IID_IOleInPlaceActiveObject
 guid IID_IOleInPlaceFrame
@@ -1369,6 +1375,7 @@ guid IID_IOleInPlaceUIWindow
 guid IID_IOleObject
 guid IID_IOleWindow
 guid IID_IRawElementProviderSimple
+guid IID_IShellItem
 guid IID_ITaskbarList3
 guid IID_IUnknown
 guid IID_IWebBrowser2
@@ -1394,6 +1401,7 @@ interface IConnectionPoint
 interface IConnectionPointContainer
 interface IDispatch
 interface IDocHostUIHandler
+interface IFileDialog methods -Advise -SetFileTypes -SetFilter
 interface IOleClientSite
 interface IOleInPlaceActiveObject
 interface IOleInPlaceFrame
@@ -1401,6 +1409,7 @@ interface IOleInPlaceObject
 interface IOleInPlaceSite
 interface IOleObject
 interface IRawElementProviderSimple
+interface IShellItem methods -BindToHandler
 interface ITaskbarList3
 interface IUnknown
 interface IWebBrowser2
