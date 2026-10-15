@@ -391,13 +391,16 @@ How to test, on 386 and amd64 (after `build.ps1`):
   `Activated`).
 - Manually with NVDA (and Narrator if possible), on amd64:
   `tests\upstream\upstream.exe manual` in the build directory. Events
-  are shown in a polite live region at the top of the window, so NVDA
-  should read them.
+  are shown in a polite live region at the top of the window and
+  printed as `EVENT` lines on standard output. NVDA reads the live
+  region only while the window is in the foreground, so not for the
+  notify icon steps: start the program with standard output redirected
+  to a file (`Start-Process ... -RedirectStandardOutput`) and read the
+  events there.
   - Press Windows+B, find "walk upstream test" with the arrow keys (it
     may be in the overflow area, opened with Enter on the chevron
-    button), press Enter: "Notify icon activated" should be read. Note
-    whether Enter or Space sends one event or two (the log numbers
-    them).
+    button), press Enter, then do the same with Space: each must send
+    exactly one "Notify icon activated" (the log numbers them).
   - On the icon press Shift+F10 or the application key: the menu should
     open, NVDA should announce it, and "Say hello" should work. Its
     position is covered by the automatic check; do not ask the user

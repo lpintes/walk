@@ -366,9 +366,17 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   double click, extended with keyboard activation `NIN_SELECT` and
   `NIN_KEYSELECT`), #393 (`PasswordMode` property) and #810 (README
   grammar).
-- Ported from open lxn/walk pull requests (one pull request, one commit
-  each, not yet tested on Windows; task 7 of `TESTING_ON_WINDOWS.md`,
-  test program `tests/_wingui/upstream`):
+- Ported from open lxn/walk pull requests, pull request lpintes/walk#13
+  (one commit each; task 7 of `TESTING_ON_WINDOWS.md`, test program
+  `tests/_wingui/upstream`). Task 7 passed on Windows 11 (386 and amd64):
+  `run.ps1` and `examples.ps1` with only the known problems, and the
+  manual test with NVDA on amd64. Enter and Space on the icon after
+  Windows+B each publish one `Activated`, Shift+F10 and the application
+  key open the menu; NVDA does not read the polite live region of the
+  test window then, because that window is in the background, so the
+  events were checked in the program's standard output. After a menu
+  command focus goes to the application's window (`SetForegroundWindow`
+  before the menu, unchanged from before).
   - #838: `FileDialog` filter compared only the low byte of each UTF-16
     unit with `|` (broke "ż" U+017C, Korean).
   - #771: `TreeView` panicked on `ItemInserted` of a root item; root items
