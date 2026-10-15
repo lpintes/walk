@@ -178,6 +178,7 @@ var (
 	procSHCreateItemFromParsingName = libshell32.NewProc("SHCreateItemFromParsingName")
 	procSHDefExtractIconW           = libshell32.NewProc("SHDefExtractIconW")
 	procSHGetFileInfoW              = libshell32.NewProc("SHGetFileInfoW")
+	procSHGetKnownFolderPath        = libshell32.NewProc("SHGetKnownFolderPath")
 	procSHGetSpecialFolderPathW     = libshell32.NewProc("SHGetSpecialFolderPathW")
 	procScreenToClient              = libuser32.NewProc("ScreenToClient")
 	procSelectObject                = libgdi32.NewProc("SelectObject")
@@ -983,6 +984,11 @@ func SHDefExtractIcon(pszIconFile *uint16, iIndex int32, uFlags uint32, phiconLa
 func SHGetFileInfo(pszPath *uint16, dwFileAttributes uint32, psfi *SHFILEINFO, cbFileInfo uint32, uFlags uint32) uintptr {
 	r1, _, _ := syscall.SyscallN(procSHGetFileInfoW.Addr(), uintptr(unsafe.Pointer(pszPath)), uintptr(dwFileAttributes), uintptr(unsafe.Pointer(psfi)), uintptr(cbFileInfo), uintptr(uFlags))
 	return r1
+}
+
+func SHGetKnownFolderPath(rfid *syscall.GUID, dwFlags uint32, hToken HANDLE, ppszPath **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(procSHGetKnownFolderPath.Addr(), uintptr(unsafe.Pointer(rfid)), uintptr(dwFlags), uintptr(hToken), uintptr(unsafe.Pointer(ppszPath)))
+	return HRESULT(r1)
 }
 
 func SHGetSpecialFolderPath(hwnd HWND, pszPath *uint16, csidl CSIDL, fCreate bool) bool {

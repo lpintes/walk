@@ -1241,6 +1241,7 @@ func RoundRect
 func SHCreateItemFromParsingName pbc:unsafe.Pointer riid:REFIID
 func SHDefExtractIcon
 func SHGetFileInfo
+func SHGetKnownFolderPath
 func SHGetSpecialFolderPath csidl:CSIDL
 func ScreenToClient
 func SelectObject
@@ -1361,6 +1362,21 @@ guid CLSID_FileOpenDialog
 guid CLSID_TaskbarList
 guid CLSID_WebBrowser
 guid DIID_DWebBrowserEvents2
+guid FOLDERID_Desktop
+guid FOLDERID_Documents
+guid FOLDERID_Downloads
+guid FOLDERID_LocalAppData
+guid FOLDERID_Music
+guid FOLDERID_Pictures
+guid FOLDERID_Profile
+guid FOLDERID_ProgramData
+guid FOLDERID_ProgramFiles
+guid FOLDERID_Programs
+guid FOLDERID_RoamingAppData
+guid FOLDERID_Startup
+guid FOLDERID_System
+guid FOLDERID_Videos
+guid FOLDERID_Windows
 guid IID_IAccPropServices
 guid IID_IClassFactory
 guid IID_IConnectionPointContainer
