@@ -246,6 +246,12 @@ const EVENT_OBJECT_NAMECHANGE
 const EVENT_OBJECT_STATECHANGE
 const FALSE
 const FF_SWISS
+const FOFX_RECYCLEONDELETE
+const FOF_ALLOWUNDO
+const FOF_NOCONFIRMATION
+const FOF_NOERRORUI
+const FOF_SILENT
+const FOF_WANTNUKEWARNING
 const FOS_FORCEFILESYSTEM
 const FOS_NOCHANGEDIR
 const FOS_PATHMUSTEXIST
@@ -1359,6 +1365,7 @@ struct WNDCLASSEX
 
 guid CLSID_AccPropServices
 guid CLSID_FileOpenDialog
+guid CLSID_FileOperation
 guid CLSID_TaskbarList
 guid CLSID_WebBrowser
 guid DIID_DWebBrowserEvents2
@@ -1382,6 +1389,7 @@ guid IID_IClassFactory
 guid IID_IConnectionPointContainer
 guid IID_IDocHostUIHandler
 guid IID_IFileDialog
+guid IID_IFileOperation
 guid IID_IOleClientSite
 guid IID_IOleInPlaceActiveObject
 guid IID_IOleInPlaceFrame
@@ -1418,6 +1426,7 @@ interface IConnectionPointContainer
 interface IDispatch
 interface IDocHostUIHandler
 interface IFileDialog methods -Advise -SetFileTypes -SetFilter
+interface IFileOperation methods -Advise -SetProgressDialog -SetProperties -ApplyPropertiesToItem -RenameItem -MoveItem -CopyItem -NewItem DeleteItem.pfopsItem:unsafe.Pointer
 interface IOleClientSite
 interface IOleInPlaceActiveObject
 interface IOleInPlaceFrame
