@@ -177,11 +177,13 @@ func NewTableViewWithCfg(parent Container, cfg *TableViewCfg) (*TableView, error
 		rowHeightStyle = win.LVS_OWNERDRAWFIXED
 	}
 
+	// The frozen list view is no tab stop: it passes focus on to the normal
+	// one, so Shift+Tab from the normal one would land on it and bounce back.
 	if tv.hwndFrozenLV = win.CreateWindowEx(
 		0,
 		win.StringToUTF16Ptr("SysListView32"),
 		nil,
-		win.WS_CHILD|win.WS_CLIPSIBLINGS|win.WS_TABSTOP|win.WS_VISIBLE|win.LVS_OWNERDATA|win.LVS_REPORT|cfg.Style|rowHeightStyle,
+		win.WS_CHILD|win.WS_CLIPSIBLINGS|win.WS_VISIBLE|win.LVS_OWNERDATA|win.LVS_REPORT|cfg.Style|rowHeightStyle,
 		win.CW_USEDEFAULT,
 		win.CW_USEDEFAULT,
 		win.CW_USEDEFAULT,
