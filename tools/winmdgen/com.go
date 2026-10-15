@@ -86,8 +86,13 @@ func (m *metadata) lookupGUID(name string) (*[16]byte, string, error) {
 // goGUID returns a GUID as a Go composite literal of the given type, whose
 // underlying type must be syscall.GUID.
 func goGUID(typ string, g *[16]byte) string {
+	// go vet wants keyed fields in literals of types from other packages.
+	format := "%s{0x%08x, 0x%04x, 0x%04x, [8]byte{"
+	if strings.Contains(typ, ".") {
+		format = "%s{Data1: 0x%08x, Data2: 0x%04x, Data3: 0x%04x, Data4: [8]byte{"
+	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s{0x%08x, 0x%04x, 0x%04x, [8]byte{", typ,
+	fmt.Fprintf(&b, format, typ,
 		binary.LittleEndian.Uint32(g[0:]), binary.LittleEndian.Uint16(g[4:]), binary.LittleEndian.Uint16(g[6:]))
 	for i, c := range g[8:] {
 		if i > 0 {
