@@ -439,6 +439,27 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   hot state until the mouse leaves the list once. The `ods` test lost
   its KNOWN case. Tested on Windows 11 (386 and amd64): `run.ps1` and
   `examples.ps1` pass with no KNOWN line.
+- Step 12, part 2: pull request on branch
+  `claude/project-thread-ssstd5`, not yet tested on Windows (task 9 of
+  `TESTING_ON_WINDOWS.md`, test program `tests/_wingui/shell`).
+  - `KnownFolderPath(KnownFolder)` with 15 known folders
+    (`SHGetKnownFolderPath`); `AppDataPath` and the other CSIDL
+    functions in `path.go` are unchanged.
+  - `MoveToRecycleBin(owner, paths...)` with `IFileOperation` and
+    `FOF_ALLOWUNDO | FOFX_RECYCLEONDELETE | FOF_NOCONFIRMATION |
+    FOF_WANTNUKEWARNING | FOF_NOERRORUI | FOF_SILENT`: no dialogs except
+    the question before a permanent delete; aborting returns an error.
+  - `ShellLink` with `LoadShellLink` and `Save` (`IShellLinkW`,
+    `IPersistFile`); `Hotkey` is a `Shortcut`, whose modifiers have the
+    `HOTKEYF_*` values.
+  - COM calls run in `withCOM` (`shell.go`): locked OS thread and
+    `OleInitialize`, so the functions work from any goroutine.
+  - Generator fix: a pointer to `BOOL` is `*BOOL`, not `*bool` (Windows
+    writes 4 bytes); no existing declaration was affected. GUID
+    variables of type `syscall.GUID` get keyed literals, as `go vet`
+    wants for types of other packages.
+  - Still open from the plan: taskbar (`ITaskbarList3` is used only by
+    `ProgressIndicator`), `ShellExecuteEx` to open files.
 - Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
   (generic event types are step 9).
 
