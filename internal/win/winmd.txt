@@ -718,6 +718,7 @@ const STATE_SYSTEM_SELFVOICING
 const STATE_SYSTEM_SIZEABLE
 const STATE_SYSTEM_TRAVERSED
 const STATE_SYSTEM_UNAVAILABLE
+const STGM_READ
 const SWP_FRAMECHANGED
 const SWP_NOACTIVATE
 const SWP_NOMOVE
@@ -1366,6 +1367,7 @@ struct WNDCLASSEX
 guid CLSID_AccPropServices
 guid CLSID_FileOpenDialog
 guid CLSID_FileOperation
+guid CLSID_ShellLink
 guid CLSID_TaskbarList
 guid CLSID_WebBrowser
 guid DIID_DWebBrowserEvents2
@@ -1398,8 +1400,10 @@ guid IID_IOleInPlaceSite
 guid IID_IOleInPlaceUIWindow
 guid IID_IOleObject
 guid IID_IOleWindow
+guid IID_IPersistFile
 guid IID_IRawElementProviderSimple
 guid IID_IShellItem
+guid IID_IShellLinkW
 guid IID_ITaskbarList3
 guid IID_IUnknown
 guid IID_IWebBrowser2
@@ -1433,8 +1437,10 @@ interface IOleInPlaceFrame
 interface IOleInPlaceObject
 interface IOleInPlaceSite
 interface IOleObject
+interface IPersistFile methods
 interface IRawElementProviderSimple
 interface IShellItem methods -BindToHandler
+interface IShellLink entry=IShellLinkW methods -GetIDList -SetIDList GetPath.pfd:unsafe.Pointer
 interface ITaskbarList3
 interface IUnknown
 interface IWebBrowser2

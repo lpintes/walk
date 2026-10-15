@@ -641,6 +641,11 @@ const (
 	SS_RIGHT        = 2
 )
 
+// STGM
+const (
+	STGM_READ = 0
+)
+
 // STRETCH_BLT_MODE
 const (
 	HALFTONE = 4
