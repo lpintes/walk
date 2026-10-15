@@ -439,9 +439,9 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   hot state until the mouse leaves the list once. The `ods` test lost
   its KNOWN case. Tested on Windows 11 (386 and amd64): `run.ps1` and
   `examples.ps1` pass with no KNOWN line.
-- Step 12, part 2: pull request on branch
-  `claude/project-thread-ssstd5`, not yet tested on Windows (task 9 of
-  `TESTING_ON_WINDOWS.md`, test program `tests/_wingui/shell`).
+- Step 12, part 2: draft pull request lpintes/walk#15, not yet tested
+  on Windows (task 9 of `TESTING_ON_WINDOWS.md`, test program
+  `tests/_wingui/shell`).
   - `KnownFolderPath(KnownFolder)` with 15 known folders
     (`SHGetKnownFolderPath`); `AppDataPath` and the other CSIDL
     functions in `path.go` are unchanged.
