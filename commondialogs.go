@@ -42,7 +42,7 @@ func (dlg *FileDialog) show(owner Form, fun func(ofn *win.OPENFILENAME) bool, fl
 	copy(filter, win.StringToUTF16(dlg.Filter))
 	// Replace '|' with the expected '\0'.
 	for i, c := range filter {
-		if byte(c) == '|' {
+		if c == '|' {
 			filter[i] = uint16(0)
 		}
 	}

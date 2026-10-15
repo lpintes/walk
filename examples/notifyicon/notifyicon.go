@@ -37,16 +37,13 @@ func main() {
 	if err := ni.SetIcon(icon); err != nil {
 		log.Fatal(err)
 	}
-	if err := ni.SetToolTip("Click for info or use the context menu to exit."); err != nil {
+	if err := ni.SetToolTip("Click or press Enter for info, or use the context menu to exit."); err != nil {
 		log.Fatal(err)
 	}
 
-	// When the left mouse button is pressed, bring up our balloon.
-	ni.MouseDown().Attach(func(x, y int, button walk.MouseButton) {
-		if button != walk.LeftButton {
-			return
-		}
-
+	// When the icon is clicked or selected with the keyboard (Windows+B, then
+	// Enter), bring up our balloon.
+	ni.Activated().Attach(func() {
 		if err := ni.ShowCustom(
 			"Walk NotifyIcon Example",
 			"There are multiple ShowX methods sporting different icons.",

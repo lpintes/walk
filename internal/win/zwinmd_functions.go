@@ -208,6 +208,7 @@ var (
 	procSetWindowPos                = libuser32.NewProc("SetWindowPos")
 	procSetWindowTheme              = libuxtheme.NewProc("SetWindowTheme")
 	procShell_NotifyIconW           = libshell32.NewProc("Shell_NotifyIconW")
+	procShell_NotifyIconGetRect     = libshell32.NewProc("Shell_NotifyIconGetRect")
 	procShowWindow                  = libuser32.NewProc("ShowWindow")
 	procSizeofResource              = libkernel32.NewProc("SizeofResource")
 	procStretchBlt                  = libgdi32.NewProc("StretchBlt")
@@ -1136,6 +1137,11 @@ func SetWindowTheme(hwnd HWND, pszSubAppName *uint16, pszSubIdList *uint16) HRES
 func Shell_NotifyIcon(dwMessage uint32, lpData *NOTIFYICONDATA) bool {
 	r1, _, _ := syscall.SyscallN(procShell_NotifyIconW.Addr(), uintptr(dwMessage), uintptr(unsafe.Pointer(lpData)))
 	return r1 != 0
+}
+
+func Shell_NotifyIconGetRect(identifier *NOTIFYICONIDENTIFIER, iconLocation *RECT) HRESULT {
+	r1, _, _ := syscall.SyscallN(procShell_NotifyIconGetRect.Addr(), uintptr(unsafe.Pointer(identifier)), uintptr(unsafe.Pointer(iconLocation)))
+	return HRESULT(r1)
 }
 
 func ShowWindow(hWnd HWND, nCmdShow int32) bool {

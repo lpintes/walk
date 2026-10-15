@@ -3,7 +3,8 @@
 Test programs and scripts that run walk on a real Windows desktop. They were
 written for the Windows tasks in `TESTING_ON_WINDOWS.md` (the smoke test of
 step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, the COM objects of
-`WebView` in step 6 and the live regions of step 10) and can be rerun as
+`WebView` in step 6, the live regions of step 10 and the changes ported
+from lxn/walk pull requests) and can be rerun as
 regression tests after changes to `internal/win`, `internal/com` or the
 affected widgets. `com` is not a directory here: `build.ps1` builds the
 unit tests of `internal/com` into `tests\com\com.exe`.
@@ -84,6 +85,20 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   announce, and checks the events. The app checks with a WinEvent hook
   that `EVENT_OBJECT_LIVEREGIONCHANGED` is raised. `app.exe manual`
   only shows the window, for a test with a screen reader.
+- `upstream`: the changes ported from open lxn/walk pull requests (see
+  `opened-prs.md`). Inserts root items into a `TreeView` at the top and
+  the end (no panic, model order), toggles a `LineEdit` whose
+  `PasswordMode` is bound to a "Show password" `CheckBox` (mode,
+  `ES_PASSWORD` style, change events), sends `NIN_SELECT`,
+  `NIN_KEYSELECT` and `WM_LBUTTONDBLCLK` to the `NotifyIcon` callback
+  (`Activated`, `MouseDoubleClick`), sends `WM_CONTEXTMENU` as the shell
+  does for Shift+F10 and checks that the menu opens next to the icon
+  (`Shell_NotifyIconGetRect`), and opens the file dialog with a filter
+  containing U+017C and reads the items of its file type combo box. A
+  thread timer closes the menu and the dialog; the notify icon shows for
+  a moment and walk brings its window to the foreground for the menu.
+  `upstream.exe manual` keeps the window open for a test by hand; its
+  events appear in a polite live region.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

@@ -32,6 +32,17 @@ type NOTIFYICONDATA struct {
 	HBalloonIcon     HICON
 }
 
+// NOTIFYICONIDENTIFIER is hand-written because shellapi.h declares it with
+// #pragma pack(1) on 386. The fields happen to sit at their natural offsets
+// there too, so only the alignment differs, which does not matter when the
+// struct is passed by pointer.
+type NOTIFYICONIDENTIFIER struct {
+	CbSize   uint32
+	HWnd     HWND
+	UID      uint32
+	GuidItem syscall.GUID
+}
+
 type SHFILEINFO struct {
 	HIcon         HICON
 	IIcon         int32

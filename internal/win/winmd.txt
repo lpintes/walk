@@ -513,7 +513,9 @@ const NIM_ADD
 const NIM_DELETE
 const NIM_MODIFY
 const NIM_SETVERSION
+const NINF_KEY
 const NIN_BALLOONUSERCLICK
+const NIN_SELECT
 const NIS_HIDDEN
 const NM_CLICK uint32
 const NM_CUSTOMDRAW uint32
@@ -786,6 +788,7 @@ const TMT_FILLCOLOR
 const TMT_TEXTCOLOR
 const TPM_NOANIMATION
 const TPM_RETURNCMD
+const TPM_VERTICAL
 const TRANSPARENT
 const TRUE
 const TTF_IDISHWND
@@ -1039,6 +1042,7 @@ const WM_MOUSEWHEEL
 const WM_NCCALCSIZE
 const WM_NCHITTEST
 const WM_NOTIFY
+const WM_NULL
 const WM_PAINT
 const WM_PASTE
 const WM_PRINT
@@ -1268,6 +1272,7 @@ func SetWindowPlacement
 func SetWindowPos
 func SetWindowTheme
 func Shell_NotifyIcon
+func Shell_NotifyIconGetRect
 func ShowWindow
 func SizeofResource
 func StretchBlt

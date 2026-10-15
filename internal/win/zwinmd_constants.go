@@ -742,6 +742,7 @@ const (
 const (
 	TPM_NOANIMATION = 0x4000
 	TPM_RETURNCMD   = 0x100
+	TPM_VERTICAL    = 0x40
 )
 
 // TREE_VIEW_ITEM_STATE_FLAGS
@@ -1292,7 +1293,9 @@ const (
 	CSIDL_LOCAL_APPDATA  = 0x1c
 	CSIDL_PERSONAL       = 5
 	CSIDL_SYSTEM         = 0x25
+	NINF_KEY             = 1
 	NIN_BALLOONUSERCLICK = 0x405
+	NIN_SELECT           = 0x400
 	NOTIFYICON_VERSION   = 3
 )
 
@@ -1479,6 +1482,7 @@ const (
 	WM_NCCALCSIZE                       = 0x83
 	WM_NCHITTEST                        = 0x84
 	WM_NOTIFY                           = 0x4e
+	WM_NULL                             = 0
 	WM_PAINT                            = 0xf
 	WM_PASTE                            = 0x302
 	WM_PRINT                            = 0x317

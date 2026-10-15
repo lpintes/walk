@@ -373,7 +373,36 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   `|` bug), #771 (TreeView panic on root item insert), #552 (NotifyIcon
   double click, extended with keyboard activation `NIN_SELECT` and
   `NIN_KEYSELECT`), #393 (`PasswordMode` property) and #810 (README
-  grammar). Nothing ported yet.
+  grammar).
+- Ported from open lxn/walk pull requests, pull request lpintes/walk#13
+  (one commit each; task 7 of `TESTING_ON_WINDOWS.md`, test program
+  `tests/_wingui/upstream`). Task 7 passed on Windows 11 (386 and amd64):
+  `run.ps1` and `examples.ps1` with only the known problems, and the
+  manual test with NVDA on amd64. Enter and Space on the icon after
+  Windows+B each publish one `Activated`, Shift+F10 and the application
+  key open the menu; NVDA does not read the polite live region of the
+  test window then, because that window is in the background, so the
+  events were checked in the program's standard output. After a menu
+  command focus goes to the application's window (`SetForegroundWindow`
+  before the menu, unchanged from before).
+  - #838: `FileDialog` filter compared only the low byte of each UTF-16
+    unit with `|` (broke "ż" U+017C, Korean).
+  - #771: `TreeView` panicked on `ItemInserted` of a root item; root items
+    now go to their model position (`RootCount`/`RootAt`).
+  - #552 extended: `NotifyIcon.Activated` (`NIN_SELECT` and
+    `NIN_KEYSELECT`, so keyboard users can activate the icon),
+    `NotifyIcon.MouseDoubleClick`; a keyboard context menu (shell
+    `WM_CONTEXTMENU`, sent only for Shift+F10 and the application key with
+    `NOTIFYICON_VERSION` 3) opens next to the icon
+    (`Shell_NotifyIconGetRect`), and `WM_NULL` is posted after
+    `TrackPopupMenuEx`. New in `internal/win`: `NIN_SELECT`, `NINF_KEY`,
+    `TPM_VERTICAL`, `WM_NULL`, `Shell_NotifyIconGetRect` (generated) and
+    hand-written `NOTIFYICONIDENTIFIER` (`#pragma pack(1)` on 386).
+  - #393: `LineEdit.PasswordMode` is a bindable property (declarative
+    field is now `Property`); a change redraws and raises
+    `EVENT_OBJECT_STATECHANGE`.
+  - Three doc comments naming the wrong method (found by #456).
+  - #810: README grammar.
 - Step 12, part 1: draft pull request lpintes/walk#14, not yet tested
   on Windows (task 8 of `TESTING_ON_WINDOWS.md`).
   - Generator: the `methods` option of the `interface` directive

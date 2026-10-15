@@ -62,7 +62,7 @@ type LineEdit struct {
 	MaxLength         int
 	OnEditingFinished walk.EventHandler
 	OnTextChanged     walk.EventHandler
-	PasswordMode      bool
+	PasswordMode      Property
 	ReadOnly          Property
 	Text              Property
 	TextAlignment     Alignment1D
@@ -92,7 +92,6 @@ func (le LineEdit) Create(builder *Builder) error {
 			}
 		}
 		w.SetMaxLength(le.MaxLength)
-		w.SetPasswordMode(le.PasswordMode)
 
 		if err := w.SetCaseMode(walk.CaseMode(le.CaseMode)); err != nil {
 			return err
