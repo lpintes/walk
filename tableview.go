@@ -1837,6 +1837,14 @@ func (tv *TableView) toggleItemChecked(index int) error {
 		return newError("SendMessage(LVM_UPDATE)")
 	}
 
+	// The check state comes from LVN_GETDISPINFO, so the list view does not
+	// know it changed and raises no event; screen readers would stay silent.
+	hwnd := tv.hwndNormalLV
+	if tv.hasFrozenColumn {
+		hwnd = tv.hwndFrozenLV
+	}
+	win.NotifyWinEvent(win.EVENT_OBJECT_STATECHANGE, hwnd, win.OBJID_CLIENT, int32(index+1))
+
 	return nil
 }
 
