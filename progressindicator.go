@@ -50,7 +50,22 @@ func newTaskbarList3(hwnd win.HWND) (*ProgressIndicator, error) {
 		return nil, errorFromHRESULT("IClassFactory.CreateInstance", hr)
 	}
 
-	return &ProgressIndicator{taskbarList3: (*win.ITaskbarList3)(taskbarList3ObjectPtr), hwnd: hwnd}, nil
+	taskbarList3 := (*win.ITaskbarList3)(taskbarList3ObjectPtr)
+	// The documentation requires HrInit before any other method.
+	if hr := taskbarList3.HrInit(); win.FAILED(hr) {
+		taskbarList3.Release()
+		return nil, errorFromHRESULT("ITaskbarList3.HrInit", hr)
+	}
+
+	return &ProgressIndicator{taskbarList3: taskbarList3, hwnd: hwnd}, nil
+}
+
+// release releases the taskbar object when the form is disposed.
+func (pi *ProgressIndicator) release() {
+	if pi.taskbarList3 != nil {
+		pi.taskbarList3.Release()
+		pi.taskbarList3 = nil
+	}
 }
 
 func (pi *ProgressIndicator) SetState(state PIState) error {
