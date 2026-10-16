@@ -463,8 +463,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     writes 4 bytes); no existing declaration was affected. GUID
     variables of type `syscall.GUID` get keyed literals, as `go vet`
     wants for types of other packages.
-- Step 12, part 3 (last part of step 12): pull request on branch
-  `claude/project-thread-ssstd5`, not yet tested on Windows (task 10 of
+- Step 12, part 3 (last part of step 12): draft pull request
+  lpintes/walk#18, not yet tested on Windows (task 10 of
   `TESTING_ON_WINDOWS.md`, `tests/_wingui/shell` and its `manual` mode).
   - `ShellOpen(owner, target)`: `ShellExecute` with the default verb for
     a file, folder or URL; `SE_ERR_NOASSOC` and other codes up to 32
