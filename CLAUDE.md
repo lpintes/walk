@@ -439,9 +439,14 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   hot state until the mouse leaves the list once. The `ods` test lost
   its KNOWN case. Tested on Windows 11 (386 and amd64): `run.ps1` and
   `examples.ps1` pass with no KNOWN line.
-- Step 12, part 2: draft pull request lpintes/walk#15, not yet tested
-  on Windows (task 9 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/shell`).
+- Step 12, part 2: pull request lpintes/walk#15. Task 9 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/shell`) passed
+  on Windows 11 (386 and amd64): `run.ps1 -Only shell` passes every
+  check (no known folder is redirected on the test machine;
+  `ProgramFiles` is `Program Files (x86)` on 386), and the test items
+  were in the Recycle Bin with their original location and could be
+  restored (checked with `Shell.Application`, namespace 10). The
+  optional test with an item that cannot be recycled was not run.
   - `KnownFolderPath(KnownFolder)` with 15 known folders
     (`SHGetKnownFolderPath`); `AppDataPath` and the other CSIDL
     functions in `path.go` are unchanged.
