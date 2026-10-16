@@ -463,8 +463,24 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     writes 4 bytes); no existing declaration was affected. GUID
     variables of type `syscall.GUID` get keyed literals, as `go vet`
     wants for types of other packages.
-  - Still open from the plan: taskbar (`ITaskbarList3` is used only by
-    `ProgressIndicator`), `ShellExecuteEx` to open files.
+- Step 12, part 3 (last part of step 12): pull request on branch
+  `claude/project-thread-ssstd5`, not yet tested on Windows (task 10 of
+  `TESTING_ON_WINDOWS.md`, `tests/_wingui/shell` and its `manual` mode).
+  - `ShellOpen(owner, target)`: `ShellExecute` with the default verb for
+    a file, folder or URL; `SE_ERR_NOASSOC` and other codes up to 32
+    become errors. `ShowInFolder(path)`: `SHParseDisplayName` and
+    `SHOpenFolderAndSelectItems` (generated again, with `uintptr` for
+    the `ITEMIDLIST` pointers).
+  - Taskbar: the taskbar features walk needs were already there
+    (`ProgressIndicator` with progress state, value and overlay icon).
+    Fixed: `ITaskbarList3.HrInit` was never called (the documentation
+    requires it first) and the object was never released; it is now
+    released in `FormBase.Dispose`. New `FormBase.RequestAttention`
+    flashes the taskbar button until the form is activated
+    (`FlashWindowEx`); not added to the `Form` interface, so it is not a
+    breaking change.
+  - Not done: thumbnail toolbar buttons and jump lists (larger, little
+    use for screen reader users).
 - Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
   (generic event types are step 9).
 
