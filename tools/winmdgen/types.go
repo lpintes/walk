@@ -111,6 +111,11 @@ func (tm *typeMapper) sigType(t winmd.SigType) (goType, error) {
 		if err != nil {
 			return goType{}, err
 		}
+		if et.kind == kindBool {
+			// BOOL is translated to bool only by value: Windows
+			// writes 4 bytes through a pointer.
+			et.name = "BOOL"
+		}
 		return goType{name: "*" + et.name, kind: kindPointer, size: ptr, undefined: et.undefined}, nil
 	case flags.ElementType_ARRAY:
 		a, ok := t.Value.(winmd.SigArray)

@@ -99,6 +99,14 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   a moment and walk brings its window to the foreground for the menu.
   `upstream.exe manual` keeps the window open for a test by hand; its
   events appear in a polite live region.
+- `shell`: the shell functions of step 12 part 2, without a window.
+  `KnownFolderPath` for every known folder (the ones with an environment
+  variable, such as `APPDATA`, must match it; Documents must match
+  `PersonalPath`), `MoveToRecycleBin` with a file and a folder from the
+  temporary folder (they must be gone afterwards; they stay in the
+  Recycle Bin under names starting with `walk-shell-test`) and with a
+  missing file (error), and a `ShellLink` with every field saved, loaded
+  back and compared.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

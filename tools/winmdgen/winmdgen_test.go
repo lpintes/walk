@@ -129,6 +129,11 @@ func TestCOM(t *testing.T) {
 			t.Errorf("%s = %s, want %s", tc.name, got, tc.guid)
 		}
 	}
+	if g, _, err := m.lookupGUID("IID_IUnknown"); err != nil {
+		t.Error(err)
+	} else if got, want := goGUID("syscall.GUID", g), "syscall.GUID{Data1: 0x00000000, Data2: 0x0000, Data3: 0x0000, Data4: [8]byte{0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}}"; got != want {
+		t.Errorf("syscall.GUID literal = %s, want %s", got, want)
+	}
 	if _, _, err := m.lookupGUID("IID_NoSuchInterface"); err == nil {
 		t.Error("IID_NoSuchInterface: no error")
 	}
@@ -416,6 +421,32 @@ func TestGenerated(t *testing.T) {
 		}
 		if !bytes.Equal(got, want) {
 			t.Errorf("%s is out of date; run go generate ./internal/win", filepath.Base(g))
+		}
+	}
+}
+
+func TestBoolPointer(t *testing.T) {
+	skipWithoutMetadata(t)
+	_, m, err := load(filepath.Join(winDir, "winmd.txt"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg, err := parseGoPackage(winDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	md, err := m.lookupMethod("IsWow64Process", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, an := range archNames {
+		sig, err := (&typeMapper{m: m, arch: an.arch, pkg: pkg}).signature(md)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// BOOL is 4 bytes, so a pointer to it must not become *bool.
+		if got := sig.params[1].typ.name; got != "*BOOL" {
+			t.Errorf("%s: Wow64Process is %s, want *BOOL", an.name, got)
 		}
 	}
 }

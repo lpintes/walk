@@ -246,6 +246,12 @@ const EVENT_OBJECT_NAMECHANGE
 const EVENT_OBJECT_STATECHANGE
 const FALSE
 const FF_SWISS
+const FOFX_RECYCLEONDELETE
+const FOF_ALLOWUNDO
+const FOF_NOCONFIRMATION
+const FOF_NOERRORUI
+const FOF_SILENT
+const FOF_WANTNUKEWARNING
 const FOS_FORCEFILESYSTEM
 const FOS_NOCHANGEDIR
 const FOS_PATHMUSTEXIST
@@ -712,6 +718,7 @@ const STATE_SYSTEM_SELFVOICING
 const STATE_SYSTEM_SIZEABLE
 const STATE_SYSTEM_TRAVERSED
 const STATE_SYSTEM_UNAVAILABLE
+const STGM_READ
 const SWP_FRAMECHANGED
 const SWP_NOACTIVATE
 const SWP_NOMOVE
@@ -1241,6 +1248,7 @@ func RoundRect
 func SHCreateItemFromParsingName pbc:unsafe.Pointer riid:REFIID
 func SHDefExtractIcon
 func SHGetFileInfo
+func SHGetKnownFolderPath
 func SHGetSpecialFolderPath csidl:CSIDL
 func ScreenToClient
 func SelectObject
@@ -1358,14 +1366,32 @@ struct WNDCLASSEX
 
 guid CLSID_AccPropServices
 guid CLSID_FileOpenDialog
+guid CLSID_FileOperation
+guid CLSID_ShellLink
 guid CLSID_TaskbarList
 guid CLSID_WebBrowser
 guid DIID_DWebBrowserEvents2
+guid FOLDERID_Desktop
+guid FOLDERID_Documents
+guid FOLDERID_Downloads
+guid FOLDERID_LocalAppData
+guid FOLDERID_Music
+guid FOLDERID_Pictures
+guid FOLDERID_Profile
+guid FOLDERID_ProgramData
+guid FOLDERID_ProgramFiles
+guid FOLDERID_Programs
+guid FOLDERID_RoamingAppData
+guid FOLDERID_Startup
+guid FOLDERID_System
+guid FOLDERID_Videos
+guid FOLDERID_Windows
 guid IID_IAccPropServices
 guid IID_IClassFactory
 guid IID_IConnectionPointContainer
 guid IID_IDocHostUIHandler
 guid IID_IFileDialog
+guid IID_IFileOperation
 guid IID_IOleClientSite
 guid IID_IOleInPlaceActiveObject
 guid IID_IOleInPlaceFrame
@@ -1374,8 +1400,10 @@ guid IID_IOleInPlaceSite
 guid IID_IOleInPlaceUIWindow
 guid IID_IOleObject
 guid IID_IOleWindow
+guid IID_IPersistFile
 guid IID_IRawElementProviderSimple
 guid IID_IShellItem
+guid IID_IShellLinkW
 guid IID_ITaskbarList3
 guid IID_IUnknown
 guid IID_IWebBrowser2
@@ -1402,14 +1430,17 @@ interface IConnectionPointContainer
 interface IDispatch
 interface IDocHostUIHandler
 interface IFileDialog methods -Advise -SetFileTypes -SetFilter
+interface IFileOperation methods -Advise -SetProgressDialog -SetProperties -ApplyPropertiesToItem -RenameItem -MoveItem -CopyItem -NewItem DeleteItem.pfopsItem:unsafe.Pointer
 interface IOleClientSite
 interface IOleInPlaceActiveObject
 interface IOleInPlaceFrame
 interface IOleInPlaceObject
 interface IOleInPlaceSite
 interface IOleObject
+interface IPersistFile methods
 interface IRawElementProviderSimple
 interface IShellItem methods -BindToHandler
+interface IShellLink entry=IShellLinkW methods -GetIDList -SetIDList GetPath.pfd:unsafe.Pointer
 interface ITaskbarList3
 interface IUnknown
 interface IWebBrowser2

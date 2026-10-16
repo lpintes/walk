@@ -64,6 +64,67 @@ type IDispatch struct {
 	LpVtbl *IDispatchVtbl
 }
 
+type IPersistFileVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+	GetClassID     uintptr
+	IsDirty        uintptr
+	Load           uintptr
+	Save           uintptr
+	SaveCompleted  uintptr
+	GetCurFile     uintptr
+}
+
+type IPersistFile struct {
+	LpVtbl *IPersistFileVtbl
+}
+
+func (obj *IPersistFile) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IPersistFile) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IPersistFile) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IPersistFile) GetClassID(pClassID *syscall.GUID) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetClassID, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pClassID)))
+	return HRESULT(r1)
+}
+
+func (obj *IPersistFile) IsDirty() HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.IsDirty, uintptr(unsafe.Pointer(obj)))
+	return HRESULT(r1)
+}
+
+func (obj *IPersistFile) Load(pszFileName *uint16, dwMode uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Load, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszFileName)), uintptr(dwMode))
+	return HRESULT(r1)
+}
+
+func (obj *IPersistFile) Save(pszFileName *uint16, fRemember bool) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Save, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszFileName)), uintptr(BoolToBOOL(fRemember)))
+	return HRESULT(r1)
+}
+
+func (obj *IPersistFile) SaveCompleted(pszFileName *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SaveCompleted, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszFileName)))
+	return HRESULT(r1)
+}
+
+func (obj *IPersistFile) GetCurFile(ppszFileName **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurFile, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(ppszFileName)))
+	return HRESULT(r1)
+}
+
 type IUnknownVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
@@ -422,6 +483,111 @@ func (obj *IFileDialog) ClearClientData() HRESULT {
 	return HRESULT(r1)
 }
 
+type IFileOperationVtbl struct {
+	QueryInterface          uintptr
+	AddRef                  uintptr
+	Release                 uintptr
+	Advise                  uintptr
+	Unadvise                uintptr
+	SetOperationFlags       uintptr
+	SetProgressMessage      uintptr
+	SetProgressDialog       uintptr
+	SetProperties           uintptr
+	SetOwnerWindow          uintptr
+	ApplyPropertiesToItem   uintptr
+	ApplyPropertiesToItems  uintptr
+	RenameItem              uintptr
+	RenameItems             uintptr
+	MoveItem                uintptr
+	MoveItems               uintptr
+	CopyItem                uintptr
+	CopyItems               uintptr
+	DeleteItem              uintptr
+	DeleteItems             uintptr
+	NewItem                 uintptr
+	PerformOperations       uintptr
+	GetAnyOperationsAborted uintptr
+}
+
+type IFileOperation struct {
+	LpVtbl *IFileOperationVtbl
+}
+
+func (obj *IFileOperation) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IFileOperation) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IFileOperation) Unadvise(dwCookie uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Unadvise, uintptr(unsafe.Pointer(obj)), uintptr(dwCookie))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) SetOperationFlags(dwOperationFlags uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetOperationFlags, uintptr(unsafe.Pointer(obj)), uintptr(dwOperationFlags))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) SetProgressMessage(pszMessage *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetProgressMessage, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszMessage)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) SetOwnerWindow(hwndOwner HWND) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetOwnerWindow, uintptr(unsafe.Pointer(obj)), uintptr(hwndOwner))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) ApplyPropertiesToItems(punkItems *IUnknown) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.ApplyPropertiesToItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(punkItems)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) RenameItems(pUnkItems *IUnknown, pszNewName *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RenameItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pUnkItems)), uintptr(unsafe.Pointer(pszNewName)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) MoveItems(punkItems *IUnknown, psiDestinationFolder *IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.MoveItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(punkItems)), uintptr(unsafe.Pointer(psiDestinationFolder)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) CopyItems(punkItems *IUnknown, psiDestinationFolder *IShellItem) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CopyItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(punkItems)), uintptr(unsafe.Pointer(psiDestinationFolder)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) DeleteItem(psiItem *IShellItem, pfopsItem unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.DeleteItem, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(psiItem)), uintptr(pfopsItem))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) DeleteItems(punkItems *IUnknown) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.DeleteItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(punkItems)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) PerformOperations() HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.PerformOperations, uintptr(unsafe.Pointer(obj)))
+	return HRESULT(r1)
+}
+
+func (obj *IFileOperation) GetAnyOperationsAborted(pfAnyOperationsAborted *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetAnyOperationsAborted, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pfAnyOperationsAborted)))
+	return HRESULT(r1)
+}
+
 type IShellItemVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
@@ -469,6 +635,129 @@ func (obj *IShellItem) GetAttributes(sfgaoMask uint32, psfgaoAttribs *uint32) HR
 
 func (obj *IShellItem) Compare(psi *IShellItem, hint uint32, piOrder *int32) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Compare, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(psi)), uintptr(hint), uintptr(unsafe.Pointer(piOrder)))
+	return HRESULT(r1)
+}
+
+type IShellLinkVtbl struct {
+	QueryInterface      uintptr
+	AddRef              uintptr
+	Release             uintptr
+	GetPath             uintptr
+	GetIDList           uintptr
+	SetIDList           uintptr
+	GetDescription      uintptr
+	SetDescription      uintptr
+	GetWorkingDirectory uintptr
+	SetWorkingDirectory uintptr
+	GetArguments        uintptr
+	SetArguments        uintptr
+	GetHotkey           uintptr
+	SetHotkey           uintptr
+	GetShowCmd          uintptr
+	SetShowCmd          uintptr
+	GetIconLocation     uintptr
+	SetIconLocation     uintptr
+	SetRelativePath     uintptr
+	Resolve             uintptr
+	SetPath             uintptr
+}
+
+type IShellLink struct {
+	LpVtbl *IShellLinkVtbl
+}
+
+func (obj *IShellLink) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IShellLink) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IShellLink) GetPath(pszFile *uint16, cch int32, pfd unsafe.Pointer, fFlags uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetPath, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszFile)), uintptr(cch), uintptr(pfd), uintptr(fFlags))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) GetDescription(pszName *uint16, cch int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetDescription, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszName)), uintptr(cch))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetDescription(pszName *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetDescription, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszName)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) GetWorkingDirectory(pszDir *uint16, cch int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetWorkingDirectory, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszDir)), uintptr(cch))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetWorkingDirectory(pszDir *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetWorkingDirectory, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszDir)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) GetArguments(pszArgs *uint16, cch int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetArguments, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszArgs)), uintptr(cch))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetArguments(pszArgs *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetArguments, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszArgs)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) GetHotkey(pwHotkey *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetHotkey, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pwHotkey)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetHotkey(wHotkey uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetHotkey, uintptr(unsafe.Pointer(obj)), uintptr(wHotkey))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) GetShowCmd(piShowCmd *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetShowCmd, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(piShowCmd)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetShowCmd(iShowCmd int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetShowCmd, uintptr(unsafe.Pointer(obj)), uintptr(iShowCmd))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) GetIconLocation(pszIconPath *uint16, cch int32, piIcon *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetIconLocation, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszIconPath)), uintptr(cch), uintptr(unsafe.Pointer(piIcon)))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetIconLocation(pszIconPath *uint16, iIcon int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetIconLocation, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszIconPath)), uintptr(iIcon))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetRelativePath(pszPathRel *uint16, dwReserved uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetRelativePath, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszPathRel)), uintptr(dwReserved))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) Resolve(hwnd HWND, fFlags uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Resolve, uintptr(unsafe.Pointer(obj)), uintptr(hwnd), uintptr(fFlags))
+	return HRESULT(r1)
+}
+
+func (obj *IShellLink) SetPath(pszFile *uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetPath, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszFile)))
 	return HRESULT(r1)
 }
 

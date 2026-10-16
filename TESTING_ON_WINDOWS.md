@@ -441,6 +441,37 @@ How to test, on 386 and amd64 (after `build.ps1`):
   navigates, that "Select Folder" returns the chosen folder, and that
   Escape cancels.
 
+## Task 9: shell functions, known folders, Recycle Bin and shortcuts
+
+Step 12 part 2 adds three shell functions to walk:
+
+- `KnownFolderPath(folder)` returns the path of a known folder (desktop,
+  documents, downloads, music, pictures, videos, profile, roaming and
+  local application data, ProgramData, Program Files, the programs and
+  startup folders of the Start menu, Windows, System32) with
+  `SHGetKnownFolderPath`.
+- `MoveToRecycleBin(owner, paths...)` moves files and folders to the
+  Recycle Bin with `IFileOperation`, without confirmation, progress or
+  error dialogs. Only if an item cannot be recycled does Windows ask
+  whether to delete it permanently.
+- `ShellLink`, `LoadShellLink` and `ShellLink.Save` read and write
+  shortcut files (target, arguments, working directory, description,
+  icon and hotkey) with `IShellLinkW` and `IPersistFile`.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only shell`. Every check must pass.
+  `-Full` also prints the INFO lines with the paths of the known folders
+  and the loaded shortcut; note anything unexpected, such as a folder
+  moved to OneDrive.
+- By hand: open the Recycle Bin in Explorer, check that the items named
+  `walk-shell-test-file.txt` and `walk-shell-test-...` (a folder with
+  `inner.txt`) are there and can be restored, then delete them.
+- Optional, by hand: call `MoveToRecycleBin` for a file on a network
+  share or a drive without a Recycle Bin; Windows must ask whether to
+  delete it permanently, and "No" must return an error and keep the
+  file.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
