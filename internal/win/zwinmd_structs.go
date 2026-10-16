@@ -475,6 +475,14 @@ type TRACKMOUSEEVENT struct {
 
 // Windows.Win32.UI.WindowsAndMessaging
 
+type FLASHWINFO struct {
+	CbSize    uint32
+	Hwnd      HWND
+	DwFlags   uint32
+	UCount    uint32
+	DwTimeout uint32
+}
+
 type ICONINFO struct {
 	FIcon    BOOL
 	XHotspot uint32

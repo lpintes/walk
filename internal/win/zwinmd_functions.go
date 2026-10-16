@@ -83,6 +83,7 @@ var (
 	procFillRgn                     = libgdi32.NewProc("FillRgn")
 	procFindResourceW               = libkernel32.NewProc("FindResourceW")
 	procFindWindowW                 = libuser32.NewProc("FindWindowW")
+	procFlashWindowEx               = libuser32.NewProc("FlashWindowEx")
 	procGdiFlush                    = libgdi32.NewProc("GdiFlush")
 	procGdipCreateBitmapFromFile    = libgdiplus.NewProc("GdipCreateBitmapFromFile")
 	procGdipCreateHBITMAPFromBitmap = libgdiplus.NewProc("GdipCreateHBITMAPFromBitmap")
@@ -180,6 +181,8 @@ var (
 	procSHGetFileInfoW              = libshell32.NewProc("SHGetFileInfoW")
 	procSHGetKnownFolderPath        = libshell32.NewProc("SHGetKnownFolderPath")
 	procSHGetSpecialFolderPathW     = libshell32.NewProc("SHGetSpecialFolderPathW")
+	procSHOpenFolderAndSelectItems  = libshell32.NewProc("SHOpenFolderAndSelectItems")
+	procSHParseDisplayName          = libshell32.NewProc("SHParseDisplayName")
 	procScreenToClient              = libuser32.NewProc("ScreenToClient")
 	procSelectObject                = libgdi32.NewProc("SelectObject")
 	procSendMessageW                = libuser32.NewProc("SendMessageW")
@@ -208,6 +211,7 @@ var (
 	procSetWindowPlacement          = libuser32.NewProc("SetWindowPlacement")
 	procSetWindowPos                = libuser32.NewProc("SetWindowPos")
 	procSetWindowTheme              = libuxtheme.NewProc("SetWindowTheme")
+	procShellExecuteW               = libshell32.NewProc("ShellExecuteW")
 	procShell_NotifyIconW           = libshell32.NewProc("Shell_NotifyIconW")
 	procShell_NotifyIconGetRect     = libshell32.NewProc("Shell_NotifyIconGetRect")
 	procShowWindow                  = libuser32.NewProc("ShowWindow")
@@ -507,6 +511,11 @@ func FindResource(hModule HMODULE, lpName *uint16, lpType *uint16) HRSRC {
 func FindWindow(lpClassName *uint16, lpWindowName *uint16) HWND {
 	r1, _, _ := syscall.SyscallN(procFindWindowW.Addr(), uintptr(unsafe.Pointer(lpClassName)), uintptr(unsafe.Pointer(lpWindowName)))
 	return HWND(r1)
+}
+
+func FlashWindowEx(pfwi *FLASHWINFO) bool {
+	r1, _, _ := syscall.SyscallN(procFlashWindowEx.Addr(), uintptr(unsafe.Pointer(pfwi)))
+	return r1 != 0
 }
 
 func GdiFlush() bool {
@@ -996,6 +1005,16 @@ func SHGetSpecialFolderPath(hwnd HWND, pszPath *uint16, csidl CSIDL, fCreate boo
 	return r1 != 0
 }
 
+func SHOpenFolderAndSelectItems(pidlFolder uintptr, cidl uint32, apidl *uintptr, dwFlags uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(procSHOpenFolderAndSelectItems.Addr(), pidlFolder, uintptr(cidl), uintptr(unsafe.Pointer(apidl)), uintptr(dwFlags))
+	return HRESULT(r1)
+}
+
+func SHParseDisplayName(pszName *uint16, pbc unsafe.Pointer, ppidl *uintptr, sfgaoIn uint32, psfgaoOut *uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(procSHParseDisplayName.Addr(), uintptr(unsafe.Pointer(pszName)), uintptr(pbc), uintptr(unsafe.Pointer(ppidl)), uintptr(sfgaoIn), uintptr(unsafe.Pointer(psfgaoOut)))
+	return HRESULT(r1)
+}
+
 func ScreenToClient(hWnd HWND, lpPoint *POINT) bool {
 	r1, _, _ := syscall.SyscallN(procScreenToClient.Addr(), uintptr(hWnd), uintptr(unsafe.Pointer(lpPoint)))
 	return r1 != 0
@@ -1138,6 +1157,11 @@ func SetWindowPos(hWnd HWND, hWndInsertAfter HWND, X int32, Y int32, cx int32, c
 func SetWindowTheme(hwnd HWND, pszSubAppName *uint16, pszSubIdList *uint16) HRESULT {
 	r1, _, _ := syscall.SyscallN(procSetWindowTheme.Addr(), uintptr(hwnd), uintptr(unsafe.Pointer(pszSubAppName)), uintptr(unsafe.Pointer(pszSubIdList)))
 	return HRESULT(r1)
+}
+
+func ShellExecute(hwnd HWND, lpOperation *uint16, lpFile *uint16, lpParameters *uint16, lpDirectory *uint16, nShowCmd int32) HINSTANCE {
+	r1, _, _ := syscall.SyscallN(procShellExecuteW.Addr(), uintptr(hwnd), uintptr(unsafe.Pointer(lpOperation)), uintptr(unsafe.Pointer(lpFile)), uintptr(unsafe.Pointer(lpParameters)), uintptr(unsafe.Pointer(lpDirectory)), uintptr(nShowCmd))
+	return HINSTANCE(r1)
 }
 
 func Shell_NotifyIcon(dwMessage uint32, lpData *NOTIFYICONDATA) bool {

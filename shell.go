@@ -264,3 +264,60 @@ func withShellLink(f func(sl *win.IShellLink, pf *win.IPersistFile) error) error
 		return f(sl, pf)
 	})
 }
+
+// ShellOpen opens a file, folder or web address as a double click in
+// Explorer does: a document in its default program, a folder in Explorer, a
+// URL in the default browser. Dialogs Windows shows, for example to choose
+// a program for a file type without one, are owned by owner, which may be
+// nil.
+func ShellOpen(owner Form, target string) error {
+	targetPtr, err := windows.UTF16PtrFromString(target)
+	if err != nil {
+		return wrapError(err)
+	}
+	var hwnd win.HWND
+	if owner != nil {
+		hwnd = owner.Handle()
+	}
+
+	return withCOM(func() error {
+		// A result above 32 means success; smaller values are error
+		// codes.
+		switch r := win.ShellExecute(hwnd, nil, targetPtr, nil, nil, win.SW_SHOWNORMAL); {
+		case r > 32:
+			return nil
+		case r == win.SE_ERR_NOASSOC:
+			return newError(fmt.Sprintf("ShellExecute: no program is associated with %q", target))
+		default:
+			return newError(fmt.Sprintf("ShellExecute failed with code %d for %q", r, target))
+		}
+	})
+}
+
+// ShowInFolder opens the folder that holds a file or folder in Explorer and
+// selects it there.
+func ShowInFolder(path string) error {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return wrapError(err)
+	}
+	absPtr, err := windows.UTF16PtrFromString(abs)
+	if err != nil {
+		return wrapError(err)
+	}
+
+	return withCOM(func() error {
+		var pidl uintptr
+		if hr := win.SHParseDisplayName(absPtr, nil, &pidl, 0, nil); win.FAILED(hr) {
+			return errorFromHRESULT("SHParseDisplayName", hr)
+		}
+		defer win.CoTaskMemFree(pidl)
+
+		// With no child items, the folder of pidl is opened and the item
+		// itself is selected.
+		if hr := win.SHOpenFolderAndSelectItems(pidl, 0, nil, 0); win.FAILED(hr) {
+			return errorFromHRESULT("SHOpenFolderAndSelectItems", hr)
+		}
+		return nil
+	})
+}

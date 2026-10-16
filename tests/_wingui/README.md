@@ -105,8 +105,12 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   `PersonalPath`), `MoveToRecycleBin` with a file and a folder from the
   temporary folder (they must be gone afterwards; they stay in the
   Recycle Bin under names starting with `walk-shell-test`) and with a
-  missing file (error), and a `ShellLink` with every field saved, loaded
-  back and compared.
+  missing file (error), a `ShellLink` with every field saved, loaded
+  back and compared, and `ShellOpen` and `ShowInFolder` with a missing
+  file (error). `shell.exe manual` shows a window with buttons for
+  `ShellOpen` of a text file and a web page, `ShowInFolder` and
+  `RequestAttention` after 3 seconds; results go to a polite live
+  region and standard output.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With
