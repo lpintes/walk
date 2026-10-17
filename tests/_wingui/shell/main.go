@@ -2,14 +2,25 @@
 //
 //   - KnownFolderPath: every known folder has a path, and the folders with
 //     an environment variable match it.
+//
 //   - MoveToRecycleBin: a file and a folder in the temporary folder are
 //     moved to the Recycle Bin (their names start with walk-shell-test, so
 //     they can be found and deleted there), and a missing file is an error.
+//
 //   - ShellLink: a shortcut with every field set is saved, loaded back and
 //     compared, and loading a missing file is an error.
 //
+//   - ShellOpen and ShowInFolder (step 12 part 3): a missing file is an
+//     error. Opening real files would open windows, so that is left to the
+//     manual test.
+//
 // It needs no window. It prints PASS and FAIL lines and exits with code 1
 // if a check failed.
+//
+// With the argument "manual" it skips the checks and shows a window with
+// buttons that open a text file in its default program, open a web page,
+// show a file in its folder and flash the taskbar button, for a test by
+// hand with a screen reader.
 package main
 
 import (
@@ -17,8 +28,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/lpintes/walk"
+	. "github.com/lpintes/walk/declarative"
 )
 
 var failed bool
@@ -158,10 +171,64 @@ func testShellLink() {
 	check("LoadShellLink missing file", err != nil, "no error")
 }
 
+func testOpen() {
+	missing := filepath.Join(os.TempDir(), "walk-shell-test-missing.txt")
+	err := walk.ShellOpen(nil, missing)
+	check("ShellOpen missing file", err != nil, "no error")
+	err = walk.ShowInFolder(missing)
+	check("ShowInFolder missing file", err != nil, "no error")
+}
+
+func manual() {
+	file := filepath.Join(os.TempDir(), "walk-shell-test-open.txt")
+	if err := os.WriteFile(file, []byte("walk shell test: opened with ShellOpen\r\n"), 0o644); err != nil {
+		fmt.Println("FAIL", err)
+		os.Exit(1)
+	}
+	var mw *walk.MainWindow
+	var status *walk.Label
+	report := func(what string, err error) {
+		text := what + ": done"
+		if err != nil {
+			text = what + ": " + err.Error()
+		}
+		fmt.Println(text)
+		status.SetText(text)
+	}
+	if _, err := (MainWindow{
+		AssignTo: &mw,
+		Title:    "walk shell manual test",
+		Layout:   VBox{},
+		Children: []Widget{
+			PushButton{Text: "&Open text file", OnClicked: func() { report("ShellOpen "+file, walk.ShellOpen(mw, file)) }},
+			PushButton{Text: "Open &web page", OnClicked: func() { report("ShellOpen https://example.com", walk.ShellOpen(mw, "https://example.com")) }},
+			PushButton{Text: "&Show text file in folder", OnClicked: func() { report("ShowInFolder "+file, walk.ShowInFolder(file)) }},
+			PushButton{Text: "&Flash taskbar button in 3 seconds", OnClicked: func() {
+				go func() {
+					time.Sleep(3 * time.Second)
+					mw.Synchronize(func() {
+						mw.RequestAttention()
+						report("RequestAttention", nil)
+					})
+				}()
+			}},
+			Label{AssignTo: &status, Text: "Ready", Accessibility: Accessibility{LiveSetting: AccLiveSettingPolite}},
+		},
+	}).Run(); err != nil {
+		fmt.Println("FAIL", err)
+		os.Exit(1)
+	}
+}
+
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "manual" {
+		manual()
+		return
+	}
 	testKnownFolders()
 	testRecycleBin()
 	testShellLink()
+	testOpen()
 	if failed {
 		os.Exit(1)
 	}

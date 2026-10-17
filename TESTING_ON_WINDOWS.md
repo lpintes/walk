@@ -472,6 +472,41 @@ How to test, on 386 and amd64 (after `build.ps1`):
   delete it permanently, and "No" must return an error and keep the
   file.
 
+## Task 10: shell functions, opening files and the taskbar
+
+Step 12 part 3 adds:
+
+- `ShellOpen(owner, target)` opens a file, folder or web address like a
+  double click in Explorer (`ShellExecuteEx` with the default verb). It
+  shows no message box on errors; it returns them.
+- `ShowInFolder(path)` opens the folder of a file in Explorer and selects
+  the file (`SHOpenFolderAndSelectItems`).
+- `FormBase.RequestAttention()` flashes the taskbar button until the form
+  is activated (`FlashWindowEx`).
+- `ProgressIndicator` now calls `ITaskbarList3.HrInit` before using the
+  taskbar object and releases it when the form is disposed; its methods
+  return an error after that.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only shell,part3`: `shell` checks that
+  `ShellOpen` and `ShowInFolder` return an error for a missing file;
+  `part3` still sets the taskbar progress and overlay icon (now after
+  `HrInit`).
+- Manually, with NVDA: `tests\shell\shell.exe manual` (in the build
+  directory). Press each button and note what happens and what NVDA says:
+  - "Open text file": Notepad (or the default text editor) opens
+    `walk-shell-test-open.txt` from the temporary folder.
+  - "Open web page": the default browser opens https://example.com.
+  - "Show text file in folder": Explorer opens the temporary folder with
+    the text file selected; NVDA should read the selected file.
+  - "Flash taskbar button in 3 seconds": switch to another window within
+    3 seconds; the taskbar button of the test window should flash until
+    it is activated again (sighted check or a screen reader that reports
+    it; NVDA usually does not).
+  - The status label is a polite live region and reads each result.
+- `examples.ps1`: `progressindicator` must still work.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

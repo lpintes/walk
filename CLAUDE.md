@@ -463,8 +463,40 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     writes 4 bytes); no existing declaration was affected. GUID
     variables of type `syscall.GUID` get keyed literals, as `go vet`
     wants for types of other packages.
-  - Still open from the plan: taskbar (`ITaskbarList3` is used only by
-    `ProgressIndicator`), `ShellExecuteEx` to open files.
+- Step 12, part 3 (last part of step 12): draft pull request
+  lpintes/walk#18. Task 10 of `TESTING_ON_WINDOWS.md` passed on Windows
+  11: `run.ps1 -Only shell,part3` and `examples.ps1` on 386 and amd64,
+  and the manual test with NVDA on amd64 (`shell.exe manual`: the text
+  file opens in its editor, the web page in the browser, and Explorer
+  opens the folder with the file selected). The flashing cannot be
+  judged by ear, so a throwaway program checked it on 386 and amd64: a
+  hidden window registered with `RegisterShellHookWindow` got
+  `HSHELL_FLASH` (0x8006) for a minimized form after `RequestAttention`
+  (5 messages in 5 seconds) and none without the call.
+  - `ShellOpen(owner, target)`: `ShellExecuteEx` with the default verb
+    for a file, folder or URL, with `SEE_MASK_NOASYNC` (the launch is
+    finished before `withCOM` uninitializes COM, also on a goroutine
+    without a message loop) and `SEE_MASK_FLAG_NO_UI` (errors such as a
+    missing file are returned, not shown in a message box; without it
+    the test hung on that message box). `SE_ERR_NOASSOC` gets its own
+    message, other failures carry the `GetLastError` text.
+    `SHELLEXECUTEINFO` is hand-written (anonymous union of `hIcon` and
+    `hMonitor`); 60 bytes on 386 and 112 on amd64, as in the SDK.
+    `ShowInFolder(path)`: `SHParseDisplayName` and
+    `SHOpenFolderAndSelectItems` (generated again, with `uintptr` for
+    the `ITEMIDLIST` pointers).
+  - Taskbar: the taskbar features walk needs were already there
+    (`ProgressIndicator` with progress state, value and overlay icon).
+    Fixed: `ITaskbarList3.HrInit` was never called (the documentation
+    requires it first) and the object was never released; it is now
+    released in `FormBase.Dispose`; after that `SetState`,
+    `SetCompleted` and `SetOverlayIcon` return an error instead of
+    calling through a nil pointer. New `FormBase.RequestAttention`
+    flashes the taskbar button until the form is activated
+    (`FlashWindowEx`); not added to the `Form` interface, so it is not a
+    breaking change.
+  - Not done: thumbnail toolbar buttons and jump lists (larger, little
+    use for screen reader users).
 - Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
   (generic event types are step 9).
 

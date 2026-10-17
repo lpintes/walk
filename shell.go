@@ -264,3 +264,71 @@ func withShellLink(f func(sl *win.IShellLink, pf *win.IPersistFile) error) error
 		return f(sl, pf)
 	})
 }
+
+// ShellOpen opens a file, folder or web address as a double click in
+// Explorer does: a document in its default program, a folder in Explorer, a
+// URL in the default browser. Dialogs Windows shows, for example to choose
+// a program for a file type without one, are owned by owner, which may be
+// nil.
+func ShellOpen(owner Form, target string) error {
+	targetPtr, err := windows.UTF16PtrFromString(target)
+	if err != nil {
+		return wrapError(err)
+	}
+	var hwnd win.HWND
+	if owner != nil {
+		hwnd = owner.Handle()
+	}
+
+	return withCOM(func() error {
+		// SEE_MASK_NOASYNC makes ShellExecuteEx finish before it returns.
+		// Without it the shell may complete the launch later on this
+		// thread, which would be cut short by OleUninitialize or would
+		// never happen on a goroutine without a message loop.
+		// SEE_MASK_FLAG_NO_UI returns errors, for example a missing file,
+		// to the caller instead of showing a message box.
+		sei := win.SHELLEXECUTEINFO{
+			FMask:  win.SEE_MASK_NOASYNC | win.SEE_MASK_FLAG_NO_UI,
+			Hwnd:   hwnd,
+			LpFile: targetPtr,
+			NShow:  win.SW_SHOWNORMAL,
+		}
+		sei.CbSize = uint32(unsafe.Sizeof(sei))
+		if win.ShellExecuteEx(&sei) {
+			return nil
+		}
+		errno := syscall.Errno(win.GetLastError())
+		if sei.HInstApp == win.SE_ERR_NOASSOC {
+			return newError(fmt.Sprintf("ShellExecuteEx: no program is associated with %q", target))
+		}
+		return newError(fmt.Sprintf("ShellExecuteEx failed for %q: %v (error %d)", target, errno, uint32(errno)))
+	})
+}
+
+// ShowInFolder opens the folder that holds a file or folder in Explorer and
+// selects it there.
+func ShowInFolder(path string) error {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return wrapError(err)
+	}
+	absPtr, err := windows.UTF16PtrFromString(abs)
+	if err != nil {
+		return wrapError(err)
+	}
+
+	return withCOM(func() error {
+		var pidl uintptr
+		if hr := win.SHParseDisplayName(absPtr, nil, &pidl, 0, nil); win.FAILED(hr) {
+			return errorFromHRESULT("SHParseDisplayName", hr)
+		}
+		defer win.CoTaskMemFree(pidl)
+
+		// With no child items, the folder of pidl is opened and the item
+		// itself is selected.
+		if hr := win.SHOpenFolderAndSelectItems(pidl, 0, nil, 0); win.FAILED(hr) {
+			return errorFromHRESULT("SHOpenFolderAndSelectItems", hr)
+		}
+		return nil
+	})
+}

@@ -50,10 +50,34 @@ func newTaskbarList3(hwnd win.HWND) (*ProgressIndicator, error) {
 		return nil, errorFromHRESULT("IClassFactory.CreateInstance", hr)
 	}
 
-	return &ProgressIndicator{taskbarList3: (*win.ITaskbarList3)(taskbarList3ObjectPtr), hwnd: hwnd}, nil
+	taskbarList3 := (*win.ITaskbarList3)(taskbarList3ObjectPtr)
+	// The documentation requires HrInit before any other method.
+	if hr := taskbarList3.HrInit(); win.FAILED(hr) {
+		taskbarList3.Release()
+		return nil, errorFromHRESULT("ITaskbarList3.HrInit", hr)
+	}
+
+	return &ProgressIndicator{taskbarList3: taskbarList3, hwnd: hwnd}, nil
+}
+
+// release releases the taskbar object when the form is disposed.
+func (pi *ProgressIndicator) release() {
+	if pi.taskbarList3 != nil {
+		pi.taskbarList3.Release()
+		pi.taskbarList3 = nil
+	}
+}
+
+// errProgressIndicatorReleased is returned by the methods that call the
+// taskbar object after the form was disposed.
+func errProgressIndicatorReleased() error {
+	return newError("ProgressIndicator: the form was disposed")
 }
 
 func (pi *ProgressIndicator) SetState(state PIState) error {
+	if pi.taskbarList3 == nil {
+		return errProgressIndicatorReleased()
+	}
 	if hr := pi.taskbarList3.SetProgressState(pi.hwnd, (int)(state)); win.FAILED(hr) {
 		return errorFromHRESULT("ITaskbarList3.setprogressState", hr)
 	}
@@ -74,6 +98,9 @@ func (pi *ProgressIndicator) Total() uint32 {
 }
 
 func (pi *ProgressIndicator) SetCompleted(completed uint32) error {
+	if pi.taskbarList3 == nil {
+		return errProgressIndicatorReleased()
+	}
 	if hr := pi.taskbarList3.SetProgressValue(pi.hwnd, completed, pi.total); win.FAILED(hr) {
 		return errorFromHRESULT("ITaskbarList3.SetProgressValue", hr)
 	}
@@ -86,6 +113,9 @@ func (pi *ProgressIndicator) Completed() uint32 {
 }
 
 func (pi *ProgressIndicator) SetOverlayIcon(icon *Icon, description string) error {
+	if pi.taskbarList3 == nil {
+		return errProgressIndicatorReleased()
+	}
 	handle := win.HICON(0)
 	if icon != nil {
 		handle = icon.handleForDPI(int(win.GetDpiForWindow(pi.hwnd)))

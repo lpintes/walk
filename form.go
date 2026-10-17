@@ -150,7 +150,25 @@ func (fb *FormBase) Dispose() {
 		fb.quitLayoutPerformer <- struct{}{}
 	}
 
+	if fb.progressIndicator != nil {
+		fb.progressIndicator.release()
+		fb.progressIndicator = nil
+	}
+
 	fb.WindowBase.Dispose()
+}
+
+// RequestAttention flashes the taskbar button of the form until the user
+// activates the form, unless it is already the foreground window. Use it
+// when something finished in the background. Screen readers do not
+// announce the flashing; Announce speaks a message.
+func (fb *FormBase) RequestAttention() {
+	fwi := win.FLASHWINFO{
+		Hwnd:    fb.hWnd,
+		DwFlags: win.FLASHW_TRAY | win.FLASHW_TIMERNOFG,
+	}
+	fwi.CbSize = uint32(unsafe.Sizeof(fwi))
+	win.FlashWindowEx(&fwi)
 }
 
 func (fb *FormBase) AsContainerBase() *ContainerBase {

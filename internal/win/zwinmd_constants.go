@@ -142,6 +142,12 @@ const (
 	FOF_WANTNUKEWARNING  = 0x4000
 )
 
+// FLASHWINFO_FLAGS
+const (
+	FLASHW_TIMERNOFG = 0xc
+	FLASHW_TRAY      = 2
+)
+
 // FONT_CHARSET
 const (
 	DEFAULT_CHARSET = 1
@@ -619,9 +625,10 @@ const (
 
 // SHOW_WINDOW_CMD
 const (
-	SW_HIDE   = 0
-	SW_SHOW   = 5
-	SW_SHOWNA = 8
+	SW_HIDE       = 0
+	SW_SHOW       = 5
+	SW_SHOWNA     = 8
+	SW_SHOWNORMAL = 1
 )
 
 // SIGDN
@@ -1312,6 +1319,9 @@ const (
 	NIN_BALLOONUSERCLICK = 0x405
 	NIN_SELECT           = 0x400
 	NOTIFYICON_VERSION   = 3
+	SEE_MASK_FLAG_NO_UI  = 0x400
+	SEE_MASK_NOASYNC     = 0x100
+	SE_ERR_NOASSOC       = 0x1f
 )
 
 // Windows.Win32.UI.WindowsAndMessaging

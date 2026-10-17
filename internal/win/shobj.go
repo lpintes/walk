@@ -11,6 +11,18 @@ import (
 	"unsafe"
 )
 
+func (obj *ITaskbarList3) HrInit() HRESULT {
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.HrInit,
+		uintptr(unsafe.Pointer(obj)))
+	return HRESULT(ret)
+}
+
+func (obj *ITaskbarList3) Release() uint32 {
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.Release,
+		uintptr(unsafe.Pointer(obj)))
+	return uint32(ret)
+}
+
 func (obj *ITaskbarList3) SetProgressState(hwnd HWND, state int) HRESULT {
 	ret, _, _ := syscall.SyscallN(obj.LpVtbl.SetProgressState,
 		uintptr(unsafe.Pointer(obj)),
