@@ -281,16 +281,27 @@ func ShellOpen(owner Form, target string) error {
 	}
 
 	return withCOM(func() error {
-		// A result above 32 means success; smaller values are error
-		// codes.
-		switch r := win.ShellExecute(hwnd, nil, targetPtr, nil, nil, win.SW_SHOWNORMAL); {
-		case r > 32:
-			return nil
-		case r == win.SE_ERR_NOASSOC:
-			return newError(fmt.Sprintf("ShellExecute: no program is associated with %q", target))
-		default:
-			return newError(fmt.Sprintf("ShellExecute failed with code %d for %q", r, target))
+		// SEE_MASK_NOASYNC makes ShellExecuteEx finish before it returns.
+		// Without it the shell may complete the launch later on this
+		// thread, which would be cut short by OleUninitialize or would
+		// never happen on a goroutine without a message loop.
+		// SEE_MASK_FLAG_NO_UI returns errors, for example a missing file,
+		// to the caller instead of showing a message box.
+		sei := win.SHELLEXECUTEINFO{
+			FMask:  win.SEE_MASK_NOASYNC | win.SEE_MASK_FLAG_NO_UI,
+			Hwnd:   hwnd,
+			LpFile: targetPtr,
+			NShow:  win.SW_SHOWNORMAL,
 		}
+		sei.CbSize = uint32(unsafe.Sizeof(sei))
+		if win.ShellExecuteEx(&sei) {
+			return nil
+		}
+		errno := syscall.Errno(win.GetLastError())
+		if sei.HInstApp == win.SE_ERR_NOASSOC {
+			return newError(fmt.Sprintf("ShellExecuteEx: no program is associated with %q", target))
+		}
+		return newError(fmt.Sprintf("ShellExecuteEx failed for %q: %v (error %d)", target, errno, uint32(errno)))
 	})
 }
 

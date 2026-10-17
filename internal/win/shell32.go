@@ -43,6 +43,28 @@ type NOTIFYICONIDENTIFIER struct {
 	GuidItem syscall.GUID
 }
 
+// SHELLEXECUTEINFO is hand-written because the generator does not support
+// its anonymous union of hIcon and hMonitor, which HIconOrMonitor stands
+// for. shellapi.h declares it with #pragma pack(1) on 386, where every
+// field is 4 bytes, so the layout is the same.
+type SHELLEXECUTEINFO struct {
+	CbSize         uint32
+	FMask          uint32
+	Hwnd           HWND
+	LpVerb         *uint16
+	LpFile         *uint16
+	LpParameters   *uint16
+	LpDirectory    *uint16
+	NShow          int32
+	HInstApp       HINSTANCE
+	LpIDList       uintptr
+	LpClass        *uint16
+	HkeyClass      HKEY
+	DwHotKey       uint32
+	HIconOrMonitor HANDLE
+	HProcess       HANDLE
+}
+
 type SHFILEINFO struct {
 	HIcon         HICON
 	IIcon         int32

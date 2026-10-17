@@ -211,7 +211,7 @@ var (
 	procSetWindowPlacement          = libuser32.NewProc("SetWindowPlacement")
 	procSetWindowPos                = libuser32.NewProc("SetWindowPos")
 	procSetWindowTheme              = libuxtheme.NewProc("SetWindowTheme")
-	procShellExecuteW               = libshell32.NewProc("ShellExecuteW")
+	procShellExecuteExW             = libshell32.NewProc("ShellExecuteExW")
 	procShell_NotifyIconW           = libshell32.NewProc("Shell_NotifyIconW")
 	procShell_NotifyIconGetRect     = libshell32.NewProc("Shell_NotifyIconGetRect")
 	procShowWindow                  = libuser32.NewProc("ShowWindow")
@@ -1159,9 +1159,9 @@ func SetWindowTheme(hwnd HWND, pszSubAppName *uint16, pszSubIdList *uint16) HRES
 	return HRESULT(r1)
 }
 
-func ShellExecute(hwnd HWND, lpOperation *uint16, lpFile *uint16, lpParameters *uint16, lpDirectory *uint16, nShowCmd int32) HINSTANCE {
-	r1, _, _ := syscall.SyscallN(procShellExecuteW.Addr(), uintptr(hwnd), uintptr(unsafe.Pointer(lpOperation)), uintptr(unsafe.Pointer(lpFile)), uintptr(unsafe.Pointer(lpParameters)), uintptr(unsafe.Pointer(lpDirectory)), uintptr(nShowCmd))
-	return HINSTANCE(r1)
+func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) bool {
+	r1, _, _ := syscall.SyscallN(procShellExecuteExW.Addr(), uintptr(unsafe.Pointer(pExecInfo)))
+	return r1 != 0
 }
 
 func Shell_NotifyIcon(dwMessage uint32, lpData *NOTIFYICONDATA) bool {

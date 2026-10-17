@@ -68,7 +68,16 @@ func (pi *ProgressIndicator) release() {
 	}
 }
 
+// errProgressIndicatorReleased is returned by the methods that call the
+// taskbar object after the form was disposed.
+func errProgressIndicatorReleased() error {
+	return newError("ProgressIndicator: the form was disposed")
+}
+
 func (pi *ProgressIndicator) SetState(state PIState) error {
+	if pi.taskbarList3 == nil {
+		return errProgressIndicatorReleased()
+	}
 	if hr := pi.taskbarList3.SetProgressState(pi.hwnd, (int)(state)); win.FAILED(hr) {
 		return errorFromHRESULT("ITaskbarList3.setprogressState", hr)
 	}
@@ -89,6 +98,9 @@ func (pi *ProgressIndicator) Total() uint32 {
 }
 
 func (pi *ProgressIndicator) SetCompleted(completed uint32) error {
+	if pi.taskbarList3 == nil {
+		return errProgressIndicatorReleased()
+	}
 	if hr := pi.taskbarList3.SetProgressValue(pi.hwnd, completed, pi.total); win.FAILED(hr) {
 		return errorFromHRESULT("ITaskbarList3.SetProgressValue", hr)
 	}
@@ -101,6 +113,9 @@ func (pi *ProgressIndicator) Completed() uint32 {
 }
 
 func (pi *ProgressIndicator) SetOverlayIcon(icon *Icon, description string) error {
+	if pi.taskbarList3 == nil {
+		return errProgressIndicatorReleased()
+	}
 	handle := win.HICON(0)
 	if icon != nil {
 		handle = icon.handleForDPI(int(win.GetDpiForWindow(pi.hwnd)))

@@ -477,13 +477,15 @@ How to test, on 386 and amd64 (after `build.ps1`):
 Step 12 part 3 adds:
 
 - `ShellOpen(owner, target)` opens a file, folder or web address like a
-  double click in Explorer (`ShellExecute` with the default verb).
+  double click in Explorer (`ShellExecuteEx` with the default verb). It
+  shows no message box on errors; it returns them.
 - `ShowInFolder(path)` opens the folder of a file in Explorer and selects
   the file (`SHOpenFolderAndSelectItems`).
 - `FormBase.RequestAttention()` flashes the taskbar button until the form
   is activated (`FlashWindowEx`).
 - `ProgressIndicator` now calls `ITaskbarList3.HrInit` before using the
-  taskbar object and releases it when the form is disposed.
+  taskbar object and releases it when the form is disposed; its methods
+  return an error after that.
 
 How to test, on 386 and amd64 (after `build.ps1`):
 

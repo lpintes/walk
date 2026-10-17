@@ -664,6 +664,8 @@ const SB_THUMBPOSITION
 const SB_THUMBTRACK
 const SB_VERT
 const SC_CLOSE
+const SEE_MASK_FLAG_NO_UI
+const SEE_MASK_NOASYNC
 const SE_ERR_NOASSOC
 const SHGFI_SMALLICON
 const SHGFI_SYSICONINDEX
@@ -1286,7 +1288,7 @@ func SetWindowLongPtr fallback=SetWindowLong dwNewLong:uintptr nIndex:int result
 func SetWindowPlacement
 func SetWindowPos
 func SetWindowTheme
-func ShellExecute
+func ShellExecuteEx
 func Shell_NotifyIcon
 func Shell_NotifyIconGetRect
 func ShowWindow
