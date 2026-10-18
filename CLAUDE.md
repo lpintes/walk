@@ -544,6 +544,28 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   overlay. All examples share one manifest. Regenerate with
   `go run github.com/akavel/rsrc@v0.10.2 -manifest <name>.exe.manifest
   -arch <arch> -o rsrc_windows_<arch>.syso` in the example directory.
+- Step 13, part 2: draft pull request (number in the next commit), not
+  yet tested on Windows (task 12 of `TESTING_ON_WINDOWS.md`, the same
+  test program `tests/_wingui/uia` with more widgets).
+  - Control patterns as methods of `Element`, each getting the pattern
+    with `GetCurrentPatternAs` for the call and releasing it; an
+    element without it returns an error wrapping
+    `ErrPatternNotSupported`. Invoke, Value, RangeValue (with the struct
+    `RangeValue`), Toggle (`ToggleState`), ExpandCollapse
+    (`ExpandCollapseState`), SelectionItem, Selection, Text (`Text`,
+    `SelectedText`), Window (`CloseWindow`, `WindowVisualState`,
+    `SetWindowVisualState`, `IsModal`), ScrollItem and the MSAA
+    properties of LegacyIAccessible (`DefaultAction`,
+    `DoDefaultAction`, `Description`).
+  - New in `internal/win` (generated): the eleven pattern interfaces
+    with `methods`, `IUIAutomationTextRange` and
+    `IUIAutomationTextRangeArray`, their IIDs, the pattern IDs and the
+    `ToggleState`, `ExpandCollapseState` and `WindowVisualState`
+    constants. Hand-written: `IUIAutomationRangeValuePattern.SetValue`
+    (`float64` by value: two stack words on 386, a register on amd64,
+    where `syscall.SyscallN` copies the arguments to the XMM registers
+    too; `E_NOTIMPL` on arm64, where `SyscallN` sets no floating-point
+    registers).
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 

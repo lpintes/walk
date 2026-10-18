@@ -543,6 +543,34 @@ How to test, on 386 and amd64 (after `build.ps1`):
   readable and that names and control types match what NVDA says in the
   window.
 
+## Task 12: UI Automation control patterns
+
+Step 13 part 2 adds the control patterns to the package `uia`, as
+methods of `Element`: `Invoke`, `Value` and `SetValue`, `RangeValue` and
+`SetRangeValue`, `ToggleState` and `Toggle`, `ExpandCollapseState`,
+`Expand` and `Collapse`, `Select` and the other selection methods,
+`Text` and `SelectedText`, the window methods (`CloseWindow`,
+`WindowVisualState`, `SetWindowVisualState`, `IsModal`),
+`ScrollIntoView`, and `DefaultAction`, `DoDefaultAction` and
+`Description` from the MSAA properties. An element without the pattern
+returns an error wrapping `ErrPatternNotSupported`.
+`IUIAutomationRangeValuePattern.SetValue` takes a `float64` and is
+hand-written: two stack words on 386, a register on amd64; on arm64 it
+returns `E_NOTIMPL`.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only uia`. The test window now also
+  has a multiline edit field, a combo box, a list box and a slider. The
+  pattern checks change them through UI Automation and read the result
+  back both through UI Automation and from the walk widgets. The combo
+  box opens and closes once. Report the FAIL lines with their details.
+- Manually: `tests\uia\uia.exe dump`, as in task 11. The lines now end
+  with the value or state of the element, for example the text of an edit
+  field, "on" for a checked check box, "collapsed" for a closed combo
+  box, "selected" for a selected list item and the range of a slider.
+  Check with NVDA that this matches what NVDA says.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
