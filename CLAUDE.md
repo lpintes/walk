@@ -497,7 +497,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     breaking change.
   - Not done: thumbnail toolbar buttons and jump lists (larger, little
     use for screen reader users).
-- Step 13, part 1: draft pull request (number in the next commit), not
+- Step 13, part 1: draft pull request lpintes/walk#19, not
   yet tested on Windows (task 11 of `TESTING_ON_WINDOWS.md`, test program
   `tests/_wingui/uia` with its `dump` mode).
   - New public package `uia`: `New` connects (`CUIAutomation8`, Windows 8
