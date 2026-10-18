@@ -566,7 +566,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     where `syscall.SyscallN` copies the arguments to the XMM registers
     too; `E_NOTIMPL` on arm64, where `SyscallN` sets no floating-point
     registers).
-- Step 13, part 3: draft pull request (number in the next commit),
+- Step 13, part 3: draft pull request lpintes/walk#21,
   stacked on part 2 (its base is the branch of part 2; merge part 2
   first with a merge commit, delete its branch, and GitHub retargets
   this one to `master`). Not yet tested on Windows (task 13 of
