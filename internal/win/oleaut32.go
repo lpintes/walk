@@ -99,6 +99,21 @@ func (v *VARIANT) SetLong(value int32) {
 	p.lVal = value
 }
 
+// SetBSTR makes v a VT_BSTR variant holding value. VariantClear frees
+// value.
+func (v *VARIANT) SetBSTR(value *uint16 /*BSTR*/) {
+	v.Vt = VT_BSTR
+	p := (*VAR_BSTR)(unsafe.Pointer(v))
+	p.bstrVal = value
+}
+
+// SetBool makes v a VT_BOOL variant holding value.
+func (v *VARIANT) SetBool(value VARIANT_BOOL) {
+	v.Vt = VT_BOOL
+	p := (*VAR_BOOL)(unsafe.Pointer(v))
+	p.boolVal = value
+}
+
 func (v *VARIANT) MustULong() uint32 {
 	value, err := v.ULong()
 	if err != nil {

@@ -101,6 +101,7 @@ const CLR_INVALID
 const CLSCTX_ALL
 const CLSCTX_INPROC_HANDLER
 const CLSCTX_INPROC_SERVER
+const COINIT_MULTITHREADED
 const COLOR_3DDKSHADOW
 const COLOR_3DFACE
 const COLOR_3DHIGHLIGHT
@@ -577,6 +578,9 @@ const PS_JOIN_ROUND
 const PS_NULL
 const PS_SOLID
 const PS_USERSTYLE
+const PropertyConditionFlags_IgnoreCase
+const PropertyConditionFlags_MatchSubstring
+const PropertyConditionFlags_None
 const ProviderOptions_ServerSideProvider
 const ProviderOptions_UseComThreading
 const RGN_DIFF
@@ -859,11 +863,78 @@ const TVS_HASBUTTONS
 const TVS_LINESATROOT
 const TVS_SHOWSELALWAYS
 const TVS_TRACKSELECT
+const TreeScope_Children
+const TreeScope_Descendants
+const TreeScope_Element
+const TreeScope_Subtree
 const UDM_SETBUDDY
 const UDN_DELTAPOS uint32
 const UDS_ALIGNRIGHT
 const UDS_ARROWKEYS
 const UDS_HOTTRACK
+const UIA_AcceleratorKeyPropertyId
+const UIA_AccessKeyPropertyId
+const UIA_AppBarControlTypeId
+const UIA_AutomationIdPropertyId
+const UIA_ButtonControlTypeId
+const UIA_CalendarControlTypeId
+const UIA_CheckBoxControlTypeId
+const UIA_ClassNamePropertyId
+const UIA_ComboBoxControlTypeId
+const UIA_ControlTypePropertyId
+const UIA_CustomControlTypeId
+const UIA_DataGridControlTypeId
+const UIA_DataItemControlTypeId
+const UIA_DocumentControlTypeId
+const UIA_E_ELEMENTNOTAVAILABLE
+const UIA_EditControlTypeId
+const UIA_FrameworkIdPropertyId
+const UIA_GroupControlTypeId
+const UIA_HasKeyboardFocusPropertyId
+const UIA_HeaderControlTypeId
+const UIA_HeaderItemControlTypeId
+const UIA_HelpTextPropertyId
+const UIA_HyperlinkControlTypeId
+const UIA_ImageControlTypeId
+const UIA_IsContentElementPropertyId
+const UIA_IsControlElementPropertyId
+const UIA_IsEnabledPropertyId
+const UIA_IsKeyboardFocusablePropertyId
+const UIA_IsOffscreenPropertyId
+const UIA_IsPasswordPropertyId
+const UIA_IsRequiredForFormPropertyId
+const UIA_ItemStatusPropertyId
+const UIA_ItemTypePropertyId
+const UIA_ListControlTypeId
+const UIA_ListItemControlTypeId
+const UIA_LocalizedControlTypePropertyId
+const UIA_MenuBarControlTypeId
+const UIA_MenuControlTypeId
+const UIA_MenuItemControlTypeId
+const UIA_NamePropertyId
+const UIA_NativeWindowHandlePropertyId
+const UIA_PaneControlTypeId
+const UIA_ProcessIdPropertyId
+const UIA_ProgressBarControlTypeId
+const UIA_RadioButtonControlTypeId
+const UIA_ScrollBarControlTypeId
+const UIA_SemanticZoomControlTypeId
+const UIA_SeparatorControlTypeId
+const UIA_SliderControlTypeId
+const UIA_SpinnerControlTypeId
+const UIA_SplitButtonControlTypeId
+const UIA_StatusBarControlTypeId
+const UIA_TabControlTypeId
+const UIA_TabItemControlTypeId
+const UIA_TableControlTypeId
+const UIA_TextControlTypeId
+const UIA_ThumbControlTypeId
+const UIA_TitleBarControlTypeId
+const UIA_ToolBarControlTypeId
+const UIA_ToolTipControlTypeId
+const UIA_TreeControlTypeId
+const UIA_TreeItemControlTypeId
+const UIA_WindowControlTypeId
 const UISF_HIDEFOCUS
 const UIS_CLEAR
 const UIS_INITIALIZE
@@ -1009,6 +1080,7 @@ const VK_XBUTTON1
 const VK_XBUTTON2
 const VK_ZOOM
 const VT_ARRAY VARTYPE
+const VT_EMPTY VARTYPE
 const VT_UI1 VARTYPE
 const WA_ACTIVE
 const WA_CLICKACTIVE
@@ -1115,7 +1187,9 @@ func CloseEnhMetaFile
 func CloseThemeData
 func CoCreateInstance rclsid:REFCLSID riid:REFIID
 func CoGetClassObject pvReserved:*COSERVERINFO rclsid:REFCLSID riid:REFIID
+func CoInitializeEx
 func CoTaskMemFree pv:uintptr
+func CoUninitialize
 func CombineRgn
 func CommDlgExtendedError
 func CopyEnhMetaFile
@@ -1304,6 +1378,7 @@ func UiaClientsAreListening
 func UiaHostProviderFromHwnd
 func UiaRaiseNotificationEvent
 func UpdateWindow
+func VariantClear
 func WindowFromDC
 
 # Structs
@@ -1376,6 +1451,7 @@ struct WNDCLASSEX
 # GUIDs
 
 guid CLSID_AccPropServices
+guid CLSID_CUIAutomation8
 guid CLSID_FileOpenDialog
 guid CLSID_FileOperation
 guid CLSID_ShellLink
@@ -1416,6 +1492,7 @@ guid IID_IRawElementProviderSimple
 guid IID_IShellItem
 guid IID_IShellLinkW
 guid IID_ITaskbarList3
+guid IID_IUIAutomation
 guid IID_IUnknown
 guid IID_IWebBrowser2
 guid LiveSetting_Property_GUID MSAAPROPID
@@ -1453,5 +1530,10 @@ interface IRawElementProviderSimple
 interface IShellItem methods -BindToHandler
 interface IShellLink entry=IShellLinkW methods -GetIDList -SetIDList GetPath.pfd:unsafe.Pointer
 interface ITaskbarList3
+interface IUIAutomation methods -ElementFromPoint -GetRootElementBuildCache -ElementFromHandleBuildCache -ElementFromPointBuildCache -GetFocusedElementBuildCache -CreateCacheRequest -CreatePropertyCondition -CreatePropertyConditionEx -AddAutomationEventHandler -RemoveAutomationEventHandler -AddPropertyChangedEventHandlerNativeArray -AddPropertyChangedEventHandler -RemovePropertyChangedEventHandler -AddStructureChangedEventHandler -RemoveStructureChangedEventHandler -AddFocusChangedEventHandler -RemoveFocusChangedEventHandler -RectToVariant -VariantToRect -CreateProxyFactoryEntry -get_ProxyFactoryMapping -CheckNotSupported -ElementFromIAccessible -ElementFromIAccessibleBuildCache
+interface IUIAutomationCondition methods
+interface IUIAutomationElement methods -FindFirstBuildCache -FindAllBuildCache -BuildUpdatedCache
+interface IUIAutomationElementArray methods
+interface IUIAutomationTreeWalker methods -GetParentElementBuildCache -GetFirstChildElementBuildCache -GetLastChildElementBuildCache -GetNextSiblingElementBuildCache -GetPreviousSiblingElementBuildCache -NormalizeElementBuildCache
 interface IUnknown
 interface IWebBrowser2

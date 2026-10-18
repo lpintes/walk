@@ -40,7 +40,9 @@ var (
 	procCloseThemeData              = libuxtheme.NewProc("CloseThemeData")
 	procCoCreateInstance            = libole32.NewProc("CoCreateInstance")
 	procCoGetClassObject            = libole32.NewProc("CoGetClassObject")
+	procCoInitializeEx              = libole32.NewProc("CoInitializeEx")
 	procCoTaskMemFree               = libole32.NewProc("CoTaskMemFree")
+	procCoUninitialize              = libole32.NewProc("CoUninitialize")
 	procCombineRgn                  = libgdi32.NewProc("CombineRgn")
 	procCommDlgExtendedError        = libcomdlg32.NewProc("CommDlgExtendedError")
 	procCopyEnhMetaFileW            = libgdi32.NewProc("CopyEnhMetaFileW")
@@ -227,6 +229,7 @@ var (
 	procUiaHostProviderFromHwnd     = libuiautomationcore.NewProc("UiaHostProviderFromHwnd")
 	procUiaRaiseNotificationEvent   = libuiautomationcore.NewProc("UiaRaiseNotificationEvent")
 	procUpdateWindow                = libuser32.NewProc("UpdateWindow")
+	procVariantClear                = liboleaut32.NewProc("VariantClear")
 	procWindowFromDC                = libuser32.NewProc("WindowFromDC")
 )
 
@@ -300,8 +303,17 @@ func CoGetClassObject(rclsid REFCLSID, dwClsContext uint32, pvReserved *COSERVER
 	return HRESULT(r1)
 }
 
+func CoInitializeEx(pvReserved unsafe.Pointer, dwCoInit uint32) HRESULT {
+	r1, _, _ := syscall.SyscallN(procCoInitializeEx.Addr(), uintptr(pvReserved), uintptr(dwCoInit))
+	return HRESULT(r1)
+}
+
 func CoTaskMemFree(pv uintptr) {
 	syscall.SyscallN(procCoTaskMemFree.Addr(), pv)
+}
+
+func CoUninitialize() {
+	syscall.SyscallN(procCoUninitialize.Addr())
 }
 
 func CombineRgn(hrgnDst HRGN, hrgnSrc1 HRGN, hrgnSrc2 HRGN, iMode int32) int32 {
@@ -1236,6 +1248,11 @@ func UiaRaiseNotificationEvent(provider *IRawElementProviderSimple, notification
 func UpdateWindow(hWnd HWND) bool {
 	r1, _, _ := syscall.SyscallN(procUpdateWindow.Addr(), uintptr(hWnd))
 	return r1 != 0
+}
+
+func VariantClear(pvarg *VARIANT) HRESULT {
+	r1, _, _ := syscall.SyscallN(procVariantClear.Addr(), uintptr(unsafe.Pointer(pvarg)))
+	return HRESULT(r1)
 }
 
 func WindowFromDC(hDC HDC) HWND {

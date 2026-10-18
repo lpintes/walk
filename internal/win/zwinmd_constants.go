@@ -40,6 +40,11 @@ const (
 	CLSCTX_INPROC_SERVER  = 1
 )
 
+// COINIT
+const (
+	COINIT_MULTITHREADED = 0
+)
+
 // COMBOBOXINFO_BUTTON_STATE
 const (
 	STATE_SYSTEM_FOCUSABLE   = 0x100000
@@ -555,6 +560,13 @@ const (
 	PBS_NORMAL = 1
 )
 
+// PropertyConditionFlags
+const (
+	PropertyConditionFlags_IgnoreCase     = 1
+	PropertyConditionFlags_MatchSubstring = 2
+	PropertyConditionFlags_None           = 0
+)
+
 // ProviderOptions
 const (
 	ProviderOptions_ServerSideProvider = 2
@@ -786,9 +798,88 @@ const (
 	TVIF_TEXT          = 1
 )
 
+// TreeScope
+const (
+	TreeScope_Children    = 2
+	TreeScope_Descendants = 4
+	TreeScope_Element     = 1
+	TreeScope_Subtree     = 7
+)
+
+// UIA_CONTROLTYPE_ID
+const (
+	UIA_AppBarControlTypeId       = 0xc378
+	UIA_ButtonControlTypeId       = 0xc350
+	UIA_CalendarControlTypeId     = 0xc351
+	UIA_CheckBoxControlTypeId     = 0xc352
+	UIA_ComboBoxControlTypeId     = 0xc353
+	UIA_CustomControlTypeId       = 0xc369
+	UIA_DataGridControlTypeId     = 0xc36c
+	UIA_DataItemControlTypeId     = 0xc36d
+	UIA_DocumentControlTypeId     = 0xc36e
+	UIA_EditControlTypeId         = 0xc354
+	UIA_GroupControlTypeId        = 0xc36a
+	UIA_HeaderControlTypeId       = 0xc372
+	UIA_HeaderItemControlTypeId   = 0xc373
+	UIA_HyperlinkControlTypeId    = 0xc355
+	UIA_ImageControlTypeId        = 0xc356
+	UIA_ListControlTypeId         = 0xc358
+	UIA_ListItemControlTypeId     = 0xc357
+	UIA_MenuBarControlTypeId      = 0xc35a
+	UIA_MenuControlTypeId         = 0xc359
+	UIA_MenuItemControlTypeId     = 0xc35b
+	UIA_PaneControlTypeId         = 0xc371
+	UIA_ProgressBarControlTypeId  = 0xc35c
+	UIA_RadioButtonControlTypeId  = 0xc35d
+	UIA_ScrollBarControlTypeId    = 0xc35e
+	UIA_SemanticZoomControlTypeId = 0xc377
+	UIA_SeparatorControlTypeId    = 0xc376
+	UIA_SliderControlTypeId       = 0xc35f
+	UIA_SpinnerControlTypeId      = 0xc360
+	UIA_SplitButtonControlTypeId  = 0xc36f
+	UIA_StatusBarControlTypeId    = 0xc361
+	UIA_TabControlTypeId          = 0xc362
+	UIA_TabItemControlTypeId      = 0xc363
+	UIA_TableControlTypeId        = 0xc374
+	UIA_TextControlTypeId         = 0xc364
+	UIA_ThumbControlTypeId        = 0xc36b
+	UIA_TitleBarControlTypeId     = 0xc375
+	UIA_ToolBarControlTypeId      = 0xc365
+	UIA_ToolTipControlTypeId      = 0xc366
+	UIA_TreeControlTypeId         = 0xc367
+	UIA_TreeItemControlTypeId     = 0xc368
+	UIA_WindowControlTypeId       = 0xc370
+)
+
+// UIA_PROPERTY_ID
+const (
+	UIA_AcceleratorKeyPropertyId       = 0x7536
+	UIA_AccessKeyPropertyId            = 0x7537
+	UIA_AutomationIdPropertyId         = 0x753b
+	UIA_ClassNamePropertyId            = 0x753c
+	UIA_ControlTypePropertyId          = 0x7533
+	UIA_FrameworkIdPropertyId          = 0x7548
+	UIA_HasKeyboardFocusPropertyId     = 0x7538
+	UIA_HelpTextPropertyId             = 0x753d
+	UIA_IsContentElementPropertyId     = 0x7541
+	UIA_IsControlElementPropertyId     = 0x7540
+	UIA_IsEnabledPropertyId            = 0x753a
+	UIA_IsKeyboardFocusablePropertyId  = 0x7539
+	UIA_IsOffscreenPropertyId          = 0x7546
+	UIA_IsPasswordPropertyId           = 0x7543
+	UIA_IsRequiredForFormPropertyId    = 0x7549
+	UIA_ItemStatusPropertyId           = 0x754a
+	UIA_ItemTypePropertyId             = 0x7545
+	UIA_LocalizedControlTypePropertyId = 0x7534
+	UIA_NamePropertyId                 = 0x7535
+	UIA_NativeWindowHandlePropertyId   = 0x7544
+	UIA_ProcessIdPropertyId            = 0x7532
+)
+
 // VARENUM
 const (
 	VT_ARRAY VARTYPE = 0x2000
+	VT_EMPTY VARTYPE = 0
 	VT_UI1   VARTYPE = 0x11
 )
 
@@ -1081,6 +1172,7 @@ const (
 	ROLE_SYSTEM_WINDOW             = 9
 	STATE_SYSTEM_HASPOPUP          = 0x40000000
 	STATE_SYSTEM_NORMAL            = 0
+	UIA_E_ELEMENTNOTAVAILABLE      = 0x80040201
 )
 
 // Windows.Win32.UI.Controls

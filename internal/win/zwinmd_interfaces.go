@@ -313,6 +313,878 @@ type IRawElementProviderSimple struct {
 	LpVtbl *IRawElementProviderSimpleVtbl
 }
 
+type IUIAutomationVtbl struct {
+	QueryInterface                            uintptr
+	AddRef                                    uintptr
+	Release                                   uintptr
+	CompareElements                           uintptr
+	CompareRuntimeIds                         uintptr
+	GetRootElement                            uintptr
+	ElementFromHandle                         uintptr
+	ElementFromPoint                          uintptr
+	GetFocusedElement                         uintptr
+	GetRootElementBuildCache                  uintptr
+	ElementFromHandleBuildCache               uintptr
+	ElementFromPointBuildCache                uintptr
+	GetFocusedElementBuildCache               uintptr
+	CreateTreeWalker                          uintptr
+	Get_ControlViewWalker                     uintptr
+	Get_ContentViewWalker                     uintptr
+	Get_RawViewWalker                         uintptr
+	Get_RawViewCondition                      uintptr
+	Get_ControlViewCondition                  uintptr
+	Get_ContentViewCondition                  uintptr
+	CreateCacheRequest                        uintptr
+	CreateTrueCondition                       uintptr
+	CreateFalseCondition                      uintptr
+	CreatePropertyCondition                   uintptr
+	CreatePropertyConditionEx                 uintptr
+	CreateAndCondition                        uintptr
+	CreateAndConditionFromArray               uintptr
+	CreateAndConditionFromNativeArray         uintptr
+	CreateOrCondition                         uintptr
+	CreateOrConditionFromArray                uintptr
+	CreateOrConditionFromNativeArray          uintptr
+	CreateNotCondition                        uintptr
+	AddAutomationEventHandler                 uintptr
+	RemoveAutomationEventHandler              uintptr
+	AddPropertyChangedEventHandlerNativeArray uintptr
+	AddPropertyChangedEventHandler            uintptr
+	RemovePropertyChangedEventHandler         uintptr
+	AddStructureChangedEventHandler           uintptr
+	RemoveStructureChangedEventHandler        uintptr
+	AddFocusChangedEventHandler               uintptr
+	RemoveFocusChangedEventHandler            uintptr
+	RemoveAllEventHandlers                    uintptr
+	IntNativeArrayToSafeArray                 uintptr
+	IntSafeArrayToNativeArray                 uintptr
+	RectToVariant                             uintptr
+	VariantToRect                             uintptr
+	SafeArrayToRectNativeArray                uintptr
+	CreateProxyFactoryEntry                   uintptr
+	Get_ProxyFactoryMapping                   uintptr
+	GetPropertyProgrammaticName               uintptr
+	GetPatternProgrammaticName                uintptr
+	PollForPotentialSupportedPatterns         uintptr
+	PollForPotentialSupportedProperties       uintptr
+	CheckNotSupported                         uintptr
+	Get_ReservedNotSupportedValue             uintptr
+	Get_ReservedMixedAttributeValue           uintptr
+	ElementFromIAccessible                    uintptr
+	ElementFromIAccessibleBuildCache          uintptr
+}
+
+type IUIAutomation struct {
+	LpVtbl *IUIAutomationVtbl
+}
+
+func (obj *IUIAutomation) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomation) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomation) CompareElements(el1 *IUIAutomationElement, el2 *IUIAutomationElement, areSame *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CompareElements, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(el1)), uintptr(unsafe.Pointer(el2)), uintptr(unsafe.Pointer(areSame)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CompareRuntimeIds(runtimeId1 *SAFEARRAY, runtimeId2 *SAFEARRAY, areSame *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CompareRuntimeIds, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(runtimeId1)), uintptr(unsafe.Pointer(runtimeId2)), uintptr(unsafe.Pointer(areSame)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) GetRootElement(root **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetRootElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(root)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) ElementFromHandle(hwnd HWND, element **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.ElementFromHandle, uintptr(unsafe.Pointer(obj)), uintptr(hwnd), uintptr(unsafe.Pointer(element)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) GetFocusedElement(element **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetFocusedElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateTreeWalker(pCondition *IUIAutomationCondition, walker **IUIAutomationTreeWalker) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateTreeWalker, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pCondition)), uintptr(unsafe.Pointer(walker)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_ControlViewWalker(walker **IUIAutomationTreeWalker) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ControlViewWalker, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(walker)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_ContentViewWalker(walker **IUIAutomationTreeWalker) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ContentViewWalker, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(walker)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_RawViewWalker(walker **IUIAutomationTreeWalker) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_RawViewWalker, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(walker)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_RawViewCondition(condition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_RawViewCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_ControlViewCondition(condition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ControlViewCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_ContentViewCondition(condition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ContentViewCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateTrueCondition(newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateTrueCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateFalseCondition(newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateFalseCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateAndCondition(condition1 *IUIAutomationCondition, condition2 *IUIAutomationCondition, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateAndCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition1)), uintptr(unsafe.Pointer(condition2)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateAndConditionFromArray(conditions *SAFEARRAY, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateAndConditionFromArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(conditions)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateAndConditionFromNativeArray(conditions **IUIAutomationCondition, conditionCount int32, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateAndConditionFromNativeArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(conditions)), uintptr(conditionCount), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateOrCondition(condition1 *IUIAutomationCondition, condition2 *IUIAutomationCondition, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateOrCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition1)), uintptr(unsafe.Pointer(condition2)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateOrConditionFromArray(conditions *SAFEARRAY, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateOrConditionFromArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(conditions)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateOrConditionFromNativeArray(conditions **IUIAutomationCondition, conditionCount int32, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateOrConditionFromNativeArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(conditions)), uintptr(conditionCount), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) CreateNotCondition(condition *IUIAutomationCondition, newCondition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateNotCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition)), uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) RemoveAllEventHandlers() HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RemoveAllEventHandlers, uintptr(unsafe.Pointer(obj)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) IntNativeArrayToSafeArray(array *int32, arrayCount int32, safeArray **SAFEARRAY) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.IntNativeArrayToSafeArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(array)), uintptr(arrayCount), uintptr(unsafe.Pointer(safeArray)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) IntSafeArrayToNativeArray(intArray *SAFEARRAY, array **int32, arrayCount *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.IntSafeArrayToNativeArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(intArray)), uintptr(unsafe.Pointer(array)), uintptr(unsafe.Pointer(arrayCount)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) SafeArrayToRectNativeArray(rects *SAFEARRAY, rectArray **RECT, rectArrayCount *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SafeArrayToRectNativeArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(rects)), uintptr(unsafe.Pointer(rectArray)), uintptr(unsafe.Pointer(rectArrayCount)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) GetPropertyProgrammaticName(property int32, name **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetPropertyProgrammaticName, uintptr(unsafe.Pointer(obj)), uintptr(property), uintptr(unsafe.Pointer(name)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) GetPatternProgrammaticName(pattern int32, name **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetPatternProgrammaticName, uintptr(unsafe.Pointer(obj)), uintptr(pattern), uintptr(unsafe.Pointer(name)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) PollForPotentialSupportedPatterns(pElement *IUIAutomationElement, patternIds **SAFEARRAY, patternNames **SAFEARRAY) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.PollForPotentialSupportedPatterns, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pElement)), uintptr(unsafe.Pointer(patternIds)), uintptr(unsafe.Pointer(patternNames)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) PollForPotentialSupportedProperties(pElement *IUIAutomationElement, propertyIds **SAFEARRAY, propertyNames **SAFEARRAY) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.PollForPotentialSupportedProperties, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pElement)), uintptr(unsafe.Pointer(propertyIds)), uintptr(unsafe.Pointer(propertyNames)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_ReservedNotSupportedValue(notSupportedValue **IUnknown) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ReservedNotSupportedValue, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(notSupportedValue)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) Get_ReservedMixedAttributeValue(mixedAttributeValue **IUnknown) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ReservedMixedAttributeValue, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(mixedAttributeValue)))
+	return HRESULT(r1)
+}
+
+type IUIAutomationConditionVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+}
+
+type IUIAutomationCondition struct {
+	LpVtbl *IUIAutomationConditionVtbl
+}
+
+func (obj *IUIAutomationCondition) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCondition) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationCondition) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+type IUIAutomationElementVtbl struct {
+	QueryInterface                  uintptr
+	AddRef                          uintptr
+	Release                         uintptr
+	SetFocus                        uintptr
+	GetRuntimeId                    uintptr
+	FindFirst                       uintptr
+	FindAll                         uintptr
+	FindFirstBuildCache             uintptr
+	FindAllBuildCache               uintptr
+	BuildUpdatedCache               uintptr
+	GetCurrentPropertyValue         uintptr
+	GetCurrentPropertyValueEx       uintptr
+	GetCachedPropertyValue          uintptr
+	GetCachedPropertyValueEx        uintptr
+	GetCurrentPatternAs             uintptr
+	GetCachedPatternAs              uintptr
+	GetCurrentPattern               uintptr
+	GetCachedPattern                uintptr
+	GetCachedParent                 uintptr
+	GetCachedChildren               uintptr
+	Get_CurrentProcessId            uintptr
+	Get_CurrentControlType          uintptr
+	Get_CurrentLocalizedControlType uintptr
+	Get_CurrentName                 uintptr
+	Get_CurrentAcceleratorKey       uintptr
+	Get_CurrentAccessKey            uintptr
+	Get_CurrentHasKeyboardFocus     uintptr
+	Get_CurrentIsKeyboardFocusable  uintptr
+	Get_CurrentIsEnabled            uintptr
+	Get_CurrentAutomationId         uintptr
+	Get_CurrentClassName            uintptr
+	Get_CurrentHelpText             uintptr
+	Get_CurrentCulture              uintptr
+	Get_CurrentIsControlElement     uintptr
+	Get_CurrentIsContentElement     uintptr
+	Get_CurrentIsPassword           uintptr
+	Get_CurrentNativeWindowHandle   uintptr
+	Get_CurrentItemType             uintptr
+	Get_CurrentIsOffscreen          uintptr
+	Get_CurrentOrientation          uintptr
+	Get_CurrentFrameworkId          uintptr
+	Get_CurrentIsRequiredForForm    uintptr
+	Get_CurrentItemStatus           uintptr
+	Get_CurrentBoundingRectangle    uintptr
+	Get_CurrentLabeledBy            uintptr
+	Get_CurrentAriaRole             uintptr
+	Get_CurrentAriaProperties       uintptr
+	Get_CurrentIsDataValidForForm   uintptr
+	Get_CurrentControllerFor        uintptr
+	Get_CurrentDescribedBy          uintptr
+	Get_CurrentFlowsTo              uintptr
+	Get_CurrentProviderDescription  uintptr
+	Get_CachedProcessId             uintptr
+	Get_CachedControlType           uintptr
+	Get_CachedLocalizedControlType  uintptr
+	Get_CachedName                  uintptr
+	Get_CachedAcceleratorKey        uintptr
+	Get_CachedAccessKey             uintptr
+	Get_CachedHasKeyboardFocus      uintptr
+	Get_CachedIsKeyboardFocusable   uintptr
+	Get_CachedIsEnabled             uintptr
+	Get_CachedAutomationId          uintptr
+	Get_CachedClassName             uintptr
+	Get_CachedHelpText              uintptr
+	Get_CachedCulture               uintptr
+	Get_CachedIsControlElement      uintptr
+	Get_CachedIsContentElement      uintptr
+	Get_CachedIsPassword            uintptr
+	Get_CachedNativeWindowHandle    uintptr
+	Get_CachedItemType              uintptr
+	Get_CachedIsOffscreen           uintptr
+	Get_CachedOrientation           uintptr
+	Get_CachedFrameworkId           uintptr
+	Get_CachedIsRequiredForForm     uintptr
+	Get_CachedItemStatus            uintptr
+	Get_CachedBoundingRectangle     uintptr
+	Get_CachedLabeledBy             uintptr
+	Get_CachedAriaRole              uintptr
+	Get_CachedAriaProperties        uintptr
+	Get_CachedIsDataValidForForm    uintptr
+	Get_CachedControllerFor         uintptr
+	Get_CachedDescribedBy           uintptr
+	Get_CachedFlowsTo               uintptr
+	Get_CachedProviderDescription   uintptr
+	GetClickablePoint               uintptr
+}
+
+type IUIAutomationElement struct {
+	LpVtbl *IUIAutomationElementVtbl
+}
+
+func (obj *IUIAutomationElement) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationElement) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationElement) SetFocus() HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetFocus, uintptr(unsafe.Pointer(obj)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetRuntimeId(runtimeId **SAFEARRAY) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetRuntimeId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(runtimeId)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) FindFirst(scope int32, condition *IUIAutomationCondition, found **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.FindFirst, uintptr(unsafe.Pointer(obj)), uintptr(scope), uintptr(unsafe.Pointer(condition)), uintptr(unsafe.Pointer(found)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) FindAll(scope int32, condition *IUIAutomationCondition, found **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.FindAll, uintptr(unsafe.Pointer(obj)), uintptr(scope), uintptr(unsafe.Pointer(condition)), uintptr(unsafe.Pointer(found)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCurrentPropertyValue(propertyId int32, retVal *VARIANT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentPropertyValue, uintptr(unsafe.Pointer(obj)), uintptr(propertyId), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCurrentPropertyValueEx(propertyId int32, ignoreDefaultValue bool, retVal *VARIANT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentPropertyValueEx, uintptr(unsafe.Pointer(obj)), uintptr(propertyId), uintptr(BoolToBOOL(ignoreDefaultValue)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCachedPropertyValue(propertyId int32, retVal *VARIANT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedPropertyValue, uintptr(unsafe.Pointer(obj)), uintptr(propertyId), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCachedPropertyValueEx(propertyId int32, ignoreDefaultValue bool, retVal *VARIANT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedPropertyValueEx, uintptr(unsafe.Pointer(obj)), uintptr(propertyId), uintptr(BoolToBOOL(ignoreDefaultValue)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCurrentPatternAs(patternId int32, riid *syscall.GUID, patternObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentPatternAs, uintptr(unsafe.Pointer(obj)), uintptr(patternId), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(patternObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCachedPatternAs(patternId int32, riid *syscall.GUID, patternObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedPatternAs, uintptr(unsafe.Pointer(obj)), uintptr(patternId), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(patternObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCurrentPattern(patternId int32, patternObject **IUnknown) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentPattern, uintptr(unsafe.Pointer(obj)), uintptr(patternId), uintptr(unsafe.Pointer(patternObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCachedPattern(patternId int32, patternObject **IUnknown) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedPattern, uintptr(unsafe.Pointer(obj)), uintptr(patternId), uintptr(unsafe.Pointer(patternObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCachedParent(parent **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedParent, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(parent)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetCachedChildren(children **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedChildren, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(children)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentProcessId(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentProcessId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentControlType(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentControlType, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentLocalizedControlType(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentLocalizedControlType, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentName(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentName, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentAcceleratorKey(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentAcceleratorKey, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentAccessKey(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentAccessKey, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentHasKeyboardFocus(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentHasKeyboardFocus, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsKeyboardFocusable(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsKeyboardFocusable, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsEnabled(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsEnabled, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentAutomationId(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentAutomationId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentClassName(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentClassName, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentHelpText(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentHelpText, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentCulture(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentCulture, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsControlElement(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsControlElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsContentElement(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsContentElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsPassword(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsPassword, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentNativeWindowHandle(retVal *HWND) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentNativeWindowHandle, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentItemType(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentItemType, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsOffscreen(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsOffscreen, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentOrientation(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentOrientation, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentFrameworkId(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentFrameworkId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsRequiredForForm(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsRequiredForForm, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentItemStatus(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentItemStatus, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentBoundingRectangle(retVal *RECT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentBoundingRectangle, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentLabeledBy(retVal **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentLabeledBy, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentAriaRole(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentAriaRole, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentAriaProperties(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentAriaProperties, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentIsDataValidForForm(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentIsDataValidForForm, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentControllerFor(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentControllerFor, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentDescribedBy(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentDescribedBy, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentFlowsTo(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentFlowsTo, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CurrentProviderDescription(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentProviderDescription, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedProcessId(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedProcessId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedControlType(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedControlType, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedLocalizedControlType(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedLocalizedControlType, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedName(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedName, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedAcceleratorKey(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedAcceleratorKey, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedAccessKey(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedAccessKey, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedHasKeyboardFocus(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedHasKeyboardFocus, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsKeyboardFocusable(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsKeyboardFocusable, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsEnabled(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsEnabled, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedAutomationId(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedAutomationId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedClassName(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedClassName, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedHelpText(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedHelpText, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedCulture(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedCulture, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsControlElement(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsControlElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsContentElement(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsContentElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsPassword(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsPassword, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedNativeWindowHandle(retVal *HWND) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedNativeWindowHandle, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedItemType(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedItemType, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsOffscreen(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsOffscreen, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedOrientation(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedOrientation, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedFrameworkId(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedFrameworkId, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsRequiredForForm(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsRequiredForForm, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedItemStatus(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedItemStatus, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedBoundingRectangle(retVal *RECT) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedBoundingRectangle, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedLabeledBy(retVal **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedLabeledBy, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedAriaRole(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedAriaRole, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedAriaProperties(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedAriaProperties, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedIsDataValidForForm(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsDataValidForForm, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedControllerFor(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedControllerFor, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedDescribedBy(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedDescribedBy, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedFlowsTo(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedFlowsTo, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) Get_CachedProviderDescription(retVal **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedProviderDescription, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) GetClickablePoint(clickable *POINT, gotClickable *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetClickablePoint, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(clickable)), uintptr(unsafe.Pointer(gotClickable)))
+	return HRESULT(r1)
+}
+
+type IUIAutomationElementArrayVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+	Get_Length     uintptr
+	GetElement     uintptr
+}
+
+type IUIAutomationElementArray struct {
+	LpVtbl *IUIAutomationElementArrayVtbl
+}
+
+func (obj *IUIAutomationElementArray) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElementArray) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationElementArray) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationElementArray) Get_Length(length *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_Length, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(length)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElementArray) GetElement(index int32, element **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetElement, uintptr(unsafe.Pointer(obj)), uintptr(index), uintptr(unsafe.Pointer(element)))
+	return HRESULT(r1)
+}
+
+type IUIAutomationTreeWalkerVtbl struct {
+	QueryInterface                      uintptr
+	AddRef                              uintptr
+	Release                             uintptr
+	GetParentElement                    uintptr
+	GetFirstChildElement                uintptr
+	GetLastChildElement                 uintptr
+	GetNextSiblingElement               uintptr
+	GetPreviousSiblingElement           uintptr
+	NormalizeElement                    uintptr
+	GetParentElementBuildCache          uintptr
+	GetFirstChildElementBuildCache      uintptr
+	GetLastChildElementBuildCache       uintptr
+	GetNextSiblingElementBuildCache     uintptr
+	GetPreviousSiblingElementBuildCache uintptr
+	NormalizeElementBuildCache          uintptr
+	Get_Condition                       uintptr
+}
+
+type IUIAutomationTreeWalker struct {
+	LpVtbl *IUIAutomationTreeWalkerVtbl
+}
+
+func (obj *IUIAutomationTreeWalker) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) GetParentElement(element *IUIAutomationElement, parent **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetParentElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(parent)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) GetFirstChildElement(element *IUIAutomationElement, first **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetFirstChildElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(first)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) GetLastChildElement(element *IUIAutomationElement, last **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetLastChildElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(last)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) GetNextSiblingElement(element *IUIAutomationElement, next **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetNextSiblingElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(next)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) GetPreviousSiblingElement(element *IUIAutomationElement, previous **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetPreviousSiblingElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(previous)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) NormalizeElement(element *IUIAutomationElement, normalized **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.NormalizeElement, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(normalized)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTreeWalker) Get_Condition(condition **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_Condition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(condition)))
+	return HRESULT(r1)
+}
+
 // Windows.Win32.UI.Shell
 
 type DWebBrowserEvents2Vtbl struct {
