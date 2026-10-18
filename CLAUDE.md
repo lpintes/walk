@@ -497,9 +497,14 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     breaking change.
   - Not done: thumbnail toolbar buttons and jump lists (larger, little
     use for screen reader users).
-- Step 13, part 1: draft pull request lpintes/walk#19, not
-  yet tested on Windows (task 11 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/uia` with its `dump` mode).
+- Step 13, part 1: pull request lpintes/walk#19. Task 11 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/uia` with its
+  `dump` mode) passed on Windows 11: `run.ps1 -Only uia` on 386 and
+  amd64 with every check PASS and none skipped (the names set with
+  `Accessibility.SetName` are visible through UI Automation), and the
+  manual test on amd64: `uia.exe dump` of a foreign MDI application
+  printed a readable control view tree whose names and control types
+  match what NVDA says.
   - New public package `uia`: `New` connects (`CUIAutomation8`, Windows 8
     or later); `Root`, `ElementFromHandle`, `ElementFromPoint`,
     `FocusedElement`; `Element` with typed getters for the common
