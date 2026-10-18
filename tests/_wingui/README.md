@@ -35,7 +35,8 @@ From the repository root, for `amd64` or `386`:
 
 - `build.ps1` builds all examples and tests into
   `%TEMP%\walk-wingui\<arch>\examples` and `...\tests` (`-Out` changes the
-  base directory). Every exe gets the examples' manifest (common controls
+  base directory). The examples and the tests are each built with one
+  `go build`, which compiles and links them in parallel. Every exe gets the examples' manifest (common controls
   version 6, DPI awareness) next to it; the examples also have it
   embedded. `hdn` and `ods` are built with their `trace.patch` applied
   to the working tree; the patch is reverted right after the build, also
