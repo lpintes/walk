@@ -544,7 +544,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   overlay. All examples share one manifest. Regenerate with
   `go run github.com/akavel/rsrc@v0.10.2 -manifest <name>.exe.manifest
   -arch <arch> -o rsrc_windows_<arch>.syso` in the example directory.
-- Step 13, part 2: draft pull request (number in the next commit), not
+- Step 13, part 2: draft pull request lpintes/walk#20, not
   yet tested on Windows (task 12 of `TESTING_ON_WINDOWS.md`, the same
   test program `tests/_wingui/uia` with more widgets).
   - Control patterns as methods of `Element`, each getting the pattern
