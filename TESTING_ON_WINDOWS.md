@@ -507,6 +507,42 @@ How to test, on 386 and amd64 (after `build.ps1`):
   - The status label is a polite live region and reads each result.
 - `examples.ps1`: `progressindicator` must still work.
 
+## Task 11: UI Automation client package
+
+Step 13 part 1 adds the public package `uia`, a client of UI Automation:
+it reads the user interface of any program the way a screen reader does.
+This part covers finding elements and reading their properties:
+
+- `uia.New()` connects; all calls run on one COM thread of the package,
+  so they work from any goroutine. They must not run on the goroutine of
+  the message loop of the windows they ask about.
+- `Root`, `ElementFromHandle`, `ElementFromPoint`, `FocusedElement`.
+- `Element` properties (`Name`, `ControlType`, `AutomationID`,
+  `ClassName`, `IsEnabled`, `BoundingRectangle`, ...), `SetFocus`,
+  `Equal`, `FindFirst` and `FindAll` with conditions (`ByName`,
+  `ByControlType`, `Property`, `PropertyMatch`, `And`, `Or`, `Not`).
+- `TreeWalker` for the control, content and raw views.
+- New hand-written methods in `internal/win` that pass a `POINT` or
+  `VARIANT` by value (`ElementFromPoint`, `CreatePropertyCondition`,
+  `CreatePropertyConditionEx`), different on 386 and on 64-bit.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only uia`. The test opens a walk window
+  and checks the package against it from a goroutine. The focus and
+  `ElementFromPoint` checks need the window in the foreground; otherwise
+  they print SKIP. If they were skipped, run `tests\uia\uia.exe` once
+  more from a console and leave the test window alone until it closes.
+  Report the FAIL lines with their details; the check "edit annotated
+  Name" shows whether the names set with `Accessibility.SetName` are
+  visible through UI Automation.
+- Manually: `tests\uia\uia.exe dump` in a console, then switch to some
+  window (for example Notepad or an example of walk) within 3 seconds
+  and return to the console. It prints the control view tree of that
+  window, one element per line. Check with NVDA that the output is
+  readable and that names and control types match what NVDA says in the
+  window.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
