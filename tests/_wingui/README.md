@@ -124,7 +124,10 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   Invoke and DoDefaultAction (button), Toggle (check box), Value (edit
   field, combo box), Text (multiline edit field), ExpandCollapse (combo
   box), Selection and SelectionItem (list box), RangeValue (slider),
-  Window (main window) and `ErrPatternNotSupported`. `uia.exe dump`
+  Window (main window) and `ErrPatternNotSupported`. Since part 3 also
+  the events: focus (SKIP unless the window is in the foreground),
+  property changes, the live region changed event, structure changes,
+  notifications from `walk.Announce` and closing subscriptions. `uia.exe dump`
   prints the control view tree of the foreground window after 3
   seconds, with the value or state of each element.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,

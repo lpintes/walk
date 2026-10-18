@@ -571,6 +571,28 @@ How to test, on 386 and amd64 (after `build.ps1`):
   box, "selected" for a selected list item and the range of a slider.
   Check with NVDA that this matches what NVDA says.
 
+## Task 13: UI Automation events
+
+Step 13 part 3 adds events to the package `uia`: `OnFocusChanged` of the
+`Automation`, and `OnEvent`, `OnPropertyChanged`, `OnStructureChanged` and
+`OnNotification` of an `Element`. Each returns a `Subscription` that calls
+a Go function on its own goroutine until `Close`. The event handlers are
+COM objects made with `internal/com`; UI Automation calls them on threads
+of its own. The property changed handler gets a `VARIANT` by value, so its
+callback differs between 386 and 64-bit.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only uia`. The test window has a new
+  polite live region label "Status". The event checks change it and the
+  "Disabled" button, add a button "Added", call `walk.Announce` and, if
+  the window is in the foreground, move the focus; each must arrive as
+  an event within two seconds. Report the FAIL lines with their details.
+  Also report if the test hangs: a hang in a `Close` would be a
+  deadlock between the handlers and the package thread.
+- Optional manual test: none is needed; NVDA should behave as before,
+  because the test only listens.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

@@ -20,6 +20,12 @@
 //     Selection and SelectionItem on a list box, RangeValue on a slider,
 //     Window on the window, and ErrPatternNotSupported. Each change is
 //     read back through UI Automation and from the walk widget.
+//   - The events (step 13 part 3): focus changes (if the window is in the
+//     foreground), property changes of a label and a button, the live
+//     region changed event of a label, structure changes when a button is
+//     added, notifications from walk.Announce, Close of a subscription,
+//     also from its own callback, and Close of the Automation with an open
+//     subscription.
 //
 // The checks run on a goroutine while the window runs its message loop, as
 // the package documentation requires. It prints PASS, FAIL and SKIP lines
@@ -71,13 +77,15 @@ const title = "walk uia test"
 
 // The window and the widgets the pattern checks read back.
 var (
-	mw         *walk.MainWindow
-	pressed    int
-	searchEdit *walk.LineEdit
-	optionBox  *walk.CheckBox
-	colorBox   *walk.ComboBox
-	numberList *walk.ListBox
-	volume     *walk.Slider
+	mw             *walk.MainWindow
+	pressed        int
+	searchEdit     *walk.LineEdit
+	optionBox      *walk.CheckBox
+	colorBox       *walk.ComboBox
+	numberList     *walk.ListBox
+	volume         *walk.Slider
+	statusLabel    *walk.Label
+	disabledButton *walk.PushButton
 )
 
 // onUI runs f on the goroutine of the window and waits for it.
@@ -106,12 +114,13 @@ func main() {
 			LineEdit{AssignTo: &searchEdit, Accessibility: Accessibility{Name: "Search"}},
 			LineEdit{PasswordMode: true, Accessibility: Accessibility{Name: "Password"}},
 			PushButton{Text: "Press me", OnClicked: func() { pressed++ }},
-			PushButton{Text: "Disabled", Enabled: false},
+			PushButton{AssignTo: &disabledButton, Text: "Disabled", Enabled: false},
 			CheckBox{AssignTo: &optionBox, Text: "Option"},
 			TextEdit{Text: "line one\r\nline two", Accessibility: Accessibility{Name: "Notes"}},
 			ComboBox{AssignTo: &colorBox, Model: []string{"Red", "Green", "Blue"}, CurrentIndex: 0, Accessibility: Accessibility{Name: "Color"}},
 			ListBox{AssignTo: &numberList, Model: []string{"One", "Two", "Three"}, Accessibility: Accessibility{Name: "Numbers"}},
 			Slider{AssignTo: &volume, MinValue: 0, MaxValue: 100, Value: 30, Accessibility: Accessibility{Name: "Volume"}},
+			Label{AssignTo: &statusLabel, Text: "Status", Accessibility: Accessibility{LiveSetting: AccLiveSettingPolite}},
 		},
 	}).Create(); err != nil {
 		fmt.Println("FAIL create window:", err)
@@ -167,6 +176,7 @@ func run(hwnd uintptr, closeWindow func(), closed <-chan struct{}) {
 	checkFocus(a, window, press, hwnd)
 	checkConcurrency(press)
 	checkPatterns(window, press, option)
+	open := checkEvents(a, window, hwnd)
 	checkRelease(a, window, press)
 
 	closeWindow()
@@ -175,6 +185,7 @@ func run(hwnd uintptr, closeWindow func(), closed <-chan struct{}) {
 	check("element of a closed window", errors.Is(err, uia.ErrElementNotAvailable), "Name returned %v, want ErrElementNotAvailable", err)
 
 	check("Close", a.Close() == nil, "Close returned an error")
+	check("Subscription Close after Automation Close", open == nil || open.Close() == nil, "error")
 	_, err = window.Name()
 	check("element after Close", errors.Is(err, uia.ErrClosed), "Name returned %v, want ErrClosed", err)
 	_, err = a.Root()
@@ -633,4 +644,153 @@ func checkPatterns(window, press, option *uia.Element) {
 
 	check("pattern state names", uia.ToggleOn.String() == "on" && uia.Expanded.String() == "expanded" && uia.WindowMinimized.String() == "minimized",
 		"%q %q %q", uia.ToggleOn.String(), uia.Expanded.String(), uia.WindowMinimized.String())
+}
+
+// waitFor waits up to two seconds for a value from c that ok accepts and
+// returns the values it got.
+func waitFor[T any](c <-chan T, ok func(T) bool) (bool, []T) {
+	var got []T
+	timeout := time.After(2 * time.Second)
+	for {
+		select {
+		case v := <-c:
+			got = append(got, v)
+			if ok(v) {
+				return true, got
+			}
+		case <-timeout:
+			return false, got
+		}
+	}
+}
+
+type propertyEvent struct {
+	sender *uia.Element
+	id     uia.PropertyID
+	value  any
+}
+
+// checkEvents checks the events. It returns a subscription it leaves open
+// for Close of the Automation.
+func checkEvents(a *uia.Automation, window *uia.Element, hwnd uintptr) *uia.Subscription {
+	status := findOne(window, "text Status", uia.And(uia.ByControlType(uia.ControlTypeText), uia.ByName("Status")))
+	disabled := findOne(window, "button Disabled", uia.ByName("Disabled"))
+	search := findOne(window, "edit Search", uia.And(uia.ByControlType(uia.ControlTypeEdit), uia.ByName("Search")))
+	if status == nil || disabled == nil || search == nil {
+		return nil
+	}
+
+	// Property changes: the name of the label and IsEnabled of the
+	// button.
+	properties := make(chan propertyEvent, 100)
+	sub, err := window.OnPropertyChanged(uia.ScopeSubtree, func(sender *uia.Element, id uia.PropertyID, value any) {
+		properties <- propertyEvent{sender, id, value}
+	}, uia.PropertyName, uia.PropertyIsEnabled)
+	if checkErr("OnPropertyChanged", err) {
+		onUI(func() { statusLabel.SetText("Changed 1") })
+		ok, got := waitFor(properties, func(e propertyEvent) bool {
+			return e.id == uia.PropertyName && e.value == "Changed 1" && same(e.sender, status)
+		})
+		check("property changed Name", ok, "got %d events: %v", len(got), got)
+		onUI(func() { disabledButton.SetEnabled(true) })
+		ok, got = waitFor(properties, func(e propertyEvent) bool {
+			return e.id == uia.PropertyIsEnabled && e.value == true && same(e.sender, disabled)
+		})
+		check("property changed IsEnabled", ok, "got %d events: %v", len(got), got)
+		onUI(func() { disabledButton.SetEnabled(false) })
+
+		check("Subscription Close", sub.Close() == nil, "error")
+		for len(properties) > 0 {
+			<-properties
+		}
+		onUI(func() { statusLabel.SetText("Changed 2") })
+		time.Sleep(500 * time.Millisecond)
+		check("no events after Close", len(properties) == 0, "%d events", len(properties))
+		check("Subscription Close again", sub.Close() == nil, "error")
+	}
+
+	// The live region changed event of the label, from a subscription
+	// that closes itself in its callback.
+	live := make(chan *uia.Element, 100)
+	var liveSub *uia.Subscription
+	var liveMu sync.Mutex
+	newSub, err := window.OnEvent(uia.EventLiveRegionChanged, uia.ScopeSubtree, func(sender *uia.Element, id uia.EventID) {
+		live <- sender
+		liveMu.Lock()
+		s := liveSub
+		liveMu.Unlock()
+		if s != nil {
+			s.Close()
+		}
+	})
+	liveMu.Lock()
+	liveSub = newSub
+	liveMu.Unlock()
+	if checkErr("OnEvent LiveRegionChanged", err) {
+		onUI(func() { statusLabel.SetText("Changed 3") })
+		ok, got := waitFor(live, func(e *uia.Element) bool { return same(e, status) })
+		check("live region changed event", ok, "got %d events", len(got))
+		// The callback closed the subscription without a deadlock.
+		onUI(func() { statusLabel.SetText("Changed 4") })
+		time.Sleep(500 * time.Millisecond)
+		check("Close in the callback", len(live) == 0, "%d events after Close", len(live))
+	}
+
+	// Structure changes when a button is added.
+	structure := make(chan uia.StructureChange, 100)
+	sub, err = window.OnStructureChanged(uia.ScopeSubtree, func(sender *uia.Element, change uia.StructureChange) {
+		structure <- change
+	})
+	if checkErr("OnStructureChanged", err) {
+		onUI(func() {
+			if b, err := walk.NewPushButton(searchEdit.Parent()); err == nil {
+				b.SetText("Added")
+			}
+		})
+		ok, got := waitFor(structure, func(c uia.StructureChange) bool { return true })
+		check("structure changed", ok, "got %v", got)
+		sub.Close()
+	}
+
+	// Notifications from walk.Announce.
+	notifications := make(chan uia.Notification, 100)
+	sub, err = window.OnNotification(uia.ScopeSubtree, func(sender *uia.Element, n uia.Notification) {
+		notifications <- n
+	})
+	if checkErr("OnNotification", err) {
+		var announceErr error
+		onUI(func() { announceErr = walk.Announce(mw, "Hello from walk", walk.AnnounceAll) })
+		ok, got := waitFor(notifications, func(n uia.Notification) bool {
+			return n.Text == "Hello from walk" && strings.HasPrefix(n.ActivityID, "Walk.Announce.") &&
+				n.Processing == uia.ProcessingAll && n.Kind == uia.NotificationOther
+		})
+		check("notification", announceErr == nil && ok, "%v, got %+v", announceErr, got)
+		sub.Close()
+	}
+
+	// Focus changes, if the window has the foreground.
+	if uintptr(win.GetForegroundWindow()) == hwnd {
+		focus := make(chan *uia.Element, 100)
+		sub, err = a.OnFocusChanged(func(focused *uia.Element) { focus <- focused })
+		if checkErr("OnFocusChanged", err) {
+			onUI(func() { searchEdit.SetFocus() })
+			ok, got := waitFor(focus, func(e *uia.Element) bool { return same(e, search) })
+			check("focus changed", ok, "got %d events", len(got))
+			sub.Close()
+		}
+	} else {
+		fmt.Println("SKIP focus changed: the window is not in the foreground")
+	}
+
+	check("event names", uia.EventLiveRegionChanged.String() == "LiveRegionChanged" && uia.ChildAdded.String() == "ChildAdded" &&
+		uia.NotificationOther.String() == "Other" && uia.ProcessingAll.String() == "All",
+		"%q %q %q %q", uia.EventLiveRegionChanged.String(), uia.ChildAdded.String(), uia.NotificationOther.String(), uia.ProcessingAll.String())
+
+	_, err = window.OnPropertyChanged(uia.ScopeSubtree, func(*uia.Element, uia.PropertyID, any) {})
+	check("OnPropertyChanged without properties", err != nil, "no error")
+
+	// Left open for Close of the Automation.
+	open, err := window.OnPropertyChanged(uia.ScopeElement, func(*uia.Element, uia.PropertyID, any) {}, uia.PropertyName)
+	checkErr("OnPropertyChanged left open", err)
+	return open
 }
