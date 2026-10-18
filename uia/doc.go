@@ -17,6 +17,29 @@
 // and move the keyboard focus to it (SetFocus). A TreeWalker moves through
 // the tree from element to element.
 //
+// Control patterns are what an element can do. Their methods are methods
+// of Element and return an error wrapping ErrPatternNotSupported for an
+// element without the pattern:
+//
+//   - Invoke: Invoke, for buttons, menu items and links.
+//   - Value: Value, SetValue and IsValueReadOnly, for edit fields and
+//     combo boxes.
+//   - RangeValue: RangeValue and SetRangeValue, for sliders, progress
+//     bars and spinners.
+//   - Toggle: ToggleState and Toggle, for check boxes.
+//   - ExpandCollapse: ExpandCollapseState, Expand and Collapse, for combo
+//     boxes, tree items and menus.
+//   - SelectionItem: Select, AddToSelection, RemoveFromSelection,
+//     IsSelected and SelectionContainer, for list items, tabs and radio
+//     buttons; Selection: Selection and CanSelectMultiple, for their
+//     containers.
+//   - Text: Text and SelectedText, for documents and edit fields.
+//   - Window: CloseWindow, WindowVisualState, SetWindowVisualState and
+//     IsModal, for top-level windows.
+//   - ScrollItem: ScrollIntoView.
+//   - LegacyIAccessible: DefaultAction, DoDefaultAction and Description,
+//     the MSAA properties, for elements of Win32 and MSAA programs.
+//
 // The package works in any Go program, with or without walk windows.
 //
 // # Threads
