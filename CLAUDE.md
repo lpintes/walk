@@ -74,7 +74,7 @@ The `LICENSE` and `AUTHORS` files must be preserved.
 12. Shell integration (queued 2026-10-13): the folder picker of the
     system file dialog first, then known folders, Recycle Bin, shortcuts
     and the taskbar. Needs COM client methods from the generator.
-13. UI Automation client as a public package (candidate, 2026-10-13).
+13. UI Automation client as a public package `uia` (started 2026-10-18).
 
 Steps 12 and 13 come from the review of Windows API areas outside the
 GUI, `windows-api-oblasti.md` in the project files (in Slovak).
@@ -463,8 +463,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     writes 4 bytes); no existing declaration was affected. GUID
     variables of type `syscall.GUID` get keyed literals, as `go vet`
     wants for types of other packages.
-- Step 12, part 3 (last part of step 12): draft pull request
-  lpintes/walk#18. Task 10 of `TESTING_ON_WINDOWS.md` passed on Windows
+- Step 12, part 3 (last part of step 12): pull request
+  lpintes/walk#18, merged. Task 10 of `TESTING_ON_WINDOWS.md` passed on Windows
   11: `run.ps1 -Only shell,part3` and `examples.ps1` on 386 and amd64,
   and the manual test with NVDA on amd64 (`shell.exe manual`: the text
   file opens in its editor, the web page in the browser, and Explorer
@@ -497,8 +497,50 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     breaking change.
   - Not done: thumbnail toolbar buttons and jump lists (larger, little
     use for screen reader users).
-- Steps 4, 5, 7, 9, 11 and 13: not started; step 8 can continue
-  (generic event types are step 9).
+- Step 13, part 1: pull request lpintes/walk#19. Task 11 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/uia` with its
+  `dump` mode) passed on Windows 11: `run.ps1 -Only uia` on 386 and
+  amd64 with every check PASS and none skipped (the names set with
+  `Accessibility.SetName` are visible through UI Automation), and the
+  manual test on amd64: `uia.exe dump` of a foreign MDI application
+  printed a readable control view tree whose names and control types
+  match what NVDA says.
+  - New public package `uia`: `New` connects (`CUIAutomation8`, Windows 8
+    or later); `Root`, `ElementFromHandle`, `ElementFromPoint`,
+    `FocusedElement`; `Element` with typed getters for the common
+    properties, `LabeledBy`, `SetFocus`, `Equal`, `FindFirst` and
+    `FindAll`; `Condition` values (`True`, `False`, `Property`,
+    `PropertyMatch`, `ByName`, `ByAutomationID`, `ByClassName`,
+    `ByControlType`, `And`, `Or`, `Not`), built into COM conditions only
+    for the call, so they need no release; `TreeWalker` for the
+    control, content and raw views and for a condition.
+  - Threads: every call runs on one locked OS thread of the
+    `Automation` in the multithreaded apartment (a channel of
+    functions), so any goroutine may call, also walk's UI goroutine,
+    except about its own windows (the call waits for that thread's
+    messages; documented). Elements are released with `Release` or, as
+    a fallback, by a finalizer that queues the release for the
+    Automation thread. Errors wrap `ErrElementNotAvailable`
+    (`UIA_E_ELEMENTNOTAVAILABLE`), `ErrReleased` or `ErrClosed`; other
+    HRESULTs become `syscall.Errno`.
+  - New in `internal/win` (generated): `IUIAutomation`,
+    `IUIAutomationElement`, `IUIAutomationElementArray`,
+    `IUIAutomationTreeWalker` and `IUIAutomationCondition` with
+    `methods` (methods needing cache requests, event handlers,
+    `SAFEARRAY` conversions or by-value structs skipped),
+    `CLSID_CUIAutomation8`, `IID_IUIAutomation`, the control type,
+    property, `TreeScope` and `PropertyConditionFlags` constants,
+    `CoInitializeEx`, `CoUninitialize` and `VariantClear`.
+    Hand-written: `ElementFromPoint`, `CreatePropertyCondition` and
+    `CreatePropertyConditionEx` (`POINT` and `VARIANT` by value; split
+    into stack words on 386, a register or a pointer to a copy on
+    64-bit) and `VARIANT.SetBSTR` and `SetBool`.
+  - Planned next parts: control patterns (Invoke, Value, Toggle,
+    Selection, ExpandCollapse, Text), then events (focus, property and
+    structure changes, notifications) with handlers made with
+    `internal/com`; then the liveregion test client can use the package.
+- Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
+  event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
 

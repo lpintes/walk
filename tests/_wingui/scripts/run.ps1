@@ -63,7 +63,7 @@ function Report([string]$name, $p, [string]$stop, [string[]]$extra) {
 	Write-Host "=== $name ($Arch): $stop, output in $($p.Out)"
 	$text = Read-Out $p
 	$lines = @($text -split "`r?`n") + $extra
-	if (-not $Full) { $lines = $lines -match "^(PASS|FAIL|KNOWN) " }
+	if (-not $Full) { $lines = $lines -match "^(PASS|FAIL|KNOWN|SKIP) " }
 	$lines | Write-Host
 	$err = Get-Content $p.Err -TotalCount 20 -ErrorAction SilentlyContinue
 	if ($err) { Write-Host "stderr:"; $err | Write-Host }
@@ -91,7 +91,7 @@ if (Want "part3") {
 	Report "part3" $p (Stop-Test $p 5) $extra
 }
 
-foreach ($n in "dragfinish", "hdn", "ods", "upstream", "shell") {
+foreach ($n in "dragfinish", "hdn", "ods", "upstream", "shell", "uia") {
 	if (-not (Want $n)) { continue }
 	$p = Start-Test (Join-Path $root $n) $n
 	Report $n $p (Stop-Test $p 30)

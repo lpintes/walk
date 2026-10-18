@@ -40,10 +40,11 @@ From the repository root, for `amd64` or `386`:
   of the examples do not link, so an overlay hides them. `hdn` and `ods`
   are built with their `trace.patch` applied to the working tree; the
   patch is reverted right after the build, also when the build fails.
-- `run.ps1` runs the self-checking tests and prints their PASS, FAIL and
-  KNOWN lines and a summary; the full output stays in a file next to each
-  exe, whose path is printed (`-Full` prints it all). `-Only part3,hdn`
-  runs a subset, `-Drag` adds `olednd`. Exit code 1 if a test failed.
+- `run.ps1` runs the self-checking tests and prints their PASS, FAIL,
+  KNOWN and SKIP lines and a summary; the full output stays in a file
+  next to each exe, whose path is printed (`-Full` prints it all).
+  `-Only part3,hdn` runs a subset, `-Drag` adds `olednd`. Exit code 1 if
+  a test failed.
 - `examples.ps1` starts every example, writes its window tree with the MSAA
   object of every window to `%TEMP%\walk-wingui\examples-<arch>.txt`,
   posts a few Tab presses to the focused window, records where focus went,
@@ -111,6 +112,14 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   `ShellOpen` of a text file and a web page, `ShowInFolder` and
   `RequestAttention` after 3 seconds; results go to a polite live
   region and standard output.
+- `uia`: the UI Automation client package `uia` (step 13 part 1),
+  checked from a goroutine against a walk window of its own process:
+  properties of the window and its controls, `FindFirst` and `FindAll`
+  with every kind of condition, the tree walkers, focus and
+  `ElementFromPoint` (SKIP unless the window is in the foreground),
+  concurrent calls, finalizers, `Release`, `Close` and an element of a
+  closed window. `uia.exe dump` prints the control view tree of the
+  foreground window after 3 seconds.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

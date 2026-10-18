@@ -73,7 +73,7 @@ try {
 	# The examples load images from ../img.
 	Copy-Item -Recurse -Force (Join-Path $repo "examples\img") (Join-Path $dest "examples")
 
-	foreach ($n in "part3", "dragfinish", "webview", "upstream", "shell") {
+	foreach ($n in "part3", "dragfinish", "webview", "upstream", "shell", "uia") {
 		Build "./tests/_wingui/$n" (Join-Path $dest "tests\$n") $n
 	}
 	# The unit tests of internal/com need Windows; build them as an exe.
