@@ -18,26 +18,12 @@ $failed = @()
 $oldGOOS, $oldGOARCH = $env:GOOS, $env:GOARCH
 $env:GOOS = "windows"
 $env:GOARCH = $Arch
-$flags = @()
-if ($Arch -ne "386") {
-	# The rsrc.syso files of the examples are 386 COFF objects and do not
-	# link on other architectures. An overlay hides them; the manifest
-	# next to the exe replaces the embedded one.
-	New-Item -ItemType Directory -Force $Out | Out-Null
-	$replace = @{}
-	foreach ($s in Get-ChildItem (Join-Path $repo "examples\*\rsrc.syso")) {
-		$replace[$s.FullName -replace "\\", "/"] = ""
-	}
-	$overlay = Join-Path $Out "overlay.json"
-	@{ Replace = $replace } | ConvertTo-Json | Set-Content $overlay
-	$flags += "-overlay=$overlay"
-}
 
 function Build([string]$pkg, [string]$dir, [string]$name) {
 	New-Item -ItemType Directory -Force $dir | Out-Null
 	$exe = Join-Path $dir "$name.exe"
 	Write-Host "build $Arch $pkg"
-	& go build @flags -o $exe $pkg
+	& go build -o $exe $pkg
 	if ($LASTEXITCODE -ne 0) {
 		$script:failed += $pkg
 		return

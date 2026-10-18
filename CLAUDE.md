@@ -31,9 +31,7 @@ The `LICENSE` and `AUTHORS` files must be preserved.
 - Checks before committing:
   - `GOOS=windows GOARCH=amd64 go build ./...`
   - `GOOS=windows GOARCH=386 go build ./...`
-  - `GOOS=windows GOARCH=arm64 go build . ./declarative ./tools/...`
-    (examples do not build on arm64: their `rsrc.syso` files are 386 COFF
-    objects)
+  - `GOOS=windows GOARCH=arm64 go build ./...`
   - `gofmt -l .` must print nothing
   - `GOOS=windows go vet ./...` (only the 3 known warnings in
     `internal/win`; do not add new ones)
@@ -539,6 +537,13 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     Selection, ExpandCollapse, Text), then events (focus, property and
     structure changes, notifications) with handlers made with
     `internal/com`; then the liveregion test client can use the package.
+- Examples on every architecture (2026-10-18, committed to `master`):
+  each example has `rsrc_windows_{386,amd64,arm64}.syso` instead of the
+  386-only `rsrc.syso`, so `go build ./...` works on arm64 and amd64
+  executables embed the manifest too; `build.ps1` no longer needs an
+  overlay. All examples share one manifest. Regenerate with
+  `go run github.com/akavel/rsrc@v0.10.2 -manifest <name>.exe.manifest
+  -arch <arch> -o rsrc_windows_<arch>.syso` in the example directory.
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
@@ -767,4 +772,3 @@ and real dialogs all need new Win32/COM declarations.
   (`LPSTR_TEXTCALLBACK`, `SB_SETTIPTEXT`, `TBM_GETPOS`) stay hand-written.
   `STATE_SYSTEM_VALID` is 0x7fffffff as in the current SDK headers; the
   metadata has the older value 0x3fffffff.
-- The examples have no `rsrc.syso` for arm64.

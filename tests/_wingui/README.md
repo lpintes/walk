@@ -36,10 +36,10 @@ From the repository root, for `amd64` or `386`:
 - `build.ps1` builds all examples and tests into
   `%TEMP%\walk-wingui\<arch>\examples` and `...\tests` (`-Out` changes the
   base directory). Every exe gets the examples' manifest (common controls
-  version 6, DPI awareness) next to it. On amd64 the 386 `rsrc.syso` files
-  of the examples do not link, so an overlay hides them. `hdn` and `ods`
-  are built with their `trace.patch` applied to the working tree; the
-  patch is reverted right after the build, also when the build fails.
+  version 6, DPI awareness) next to it; the examples also have it
+  embedded. `hdn` and `ods` are built with their `trace.patch` applied
+  to the working tree; the patch is reverted right after the build, also
+  when the build fails.
 - `run.ps1` runs the self-checking tests and prints their PASS, FAIL,
   KNOWN and SKIP lines and a summary; the full output stays in a file
   next to each exe, whose path is printed (`-Full` prints it all).
