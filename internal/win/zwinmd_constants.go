@@ -129,6 +129,14 @@ const (
 	TTI_WARNING = 2
 )
 
+// ExpandCollapseState
+const (
+	ExpandCollapseState_Collapsed         = 0
+	ExpandCollapseState_Expanded          = 1
+	ExpandCollapseState_LeafNode          = 3
+	ExpandCollapseState_PartiallyExpanded = 2
+)
+
 // FILEOPENDIALOGOPTIONS
 const (
 	FOS_FORCEFILESYSTEM = 0x40
@@ -798,6 +806,13 @@ const (
 	TVIF_TEXT          = 1
 )
 
+// ToggleState
+const (
+	ToggleState_Indeterminate = 2
+	ToggleState_Off           = 0
+	ToggleState_On            = 1
+)
+
 // TreeScope
 const (
 	TreeScope_Children    = 2
@@ -849,6 +864,21 @@ const (
 	UIA_TreeControlTypeId         = 0xc367
 	UIA_TreeItemControlTypeId     = 0xc368
 	UIA_WindowControlTypeId       = 0xc370
+)
+
+// UIA_PATTERN_ID
+const (
+	UIA_ExpandCollapsePatternId    = 0x2715
+	UIA_InvokePatternId            = 0x2710
+	UIA_LegacyIAccessiblePatternId = 0x2722
+	UIA_RangeValuePatternId        = 0x2713
+	UIA_ScrollItemPatternId        = 0x2721
+	UIA_SelectionItemPatternId     = 0x271a
+	UIA_SelectionPatternId         = 0x2711
+	UIA_TextPatternId              = 0x271e
+	UIA_TogglePatternId            = 0x271f
+	UIA_ValuePatternId             = 0x2712
+	UIA_WindowPatternId            = 0x2719
 )
 
 // UIA_PROPERTY_ID
@@ -1078,6 +1108,13 @@ const (
 	WB_ISDELIMITER = 2
 	WB_LEFT        = 0
 	WB_RIGHT       = 1
+)
+
+// WindowVisualState
+const (
+	WindowVisualState_Maximized = 1
+	WindowVisualState_Minimized = 2
+	WindowVisualState_Normal    = 0
 )
 
 // Windows.Win32.Foundation

@@ -245,6 +245,10 @@ const EVENT_OBJECT_HELPCHANGE
 const EVENT_OBJECT_LIVEREGIONCHANGED
 const EVENT_OBJECT_NAMECHANGE
 const EVENT_OBJECT_STATECHANGE
+const ExpandCollapseState_Collapsed
+const ExpandCollapseState_Expanded
+const ExpandCollapseState_LeafNode
+const ExpandCollapseState_PartiallyExpanded
 const FALSE
 const FF_SWISS
 const FLASHW_TIMERNOFG
@@ -863,6 +867,9 @@ const TVS_HASBUTTONS
 const TVS_LINESATROOT
 const TVS_SHOWSELALWAYS
 const TVS_TRACKSELECT
+const ToggleState_Indeterminate
+const ToggleState_Off
+const ToggleState_On
 const TreeScope_Children
 const TreeScope_Descendants
 const TreeScope_Element
@@ -888,6 +895,7 @@ const UIA_DataItemControlTypeId
 const UIA_DocumentControlTypeId
 const UIA_E_ELEMENTNOTAVAILABLE
 const UIA_EditControlTypeId
+const UIA_ExpandCollapsePatternId
 const UIA_FrameworkIdPropertyId
 const UIA_GroupControlTypeId
 const UIA_HasKeyboardFocusPropertyId
@@ -896,6 +904,7 @@ const UIA_HeaderItemControlTypeId
 const UIA_HelpTextPropertyId
 const UIA_HyperlinkControlTypeId
 const UIA_ImageControlTypeId
+const UIA_InvokePatternId
 const UIA_IsContentElementPropertyId
 const UIA_IsControlElementPropertyId
 const UIA_IsEnabledPropertyId
@@ -905,6 +914,7 @@ const UIA_IsPasswordPropertyId
 const UIA_IsRequiredForFormPropertyId
 const UIA_ItemStatusPropertyId
 const UIA_ItemTypePropertyId
+const UIA_LegacyIAccessiblePatternId
 const UIA_ListControlTypeId
 const UIA_ListItemControlTypeId
 const UIA_LocalizedControlTypePropertyId
@@ -917,7 +927,11 @@ const UIA_PaneControlTypeId
 const UIA_ProcessIdPropertyId
 const UIA_ProgressBarControlTypeId
 const UIA_RadioButtonControlTypeId
+const UIA_RangeValuePatternId
 const UIA_ScrollBarControlTypeId
+const UIA_ScrollItemPatternId
+const UIA_SelectionItemPatternId
+const UIA_SelectionPatternId
 const UIA_SemanticZoomControlTypeId
 const UIA_SeparatorControlTypeId
 const UIA_SliderControlTypeId
@@ -928,13 +942,17 @@ const UIA_TabControlTypeId
 const UIA_TabItemControlTypeId
 const UIA_TableControlTypeId
 const UIA_TextControlTypeId
+const UIA_TextPatternId
 const UIA_ThumbControlTypeId
 const UIA_TitleBarControlTypeId
+const UIA_TogglePatternId
 const UIA_ToolBarControlTypeId
 const UIA_ToolTipControlTypeId
 const UIA_TreeControlTypeId
 const UIA_TreeItemControlTypeId
+const UIA_ValuePatternId
 const UIA_WindowControlTypeId
+const UIA_WindowPatternId
 const UISF_HIDEFOCUS
 const UIS_CLEAR
 const UIS_INITIALIZE
@@ -1170,6 +1188,9 @@ const WS_TABSTOP
 const WS_THICKFRAME
 const WS_VISIBLE
 const WS_VSCROLL
+const WindowVisualState_Maximized
+const WindowVisualState_Minimized
+const WindowVisualState_Normal
 
 # Functions
 
@@ -1493,6 +1514,17 @@ guid IID_IShellItem
 guid IID_IShellLinkW
 guid IID_ITaskbarList3
 guid IID_IUIAutomation
+guid IID_IUIAutomationExpandCollapsePattern
+guid IID_IUIAutomationInvokePattern
+guid IID_IUIAutomationLegacyIAccessiblePattern
+guid IID_IUIAutomationRangeValuePattern
+guid IID_IUIAutomationScrollItemPattern
+guid IID_IUIAutomationSelectionItemPattern
+guid IID_IUIAutomationSelectionPattern
+guid IID_IUIAutomationTextPattern
+guid IID_IUIAutomationTogglePattern
+guid IID_IUIAutomationValuePattern
+guid IID_IUIAutomationWindowPattern
 guid IID_IUnknown
 guid IID_IWebBrowser2
 guid LiveSetting_Property_GUID MSAAPROPID
@@ -1534,6 +1566,19 @@ interface IUIAutomation methods -ElementFromPoint -GetRootElementBuildCache -Ele
 interface IUIAutomationCondition methods
 interface IUIAutomationElement methods -FindFirstBuildCache -FindAllBuildCache -BuildUpdatedCache
 interface IUIAutomationElementArray methods
+interface IUIAutomationExpandCollapsePattern methods
+interface IUIAutomationInvokePattern methods
+interface IUIAutomationLegacyIAccessiblePattern methods -GetIAccessible
+interface IUIAutomationRangeValuePattern methods -SetValue
+interface IUIAutomationScrollItemPattern methods
+interface IUIAutomationSelectionItemPattern methods
+interface IUIAutomationSelectionPattern methods
+interface IUIAutomationTextPattern methods -RangeFromPoint
+interface IUIAutomationTextRange methods -FindAttribute
+interface IUIAutomationTextRangeArray methods
+interface IUIAutomationTogglePattern methods
 interface IUIAutomationTreeWalker methods -GetParentElementBuildCache -GetFirstChildElementBuildCache -GetLastChildElementBuildCache -GetNextSiblingElementBuildCache -GetPreviousSiblingElementBuildCache -NormalizeElementBuildCache
+interface IUIAutomationValuePattern methods
+interface IUIAutomationWindowPattern methods
 interface IUnknown
 interface IWebBrowser2

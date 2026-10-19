@@ -119,8 +119,14 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   with every kind of condition, the tree walkers, focus and
   `ElementFromPoint` (SKIP unless the window is in the foreground),
   concurrent calls, finalizers, `Release`, `Close` and an element of a
-  closed window. `uia.exe dump` prints the control view tree of the
-  foreground window after 3 seconds.
+  closed window. Since step 13 part 2 also the control patterns, each
+  change read back through UI Automation and from the walk widget:
+  Invoke and DoDefaultAction (button), Toggle (check box), Value (edit
+  field, combo box), Text (multiline edit field), ExpandCollapse (combo
+  box), Selection and SelectionItem (list box), RangeValue (slider),
+  Window (main window) and `ErrPatternNotSupported`. `uia.exe dump`
+  prints the control view tree of the foreground window after 3
+  seconds, with the value or state of each element.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

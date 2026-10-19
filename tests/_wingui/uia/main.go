@@ -14,6 +14,12 @@
 //   - Concurrent calls from several goroutines, elements left to the
 //     garbage collector, Release, Close, and an element of a closed
 //     window.
+//   - The control patterns (step 13 part 2): Invoke and DoDefaultAction
+//     on the button, Toggle on the check box, Value on an edit field, Text
+//     on a multiline edit field, ExpandCollapse and Value on a combo box,
+//     Selection and SelectionItem on a list box, RangeValue on a slider,
+//     Window on the window, and ErrPatternNotSupported. Each change is
+//     read back through UI Automation and from the walk widget.
 //
 // The checks run on a goroutine while the window runs its message loop, as
 // the package documentation requires. It prints PASS, FAIL and SKIP lines
@@ -22,7 +28,8 @@
 // With the argument "dump" it shows no window: after three seconds it
 // prints the control view tree of the foreground window, one element per
 // line, indented by depth, with control type, name, automation ID and
-// class name. Start it, switch to another window with Alt+Tab and wait.
+// class name, and the value or state of the elements that have one. Start
+// it, switch to another window with Alt+Tab and wait.
 package main
 
 import (
@@ -62,26 +69,49 @@ func checkErr(name string, err error) bool {
 
 const title = "walk uia test"
 
+// The window and the widgets the pattern checks read back.
+var (
+	mw         *walk.MainWindow
+	pressed    int
+	searchEdit *walk.LineEdit
+	optionBox  *walk.CheckBox
+	colorBox   *walk.ComboBox
+	numberList *walk.ListBox
+	volume     *walk.Slider
+)
+
+// onUI runs f on the goroutine of the window and waits for it.
+func onUI(f func()) {
+	done := make(chan struct{})
+	mw.Synchronize(func() {
+		f()
+		close(done)
+	})
+	<-done
+}
+
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "dump" {
 		dump()
 		return
 	}
 
-	var mw *walk.MainWindow
-	var pressed int
 	if err := (MainWindow{
 		AssignTo: &mw,
 		Title:    title,
-		Size:     Size{Width: 400, Height: 300},
+		Size:     Size{Width: 400, Height: 600},
 		Layout:   VBox{},
 		Children: []Widget{
 			Label{Text: "Search:"},
-			LineEdit{Accessibility: Accessibility{Name: "Search"}},
+			LineEdit{AssignTo: &searchEdit, Accessibility: Accessibility{Name: "Search"}},
 			LineEdit{PasswordMode: true, Accessibility: Accessibility{Name: "Password"}},
 			PushButton{Text: "Press me", OnClicked: func() { pressed++ }},
 			PushButton{Text: "Disabled", Enabled: false},
-			CheckBox{Text: "Option"},
+			CheckBox{AssignTo: &optionBox, Text: "Option"},
+			TextEdit{Text: "line one\r\nline two", Accessibility: Accessibility{Name: "Notes"}},
+			ComboBox{AssignTo: &colorBox, Model: []string{"Red", "Green", "Blue"}, CurrentIndex: 0, Accessibility: Accessibility{Name: "Color"}},
+			ListBox{AssignTo: &numberList, Model: []string{"One", "Two", "Three"}, Accessibility: Accessibility{Name: "Numbers"}},
+			Slider{AssignTo: &volume, MinValue: 0, MaxValue: 100, Value: 30, Accessibility: Accessibility{Name: "Volume"}},
 		},
 	}).Create(); err != nil {
 		fmt.Println("FAIL create window:", err)
@@ -136,6 +166,7 @@ func run(hwnd uintptr, closeWindow func(), closed <-chan struct{}) {
 	checkTree(a, window, press)
 	checkFocus(a, window, press, hwnd)
 	checkConcurrency(press)
+	checkPatterns(window, press, option)
 	checkRelease(a, window, press)
 
 	closeWindow()
@@ -205,6 +236,7 @@ func checkControls(window, press, disabled, option *uia.Element) {
 	check("check box Name", err == nil && name == "Option", "%q, %v", name, err)
 
 	edits, err := window.FindAll(uia.ScopeDescendants, uia.ByControlType(uia.ControlTypeEdit))
+	// The multiline TextEdit is a Document, not an Edit.
 	if checkErr("FindAll edits", err) && check2("FindAll edits", len(edits) == 2, "%d edits, want 2", len(edits)) {
 		for i, want := range []struct {
 			name     string
@@ -446,7 +478,7 @@ func dumpElement(w *uia.TreeWalker, e *uia.Element, depth int) {
 	name, _ := e.Name()
 	id, _ := e.AutomationID()
 	class, _ := e.ClassName()
-	fmt.Printf("%s%v, name %q, automation ID %q, class %q\n", strings.Repeat("  ", depth), ct, name, id, class)
+	fmt.Printf("%s%v, name %q, automation ID %q, class %q%s\n", strings.Repeat("  ", depth), ct, name, id, class, state(e))
 	children, err := w.Children(e)
 	if err != nil {
 		fmt.Printf("%s  error: %v\n", strings.Repeat("  ", depth), err)
@@ -455,4 +487,152 @@ func dumpElement(w *uia.TreeWalker, e *uia.Element, depth int) {
 		dumpElement(w, c, depth+1)
 		c.Release()
 	}
+}
+
+// state describes the value or state of e for dump, or returns "".
+func state(e *uia.Element) string {
+	var parts []string
+	if v, err := e.Value(); err == nil && v != "" {
+		parts = append(parts, fmt.Sprintf("value %q", v))
+	}
+	if t, err := e.ToggleState(); err == nil {
+		parts = append(parts, t.String())
+	}
+	if s, err := e.ExpandCollapseState(); err == nil && s != uia.LeafNode {
+		parts = append(parts, s.String())
+	}
+	if selected, err := e.IsSelected(); err == nil && selected {
+		parts = append(parts, "selected")
+	}
+	if rv, err := e.RangeValue(); err == nil {
+		parts = append(parts, fmt.Sprintf("range value %g from %g to %g", rv.Value, rv.Minimum, rv.Maximum))
+	}
+	if enabled, err := e.IsEnabled(); err == nil && !enabled {
+		parts = append(parts, "disabled")
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return ", " + strings.Join(parts, ", ")
+}
+
+// patternErr checks that err wraps ErrPatternNotSupported.
+func patternErr(name string, err error) {
+	check(name, errors.Is(err, uia.ErrPatternNotSupported), "%v, want ErrPatternNotSupported", err)
+}
+
+func checkPatterns(window, press, option *uia.Element) {
+	// Invoke and DoDefaultAction click the button.
+	before := 0
+	onUI(func() { before = pressed })
+	err := press.Invoke()
+	time.Sleep(200 * time.Millisecond)
+	after := 0
+	onUI(func() { after = pressed })
+	check("Invoke", err == nil && after == before+1, "%v, clicked %d times", err, after-before)
+	action, err := press.DefaultAction()
+	check("DefaultAction", err == nil && action != "", "%q, %v", action, err)
+	err = press.DoDefaultAction()
+	time.Sleep(200 * time.Millisecond)
+	onUI(func() { after = pressed })
+	check("DoDefaultAction", err == nil && after == before+2, "%v, clicked %d times", err, after-before)
+	_, err = press.ToggleState()
+	patternErr("ToggleState of a button", err)
+
+	// Toggle the check box on and off again.
+	state, err := option.ToggleState()
+	check("ToggleState", err == nil && state == uia.ToggleOff, "%v, %v", state, err)
+	err = option.Toggle()
+	state, err2 := option.ToggleState()
+	checked := false
+	onUI(func() { checked = optionBox.Checked() })
+	check("Toggle", err == nil && err2 == nil && state == uia.ToggleOn && checked, "%v %v, state %v, walk Checked %v", err, err2, state, checked)
+	option.Toggle()
+
+	// Value of the search field.
+	search := findOne(window, "edit Search", uia.And(uia.ByControlType(uia.ControlTypeEdit), uia.ByName("Search")))
+	if search != nil {
+		err := search.SetValue("hello")
+		value, err2 := search.Value()
+		text := ""
+		onUI(func() { text = searchEdit.Text() })
+		check("SetValue and Value", err == nil && err2 == nil && value == "hello" && text == "hello", "%v %v, %q, walk Text %q", err, err2, value, text)
+		readOnly, err := search.IsValueReadOnly()
+		check("IsValueReadOnly", err == nil && !readOnly, "%v, %v", readOnly, err)
+		err = search.SetValue("a\x00b")
+		check("SetValue with NUL", err != nil, "no error")
+		_, err = search.RangeValue()
+		patternErr("RangeValue of an edit field", err)
+	}
+
+	// Text of the multiline edit field, which UI Automation exposes as a
+	// Document.
+	notes := findOne(window, "document Notes", uia.And(uia.ByControlType(uia.ControlTypeDocument), uia.ByName("Notes")))
+	if notes != nil {
+		text, err := notes.Text()
+		check("Text", err == nil && text == "line one\r\nline two", "%q, %v", text, err)
+		sel, err := notes.SelectedText()
+		check("SelectedText", err == nil, "%q, %v", sel, err)
+	}
+
+	// The combo box expands and collapses and shows the selected item.
+	combo := findOne(window, "combo box Color", uia.ByControlType(uia.ControlTypeComboBox))
+	if combo != nil {
+		value, err := combo.Value()
+		check("combo box Value", err == nil && value == "Red", "%q, %v", value, err)
+		err = combo.Expand()
+		time.Sleep(200 * time.Millisecond)
+		state, err2 := combo.ExpandCollapseState()
+		check("Expand", err == nil && err2 == nil && state == uia.Expanded, "%v %v, %v", err, err2, state)
+		err = combo.Collapse()
+		time.Sleep(200 * time.Millisecond)
+		state, err2 = combo.ExpandCollapseState()
+		check("Collapse", err == nil && err2 == nil && state == uia.Collapsed, "%v %v, %v", err, err2, state)
+		index := -1
+		onUI(func() { index = colorBox.CurrentIndex() })
+		check("combo box unchanged", index == 0, "CurrentIndex %d", index)
+	}
+
+	// Select an item of the list box.
+	list := findOne(window, "list Numbers", uia.And(uia.ByControlType(uia.ControlTypeList), uia.ByName("Numbers")))
+	if list != nil {
+		two := findOne(list, "list item Two", uia.And(uia.ByControlType(uia.ControlTypeListItem), uia.ByName("Two")))
+		if two != nil {
+			err := two.Select()
+			selected, err2 := two.IsSelected()
+			index := -1
+			onUI(func() { index = numberList.CurrentIndex() })
+			check("Select and IsSelected", err == nil && err2 == nil && selected && index == 1, "%v %v, selected %v, walk CurrentIndex %d", err, err2, selected, index)
+			selection, err := list.Selection()
+			check("Selection", err == nil && len(selection) == 1 && same(selection[0], two), "%v, %v", names(selection), err)
+			container, err := two.SelectionContainer()
+			check("SelectionContainer", err == nil && same(container, list), "%v", err)
+			multiple, err := list.CanSelectMultiple()
+			check("CanSelectMultiple", err == nil && !multiple, "%v, %v", multiple, err)
+			err = two.ScrollIntoView()
+			check("ScrollIntoView", err == nil, "%v", err)
+		}
+	}
+
+	// Move the slider.
+	slider := findOne(window, "slider Volume", uia.ByControlType(uia.ControlTypeSlider))
+	if slider != nil {
+		rv, err := slider.RangeValue()
+		check("RangeValue", err == nil && rv.Value == 30 && rv.Minimum == 0 && rv.Maximum == 100 && !rv.IsReadOnly, "%+v, %v", rv, err)
+		err = slider.SetRangeValue(60)
+		rv, err2 := slider.RangeValue()
+		value := -1
+		onUI(func() { value = volume.Value() })
+		check("SetRangeValue", err == nil && err2 == nil && rv.Value == 60 && value == 60, "%v %v, %+v, walk Value %d", err, err2, rv, value)
+	}
+
+	// The window pattern of the main window.
+	vs, err := window.WindowVisualState()
+	check("WindowVisualState", err == nil && vs == uia.WindowNormal, "%v, %v", vs, err)
+	modal, err := window.IsModal()
+	check("IsModal", err == nil && !modal, "%v, %v", modal, err)
+	patternErr("CloseWindow of a button", press.CloseWindow())
+
+	check("pattern state names", uia.ToggleOn.String() == "on" && uia.Expanded.String() == "expanded" && uia.WindowMinimized.String() == "minimized",
+		"%q %q %q", uia.ToggleOn.String(), uia.Expanded.String(), uia.WindowMinimized.String())
 }

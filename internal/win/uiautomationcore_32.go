@@ -7,6 +7,7 @@
 package win
 
 import (
+	"math"
 	"syscall"
 	"unsafe"
 )
@@ -42,5 +43,15 @@ func (obj *IUIAutomation) CreatePropertyConditionEx(propertyId int32, value *VAR
 		varA, varB, varC, varD,
 		uintptr(flags),
 		uintptr(unsafe.Pointer(newCondition)))
+	return HRESULT(r1)
+}
+
+// SetValue passes the float64 as two stack words.
+func (obj *IUIAutomationRangeValuePattern) SetValue(val float64) HRESULT {
+	bits := math.Float64bits(val)
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetValue,
+		uintptr(unsafe.Pointer(obj)),
+		uintptr(uint32(bits)),
+		uintptr(uint32(bits>>32)))
 	return HRESULT(r1)
 }
