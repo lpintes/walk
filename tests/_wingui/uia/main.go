@@ -247,11 +247,12 @@ func checkControls(window, press, disabled, option *uia.Element) {
 	check("check box Name", err == nil && name == "Option", "%q, %v", name, err)
 
 	edits, err := window.FindAll(uia.ScopeDescendants, uia.ByControlType(uia.ControlTypeEdit))
-	if checkErr("FindAll edits", err) && check2("FindAll edits", len(edits) == 3, "%d edits, want 3", len(edits)) {
+	// The multiline TextEdit is a Document, not an Edit.
+	if checkErr("FindAll edits", err) && check2("FindAll edits", len(edits) == 2, "%d edits, want 2", len(edits)) {
 		for i, want := range []struct {
 			name     string
 			password bool
-		}{{"Search", false}, {"Password", true}, {"Notes", false}} {
+		}{{"Search", false}, {"Password", true}} {
 			name, err := edits[i].Name()
 			check("edit annotated Name "+want.name, err == nil && name == want.name, "%q, %v", name, err)
 			password, err := edits[i].IsPassword()
@@ -575,8 +576,9 @@ func checkPatterns(window, press, option *uia.Element) {
 		patternErr("RangeValue of an edit field", err)
 	}
 
-	// Text of the multiline edit field.
-	notes := findOne(window, "edit Notes", uia.And(uia.ByControlType(uia.ControlTypeEdit), uia.ByName("Notes")))
+	// Text of the multiline edit field, which UI Automation exposes as a
+	// Document.
+	notes := findOne(window, "document Notes", uia.And(uia.ByControlType(uia.ControlTypeDocument), uia.ByName("Notes")))
 	if notes != nil {
 		text, err := notes.Text()
 		check("Text", err == nil && text == "line one\r\nline two", "%q, %v", text, err)
