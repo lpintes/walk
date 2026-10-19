@@ -9,8 +9,9 @@
 //     value.
 //   - The control and raw view tree walkers from a button up to the
 //     window and back down, Children and the root.
-//   - SetFocus, FocusedElement, ElementFromPoint and Equal, if the window
-//     is in the foreground (otherwise these print SKIP).
+//   - SetFocus, FocusedElement, ElementFromPoint and Equal, which need the
+//     window in the foreground: the test waits up to three seconds for
+//     it and asks for it once, and fails if it does not get it.
 //   - Concurrent calls from several goroutines, elements left to the
 //     garbage collector, Release, Close, and an element of a closed
 //     window.
@@ -20,8 +21,8 @@
 //     Selection and SelectionItem on a list box, RangeValue on a slider,
 //     Window on the window, and ErrPatternNotSupported. Each change is
 //     read back through UI Automation and from the walk widget.
-//   - The events (step 13 part 3): focus changes (if the window is in the
-//     foreground), property changes of a label and a button, the live
+//   - The events (step 13 part 3): focus changes (the window must be in the
+//     foreground), property changes of a label and a check box, the live
 //     region changed event of a label, structure changes when a button is
 //     added, notifications from walk.Announce, Close of a subscription,
 //     also from its own callback, and Close of the Automation with an open
@@ -96,6 +97,23 @@ func onUI(f func()) {
 		close(done)
 	})
 	<-done
+}
+
+// foreground waits up to three seconds for the window to be in the
+// foreground. The window usually gets it some time after it opens, for
+// example while the window of a previous test is still closing; if it
+// has not got it after one second, the test asks for it once.
+func foreground(hwnd uintptr) bool {
+	for i := range 30 {
+		if uintptr(win.GetForegroundWindow()) == hwnd {
+			return true
+		}
+		if i == 10 {
+			onUI(func() { win.SetForegroundWindow(win.HWND(hwnd)) })
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return false
 }
 
 func main() {
@@ -400,8 +418,7 @@ func checkTree(a *uia.Automation, window, press *uia.Element) {
 }
 
 func checkFocus(a *uia.Automation, window, press *uia.Element, hwnd uintptr) {
-	if uintptr(win.GetForegroundWindow()) != hwnd {
-		fmt.Println("SKIP SetFocus, FocusedElement and ElementFromPoint: the window is not in the foreground")
+	if !check2("window in the foreground for SetFocus", foreground(hwnd), "foreground window %#x, want %#x", win.GetForegroundWindow(), hwnd) {
 		return
 	}
 	edit, err := window.FindFirst(uia.ScopeDescendants, uia.ByControlType(uia.ControlTypeEdit))
@@ -678,28 +695,31 @@ func checkEvents(a *uia.Automation, window *uia.Element, hwnd uintptr) *uia.Subs
 	status := findOne(window, "text Status", uia.And(uia.ByControlType(uia.ControlTypeText), uia.ByName("Status")))
 	disabled := findOne(window, "button Disabled", uia.ByName("Disabled"))
 	search := findOne(window, "edit Search", uia.And(uia.ByControlType(uia.ControlTypeEdit), uia.ByName("Search")))
-	if status == nil || disabled == nil || search == nil {
+	option := findOne(window, "check box Option", uia.ByName("Option"))
+	if status == nil || disabled == nil || search == nil || option == nil {
 		return nil
 	}
 
-	// Property changes: the name of the label and IsEnabled of the
-	// button.
+	// Property changes: the name of the label and the toggle state of the
+	// check box. The proxies of the Win32 controls raise no IsEnabled
+	// change for EnableWindow, and they send the new toggle state as
+	// VT_EMPTY, so only the event is checked, not its value.
+	const toggleStateProperty = uia.PropertyID(30086) // UIA_ToggleToggleStatePropertyId
 	properties := make(chan propertyEvent, 100)
 	sub, err := window.OnPropertyChanged(uia.ScopeSubtree, func(sender *uia.Element, id uia.PropertyID, value any) {
 		properties <- propertyEvent{sender, id, value}
-	}, uia.PropertyName, uia.PropertyIsEnabled)
+	}, uia.PropertyName, toggleStateProperty)
 	if checkErr("OnPropertyChanged", err) {
 		onUI(func() { statusLabel.SetText("Changed 1") })
 		ok, got := waitFor(properties, func(e propertyEvent) bool {
 			return e.id == uia.PropertyName && e.value == "Changed 1" && same(e.sender, status)
 		})
 		check("property changed Name", ok, "got %d events: %v", len(got), got)
-		onUI(func() { disabledButton.SetEnabled(true) })
+		onUI(func() { optionBox.SetChecked(!optionBox.Checked()) })
 		ok, got = waitFor(properties, func(e propertyEvent) bool {
-			return e.id == uia.PropertyIsEnabled && e.value == true && same(e.sender, disabled)
+			return e.id == toggleStateProperty && same(e.sender, option)
 		})
-		check("property changed IsEnabled", ok, "got %d events: %v", len(got), got)
-		onUI(func() { disabledButton.SetEnabled(false) })
+		check("property changed ToggleState", ok, "got %d events: %v", len(got), got)
 
 		check("Subscription Close", sub.Close() == nil, "error")
 		for len(properties) > 0 {
@@ -729,8 +749,14 @@ func checkEvents(a *uia.Automation, window *uia.Element, hwnd uintptr) *uia.Subs
 	liveSub = newSub
 	liveMu.Unlock()
 	if checkErr("OnEvent LiveRegionChanged", err) {
+		// The event comes from the window of the Label, which has the live
+		// setting, not from the Static control inside it.
+		var labelHwnd uintptr
+		onUI(func() { labelHwnd = uintptr(statusLabel.Handle()) })
+		labelElement, err := a.ElementFromHandle(labelHwnd)
+		checkErr("ElementFromHandle Label", err)
 		onUI(func() { statusLabel.SetText("Changed 3") })
-		ok, got := waitFor(live, func(e *uia.Element) bool { return same(e, status) })
+		ok, got := waitFor(live, func(e *uia.Element) bool { return same(e, labelElement) })
 		check("live region changed event", ok, "got %d events", len(got))
 		// The callback closed the subscription without a deadlock.
 		onUI(func() { statusLabel.SetText("Changed 4") })
@@ -770,8 +796,8 @@ func checkEvents(a *uia.Automation, window *uia.Element, hwnd uintptr) *uia.Subs
 		sub.Close()
 	}
 
-	// Focus changes, if the window has the foreground.
-	if uintptr(win.GetForegroundWindow()) == hwnd {
+	// Focus changes, which need the window in the foreground.
+	if check2("window in the foreground for OnFocusChanged", foreground(hwnd), "foreground window %#x, want %#x", win.GetForegroundWindow(), hwnd) {
 		focus := make(chan *uia.Element, 100)
 		sub, err = a.OnFocusChanged(func(focused *uia.Element) { focus <- focused })
 		if checkErr("OnFocusChanged", err) {
@@ -780,8 +806,6 @@ func checkEvents(a *uia.Automation, window *uia.Element, hwnd uintptr) *uia.Subs
 			check("focus changed", ok, "got %d events", len(got))
 			sub.Close()
 		}
-	} else {
-		fmt.Println("SKIP focus changed: the window is not in the foreground")
 	}
 
 	check("event names", uia.EventLiveRegionChanged.String() == "LiveRegionChanged" && uia.ChildAdded.String() == "ChildAdded" &&

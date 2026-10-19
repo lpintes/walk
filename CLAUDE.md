@@ -573,11 +573,30 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     where `syscall.SyscallN` copies the arguments to the XMM registers
     too; `E_NOTIMPL` on arm64, where `SyscallN` sets no floating-point
     registers).
-- Step 13, part 3: draft pull request lpintes/walk#21,
-  stacked on part 2 (its base is the branch of part 2; merge part 2
-  first with a merge commit, delete its branch, and GitHub retargets
-  this one to `master`). Not yet tested on Windows (task 13 of
-  `TESTING_ON_WINDOWS.md`, `tests/_wingui/uia`).
+- Step 13, part 3: pull request lpintes/walk#21, first stacked on
+  part 2. Deleting the branch of part 2 with
+  `gh pr merge --delete-branch` closed this pull request instead of
+  retargeting it; it had to be reopened with the base branch pushed
+  again, retargeted to `master` with `gh pr edit --base`, and the base
+  branch deleted afterwards. For stacked pull requests, retarget the
+  next one to `master` before deleting the merged branch.
+  Task 13 of `TESTING_ON_WINDOWS.md` (`tests/_wingui/uia`) passed on
+  Windows 11: `run.ps1 -Only uia` on 386 and amd64 with every check
+  PASS and no hang, twice per architecture. The focus checks used to
+  print SKIP when the window got the foreground only a moment after
+  the check; the test now waits up to three seconds for it (asking once
+  with `SetForegroundWindow`) and fails without it, and no run skipped
+  them any more. Two expectations of the test were
+  wrong and were fixed; both are Windows behavior:
+  - The proxies of Win32 controls raise no IsEnabled property change
+    for `EnableWindow` (not even with the root as scope). The test
+    checks the ToggleState change of a check box instead.
+  - They send the new value as `VT_EMPTY` for most properties
+    (ToggleState, Value, RangeValue; Name is an exception), so the Go
+    value is nil; `OnPropertyChanged` documents this.
+  - The live region changed event of a walk `Label` comes from the
+    label window (`Walk_Static_Class`, a Pane), which has the live
+    setting, not from the Static control (Text) inside it.
   - Events: `Automation.OnFocusChanged`, `Element.OnEvent` (18
     `EventID` values, among them `EventInvoked`, `EventWindowOpened`,
     `EventTextChanged` and `EventLiveRegionChanged`),

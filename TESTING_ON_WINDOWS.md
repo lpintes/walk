@@ -530,8 +530,10 @@ How to test, on 386 and amd64 (after `build.ps1`):
 
 - `tests/_wingui/scripts/run.ps1 -Only uia`. The test opens a walk window
   and checks the package against it from a goroutine. The focus and
-  `ElementFromPoint` checks need the window in the foreground; otherwise
-  they print SKIP. If they were skipped, run `tests\uia\uia.exe` once
+  `ElementFromPoint` checks need the window in the foreground; the test
+  waits up to three seconds for it and asks for it once (since step 13
+  part 3; before, they printed SKIP). If they fail for that reason, run
+  `tests\uia\uia.exe` once
   more from a console and leave the test window alone until it closes.
   Report the FAIL lines with their details; the check "edit annotated
   Name" shows whether the names set with `Accessibility.SetName` are
@@ -585,8 +587,9 @@ How to test, on 386 and amd64 (after `build.ps1`):
 
 - `tests/_wingui/scripts/run.ps1 -Only uia`. The test window has a new
   polite live region label "Status". The event checks change it and the
-  "Disabled" button, add a button "Added", call `walk.Announce` and, if
-  the window is in the foreground, move the focus; each must arrive as
+  check box "Option", add a button "Added", call `walk.Announce` and
+  move the focus (which needs the window in the foreground, as above);
+  each must arrive as
   an event within two seconds. Report the FAIL lines with their details.
   Also report if the test hangs: a hang in a `Close` would be a
   deadlock between the handlers and the package thread.

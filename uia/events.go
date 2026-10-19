@@ -485,7 +485,11 @@ func variantValue(id PropertyID, v *win.VARIANT) any {
 // for an element in scope of e, with the element, the property and its
 // new value. The value has the Go type listed next to the PropertyID
 // constant, float64 for floating-point properties, and is nil for
-// properties of other types. Close the returned Subscription to stop.
+// properties of other types. It is also nil when UI Automation sends no
+// value, as the proxies of Win32 controls do for most properties (the
+// name is an exception); read the property from the element then. Not
+// every change raises an event: the Win32 proxies raise none for
+// IsEnabled, for example. Close the returned Subscription to stop.
 func (e *Element) OnPropertyChanged(scope Scope, f func(sender *Element, id PropertyID, value any), ids ...PropertyID) (*Subscription, error) {
 	if len(ids) == 0 {
 		return nil, errors.New("uia: OnPropertyChanged: no property")
