@@ -544,9 +544,16 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   overlay. All examples share one manifest. Regenerate with
   `go run github.com/akavel/rsrc@v0.10.2 -manifest <name>.exe.manifest
   -arch <arch> -o rsrc_windows_<arch>.syso` in the example directory.
-- Step 13, part 2: draft pull request lpintes/walk#20, not
-  yet tested on Windows (task 12 of `TESTING_ON_WINDOWS.md`, the same
-  test program `tests/_wingui/uia` with more widgets).
+- Step 13, part 2: pull request lpintes/walk#20. Task 12 of
+  `TESTING_ON_WINDOWS.md` (the same test program `tests/_wingui/uia`
+  with more widgets) passed on Windows 11: `run.ps1 -Only uia` on 386
+  and amd64 with every check PASS (`SetRangeValue` included, so the
+  `float64` passing works), and the manual test on amd64: `uia.exe dump`
+  of the mouse properties dialog (`main.cpl`) printed the toggle,
+  expand and collapse, selection and range values NVDA reports. The
+  test first failed: UI Automation exposes a multiline `EDIT` (walk
+  `TextEdit`) as ControlType Document, not Edit; the test expects that
+  now.
   - Control patterns as methods of `Element`, each getting the pattern
     with `GetCurrentPatternAs` for the call and releasing it; an
     element without it returns an error wrapping
