@@ -23,3 +23,27 @@ func (obj *IRawElementProviderSimple) Release() uint32 {
 func UiaRaiseNotificationEventAvailable() bool {
 	return procUiaRaiseNotificationEvent.Find() == nil
 }
+
+func (obj *IUIAutomation5) Release() uint32 {
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.Release,
+		uintptr(unsafe.Pointer(obj)))
+	return uint32(ret)
+}
+
+func (obj *IUIAutomation5) AddNotificationEventHandler(element *IUIAutomationElement, scope int32, cacheRequest unsafe.Pointer, handler *IUIAutomationNotificationEventHandler) HRESULT {
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.AddNotificationEventHandler,
+		uintptr(unsafe.Pointer(obj)),
+		uintptr(unsafe.Pointer(element)),
+		uintptr(scope),
+		uintptr(cacheRequest),
+		uintptr(unsafe.Pointer(handler)))
+	return HRESULT(ret)
+}
+
+func (obj *IUIAutomation5) RemoveNotificationEventHandler(element *IUIAutomationElement, handler *IUIAutomationNotificationEventHandler) HRESULT {
+	ret, _, _ := syscall.SyscallN(obj.LpVtbl.RemoveNotificationEventHandler,
+		uintptr(unsafe.Pointer(obj)),
+		uintptr(unsafe.Pointer(element)),
+		uintptr(unsafe.Pointer(handler)))
+	return HRESULT(ret)
+}

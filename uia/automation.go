@@ -55,8 +55,10 @@ type Automation struct {
 	releases  []func() // releases queued by finalizers
 
 	// Used only on the thread of the Automation.
-	uia     *win.IUIAutomation
-	walkers [3]*win.IUIAutomationTreeWalker // see TreeWalker.view
+	uia           *win.IUIAutomation
+	uia5          *win.IUIAutomation5             // see automation5
+	walkers       [3]*win.IUIAutomationTreeWalker // see TreeWalker.view
+	subscriptions map[*Subscription]struct{}
 }
 
 // New connects to UI Automation. It needs Windows 8 or later.
@@ -99,11 +101,18 @@ func (a *Automation) run(started chan<- error) {
 		f()
 	}
 
+	for s := range a.subscriptions {
+		s.stop()
+		a.unsubscribe(s)
+	}
 	a.runReleases()
 	for _, w := range a.walkers {
 		if w != nil {
 			w.Release()
 		}
+	}
+	if a.uia5 != nil {
+		a.uia5.Release()
 	}
 	a.uia.Release()
 }
@@ -139,8 +148,9 @@ func (a *Automation) runReleases() {
 }
 
 // Close disconnects from UI Automation. It waits for running calls to
-// finish. The elements of the Automation stop working; their methods return
-// ErrClosed. Close returns nil, also when called again.
+// finish and closes the subscriptions to events. The elements of the
+// Automation stop working; their methods return ErrClosed. Close returns
+// nil, also when called again.
 func (a *Automation) Close() error {
 	a.mu.Lock()
 	if a.closed {

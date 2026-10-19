@@ -53,7 +53,8 @@ From the repository root, for `amd64` or `386`:
   example. `-Only` and `-Tabs` are available.
 
 Windows pop up and close while the scripts run. No global keyboard input is
-sent and no window is forced to the foreground: global input lands in
+sent and no window is forced to the foreground (the `uia` test only asks
+`SetForegroundWindow` once for its own window): global input lands in
 whatever window has the foreground and once closed an application of the
 user. Keys are posted only to a window of the tested process, and windows
 are closed with `WM_CLOSE`. Because of that, Tab steps in `examples.ps1`
@@ -117,14 +118,18 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   checked from a goroutine against a walk window of its own process:
   properties of the window and its controls, `FindFirst` and `FindAll`
   with every kind of condition, the tree walkers, focus and
-  `ElementFromPoint` (SKIP unless the window is in the foreground),
+  `ElementFromPoint` (FAIL if the window does not get the foreground
+  within three seconds),
   concurrent calls, finalizers, `Release`, `Close` and an element of a
   closed window. Since step 13 part 2 also the control patterns, each
   change read back through UI Automation and from the walk widget:
   Invoke and DoDefaultAction (button), Toggle (check box), Value (edit
   field, combo box), Text (multiline edit field), ExpandCollapse (combo
   box), Selection and SelectionItem (list box), RangeValue (slider),
-  Window (main window) and `ErrPatternNotSupported`. `uia.exe dump`
+  Window (main window) and `ErrPatternNotSupported`. Since part 3 also
+  the events: focus (also needs the foreground),
+  property changes, the live region changed event, structure changes,
+  notifications from `walk.Announce` and closing subscriptions. `uia.exe dump`
   prints the control view tree of the foreground window after 3
   seconds, with the value or state of each element.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,

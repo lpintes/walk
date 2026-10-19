@@ -40,6 +40,12 @@
 //   - LegacyIAccessible: DefaultAction, DoDefaultAction and Description,
 //     the MSAA properties, for elements of Win32 and MSAA programs.
 //
+// Events report changes as they happen: OnFocusChanged of the Automation,
+// and OnEvent, OnPropertyChanged, OnStructureChanged and OnNotification of
+// an Element for the elements in a scope of it. Each returns a
+// Subscription, which calls a Go function on a goroutine of its own until
+// it is closed.
+//
 // The package works in any Go program, with or without walk windows.
 //
 // # Threads

@@ -535,6 +535,10 @@ const NM_CUSTOMDRAW uint32
 const NM_DBLCLK uint32
 const NM_RETURN uint32
 const NOTIFYICON_VERSION
+const NotificationKind_ActionAborted
+const NotificationKind_ActionCompleted
+const NotificationKind_ItemAdded
+const NotificationKind_ItemRemoved
 const NotificationKind_Other
 const NotificationProcessing_All
 const NotificationProcessing_CurrentThenMostRecent
@@ -745,6 +749,12 @@ const SW_SHOWNA
 const SW_SHOWNORMAL
 const S_FALSE
 const S_OK
+const StructureChangeType_ChildAdded
+const StructureChangeType_ChildRemoved
+const StructureChangeType_ChildrenBulkAdded
+const StructureChangeType_ChildrenBulkRemoved
+const StructureChangeType_ChildrenInvalidated
+const StructureChangeType_ChildrenReordered
 const TBDDRET_DEFAULT
 const TBIF_IMAGE
 const TBIF_STATE
@@ -882,6 +892,7 @@ const UDS_HOTTRACK
 const UIA_AcceleratorKeyPropertyId
 const UIA_AccessKeyPropertyId
 const UIA_AppBarControlTypeId
+const UIA_AsyncContentLoadedEventId
 const UIA_AutomationIdPropertyId
 const UIA_ButtonControlTypeId
 const UIA_CalendarControlTypeId
@@ -905,6 +916,7 @@ const UIA_HelpTextPropertyId
 const UIA_HyperlinkControlTypeId
 const UIA_ImageControlTypeId
 const UIA_InvokePatternId
+const UIA_Invoke_InvokedEventId
 const UIA_IsContentElementPropertyId
 const UIA_IsControlElementPropertyId
 const UIA_IsEnabledPropertyId
@@ -917,10 +929,15 @@ const UIA_ItemTypePropertyId
 const UIA_LegacyIAccessiblePatternId
 const UIA_ListControlTypeId
 const UIA_ListItemControlTypeId
+const UIA_LiveRegionChangedEventId
 const UIA_LocalizedControlTypePropertyId
 const UIA_MenuBarControlTypeId
+const UIA_MenuClosedEventId
 const UIA_MenuControlTypeId
 const UIA_MenuItemControlTypeId
+const UIA_MenuModeEndEventId
+const UIA_MenuModeStartEventId
+const UIA_MenuOpenedEventId
 const UIA_NamePropertyId
 const UIA_NativeWindowHandlePropertyId
 const UIA_PaneControlTypeId
@@ -931,28 +948,39 @@ const UIA_RangeValuePatternId
 const UIA_ScrollBarControlTypeId
 const UIA_ScrollItemPatternId
 const UIA_SelectionItemPatternId
+const UIA_SelectionItem_ElementAddedToSelectionEventId
+const UIA_SelectionItem_ElementRemovedFromSelectionEventId
+const UIA_SelectionItem_ElementSelectedEventId
 const UIA_SelectionPatternId
+const UIA_Selection_InvalidatedEventId
 const UIA_SemanticZoomControlTypeId
 const UIA_SeparatorControlTypeId
 const UIA_SliderControlTypeId
 const UIA_SpinnerControlTypeId
 const UIA_SplitButtonControlTypeId
 const UIA_StatusBarControlTypeId
+const UIA_SystemAlertEventId
 const UIA_TabControlTypeId
 const UIA_TabItemControlTypeId
 const UIA_TableControlTypeId
 const UIA_TextControlTypeId
 const UIA_TextPatternId
+const UIA_Text_TextChangedEventId
+const UIA_Text_TextSelectionChangedEventId
 const UIA_ThumbControlTypeId
 const UIA_TitleBarControlTypeId
 const UIA_TogglePatternId
 const UIA_ToolBarControlTypeId
+const UIA_ToolTipClosedEventId
 const UIA_ToolTipControlTypeId
+const UIA_ToolTipOpenedEventId
 const UIA_TreeControlTypeId
 const UIA_TreeItemControlTypeId
 const UIA_ValuePatternId
 const UIA_WindowControlTypeId
 const UIA_WindowPatternId
+const UIA_Window_WindowClosedEventId
+const UIA_Window_WindowOpenedEventId
 const UISF_HIDEFOCUS
 const UIS_CLEAR
 const UIS_INITIALIZE
@@ -1099,7 +1127,11 @@ const VK_XBUTTON2
 const VK_ZOOM
 const VT_ARRAY VARTYPE
 const VT_EMPTY VARTYPE
+const VT_I2 VARTYPE
+const VT_R4 VARTYPE
+const VT_R8 VARTYPE
 const VT_UI1 VARTYPE
+const VT_UI2 VARTYPE
 const WA_ACTIVE
 const WA_CLICKACTIVE
 const WA_INACTIVE
@@ -1514,13 +1546,19 @@ guid IID_IShellItem
 guid IID_IShellLinkW
 guid IID_ITaskbarList3
 guid IID_IUIAutomation
+guid IID_IUIAutomation5
+guid IID_IUIAutomationEventHandler
 guid IID_IUIAutomationExpandCollapsePattern
+guid IID_IUIAutomationFocusChangedEventHandler
 guid IID_IUIAutomationInvokePattern
 guid IID_IUIAutomationLegacyIAccessiblePattern
+guid IID_IUIAutomationNotificationEventHandler
+guid IID_IUIAutomationPropertyChangedEventHandler
 guid IID_IUIAutomationRangeValuePattern
 guid IID_IUIAutomationScrollItemPattern
 guid IID_IUIAutomationSelectionItemPattern
 guid IID_IUIAutomationSelectionPattern
+guid IID_IUIAutomationStructureChangedEventHandler
 guid IID_IUIAutomationTextPattern
 guid IID_IUIAutomationTogglePattern
 guid IID_IUIAutomationValuePattern
@@ -1562,17 +1600,23 @@ interface IRawElementProviderSimple
 interface IShellItem methods -BindToHandler
 interface IShellLink entry=IShellLinkW methods -GetIDList -SetIDList GetPath.pfd:unsafe.Pointer
 interface ITaskbarList3
-interface IUIAutomation methods -ElementFromPoint -GetRootElementBuildCache -ElementFromHandleBuildCache -ElementFromPointBuildCache -GetFocusedElementBuildCache -CreateCacheRequest -CreatePropertyCondition -CreatePropertyConditionEx -AddAutomationEventHandler -RemoveAutomationEventHandler -AddPropertyChangedEventHandlerNativeArray -AddPropertyChangedEventHandler -RemovePropertyChangedEventHandler -AddStructureChangedEventHandler -RemoveStructureChangedEventHandler -AddFocusChangedEventHandler -RemoveFocusChangedEventHandler -RectToVariant -VariantToRect -CreateProxyFactoryEntry -get_ProxyFactoryMapping -CheckNotSupported -ElementFromIAccessible -ElementFromIAccessibleBuildCache
+interface IUIAutomation methods -ElementFromPoint -GetRootElementBuildCache -ElementFromHandleBuildCache -ElementFromPointBuildCache -GetFocusedElementBuildCache -CreateCacheRequest -CreatePropertyCondition -CreatePropertyConditionEx -AddPropertyChangedEventHandler -RectToVariant -VariantToRect -CreateProxyFactoryEntry -get_ProxyFactoryMapping -CheckNotSupported -ElementFromIAccessible -ElementFromIAccessibleBuildCache AddAutomationEventHandler.cacheRequest:unsafe.Pointer AddPropertyChangedEventHandlerNativeArray.cacheRequest:unsafe.Pointer AddStructureChangedEventHandler.cacheRequest:unsafe.Pointer AddFocusChangedEventHandler.cacheRequest:unsafe.Pointer
+interface IUIAutomation5
 interface IUIAutomationCondition methods
 interface IUIAutomationElement methods -FindFirstBuildCache -FindAllBuildCache -BuildUpdatedCache
 interface IUIAutomationElementArray methods
+interface IUIAutomationEventHandler
 interface IUIAutomationExpandCollapsePattern methods
+interface IUIAutomationFocusChangedEventHandler
 interface IUIAutomationInvokePattern methods
 interface IUIAutomationLegacyIAccessiblePattern methods -GetIAccessible
+interface IUIAutomationNotificationEventHandler
+interface IUIAutomationPropertyChangedEventHandler
 interface IUIAutomationRangeValuePattern methods -SetValue
 interface IUIAutomationScrollItemPattern methods
 interface IUIAutomationSelectionItemPattern methods
 interface IUIAutomationSelectionPattern methods
+interface IUIAutomationStructureChangedEventHandler
 interface IUIAutomationTextPattern methods -RangeFromPoint
 interface IUIAutomationTextRange methods -FindAttribute
 interface IUIAutomationTextRangeArray methods

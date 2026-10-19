@@ -99,6 +99,15 @@ func (v *VARIANT) SetLong(value int32) {
 	p.lVal = value
 }
 
+// Double returns the value of a VT_R8 variant.
+func (v *VARIANT) Double() (float64, error) {
+	if v.Vt != VT_R8 {
+		return 0, fmt.Errorf("Error: Double() v.Vt !=  VT_R8, ptr=%p, value=%+v", v, v)
+	}
+	// The union of a VARIANT starts at offset 8 on every architecture.
+	return *(*float64)(unsafe.Add(unsafe.Pointer(v), 8)), nil
+}
+
 // SetBSTR makes v a VT_BSTR variant holding value. VariantClear frees
 // value.
 func (v *VARIANT) SetBSTR(value *uint16 /*BSTR*/) {

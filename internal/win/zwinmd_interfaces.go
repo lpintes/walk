@@ -498,6 +498,46 @@ func (obj *IUIAutomation) CreateNotCondition(condition *IUIAutomationCondition, 
 	return HRESULT(r1)
 }
 
+func (obj *IUIAutomation) AddAutomationEventHandler(eventId int32, element *IUIAutomationElement, scope int32, cacheRequest unsafe.Pointer, handler *IUIAutomationEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddAutomationEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(eventId), uintptr(unsafe.Pointer(element)), uintptr(scope), uintptr(cacheRequest), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) RemoveAutomationEventHandler(eventId int32, element *IUIAutomationElement, handler *IUIAutomationEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RemoveAutomationEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(eventId), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) AddPropertyChangedEventHandlerNativeArray(element *IUIAutomationElement, scope int32, cacheRequest unsafe.Pointer, handler *IUIAutomationPropertyChangedEventHandler, propertyArray *int32, propertyCount int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddPropertyChangedEventHandlerNativeArray, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(scope), uintptr(cacheRequest), uintptr(unsafe.Pointer(handler)), uintptr(unsafe.Pointer(propertyArray)), uintptr(propertyCount))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) RemovePropertyChangedEventHandler(element *IUIAutomationElement, handler *IUIAutomationPropertyChangedEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RemovePropertyChangedEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) AddStructureChangedEventHandler(element *IUIAutomationElement, scope int32, cacheRequest unsafe.Pointer, handler *IUIAutomationStructureChangedEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddStructureChangedEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(scope), uintptr(cacheRequest), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) RemoveStructureChangedEventHandler(element *IUIAutomationElement, handler *IUIAutomationStructureChangedEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RemoveStructureChangedEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(element)), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) AddFocusChangedEventHandler(cacheRequest unsafe.Pointer, handler *IUIAutomationFocusChangedEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddFocusChangedEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(cacheRequest), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomation) RemoveFocusChangedEventHandler(handler *IUIAutomationFocusChangedEventHandler) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RemoveFocusChangedEventHandler, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(handler)))
+	return HRESULT(r1)
+}
+
 func (obj *IUIAutomation) RemoveAllEventHandlers() HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.RemoveAllEventHandlers, uintptr(unsafe.Pointer(obj)))
 	return HRESULT(r1)
@@ -546,6 +586,83 @@ func (obj *IUIAutomation) Get_ReservedNotSupportedValue(notSupportedValue **IUnk
 func (obj *IUIAutomation) Get_ReservedMixedAttributeValue(mixedAttributeValue **IUnknown) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_ReservedMixedAttributeValue, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(mixedAttributeValue)))
 	return HRESULT(r1)
+}
+
+type IUIAutomation5Vtbl struct {
+	QueryInterface                            uintptr
+	AddRef                                    uintptr
+	Release                                   uintptr
+	CompareElements                           uintptr
+	CompareRuntimeIds                         uintptr
+	GetRootElement                            uintptr
+	ElementFromHandle                         uintptr
+	ElementFromPoint                          uintptr
+	GetFocusedElement                         uintptr
+	GetRootElementBuildCache                  uintptr
+	ElementFromHandleBuildCache               uintptr
+	ElementFromPointBuildCache                uintptr
+	GetFocusedElementBuildCache               uintptr
+	CreateTreeWalker                          uintptr
+	Get_ControlViewWalker                     uintptr
+	Get_ContentViewWalker                     uintptr
+	Get_RawViewWalker                         uintptr
+	Get_RawViewCondition                      uintptr
+	Get_ControlViewCondition                  uintptr
+	Get_ContentViewCondition                  uintptr
+	CreateCacheRequest                        uintptr
+	CreateTrueCondition                       uintptr
+	CreateFalseCondition                      uintptr
+	CreatePropertyCondition                   uintptr
+	CreatePropertyConditionEx                 uintptr
+	CreateAndCondition                        uintptr
+	CreateAndConditionFromArray               uintptr
+	CreateAndConditionFromNativeArray         uintptr
+	CreateOrCondition                         uintptr
+	CreateOrConditionFromArray                uintptr
+	CreateOrConditionFromNativeArray          uintptr
+	CreateNotCondition                        uintptr
+	AddAutomationEventHandler                 uintptr
+	RemoveAutomationEventHandler              uintptr
+	AddPropertyChangedEventHandlerNativeArray uintptr
+	AddPropertyChangedEventHandler            uintptr
+	RemovePropertyChangedEventHandler         uintptr
+	AddStructureChangedEventHandler           uintptr
+	RemoveStructureChangedEventHandler        uintptr
+	AddFocusChangedEventHandler               uintptr
+	RemoveFocusChangedEventHandler            uintptr
+	RemoveAllEventHandlers                    uintptr
+	IntNativeArrayToSafeArray                 uintptr
+	IntSafeArrayToNativeArray                 uintptr
+	RectToVariant                             uintptr
+	VariantToRect                             uintptr
+	SafeArrayToRectNativeArray                uintptr
+	CreateProxyFactoryEntry                   uintptr
+	Get_ProxyFactoryMapping                   uintptr
+	GetPropertyProgrammaticName               uintptr
+	GetPatternProgrammaticName                uintptr
+	PollForPotentialSupportedPatterns         uintptr
+	PollForPotentialSupportedProperties       uintptr
+	CheckNotSupported                         uintptr
+	Get_ReservedNotSupportedValue             uintptr
+	Get_ReservedMixedAttributeValue           uintptr
+	ElementFromIAccessible                    uintptr
+	ElementFromIAccessibleBuildCache          uintptr
+	Get_AutoSetFocus                          uintptr
+	Put_AutoSetFocus                          uintptr
+	Get_ConnectionTimeout                     uintptr
+	Put_ConnectionTimeout                     uintptr
+	Get_TransactionTimeout                    uintptr
+	Put_TransactionTimeout                    uintptr
+	AddTextEditTextChangedEventHandler        uintptr
+	RemoveTextEditTextChangedEventHandler     uintptr
+	AddChangesEventHandler                    uintptr
+	RemoveChangesEventHandler                 uintptr
+	AddNotificationEventHandler               uintptr
+	RemoveNotificationEventHandler            uintptr
+}
+
+type IUIAutomation5 struct {
+	LpVtbl *IUIAutomation5Vtbl
 }
 
 type IUIAutomationConditionVtbl struct {
@@ -1112,6 +1229,17 @@ func (obj *IUIAutomationElementArray) GetElement(index int32, element **IUIAutom
 	return HRESULT(r1)
 }
 
+type IUIAutomationEventHandlerVtbl struct {
+	QueryInterface        uintptr
+	AddRef                uintptr
+	Release               uintptr
+	HandleAutomationEvent uintptr
+}
+
+type IUIAutomationEventHandler struct {
+	LpVtbl *IUIAutomationEventHandlerVtbl
+}
+
 type IUIAutomationExpandCollapsePatternVtbl struct {
 	QueryInterface                 uintptr
 	AddRef                         uintptr
@@ -1159,6 +1287,17 @@ func (obj *IUIAutomationExpandCollapsePattern) Get_CurrentExpandCollapseState(re
 func (obj *IUIAutomationExpandCollapsePattern) Get_CachedExpandCollapseState(retVal *int32) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedExpandCollapseState, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
 	return HRESULT(r1)
+}
+
+type IUIAutomationFocusChangedEventHandlerVtbl struct {
+	QueryInterface          uintptr
+	AddRef                  uintptr
+	Release                 uintptr
+	HandleFocusChangedEvent uintptr
+}
+
+type IUIAutomationFocusChangedEventHandler struct {
+	LpVtbl *IUIAutomationFocusChangedEventHandlerVtbl
 }
 
 type IUIAutomationInvokePatternVtbl struct {
@@ -1354,6 +1493,28 @@ func (obj *IUIAutomationLegacyIAccessiblePattern) GetCachedSelection(pvarSelecte
 func (obj *IUIAutomationLegacyIAccessiblePattern) Get_CachedDefaultAction(pszDefaultAction **uint16) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedDefaultAction, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(pszDefaultAction)))
 	return HRESULT(r1)
+}
+
+type IUIAutomationNotificationEventHandlerVtbl struct {
+	QueryInterface          uintptr
+	AddRef                  uintptr
+	Release                 uintptr
+	HandleNotificationEvent uintptr
+}
+
+type IUIAutomationNotificationEventHandler struct {
+	LpVtbl *IUIAutomationNotificationEventHandlerVtbl
+}
+
+type IUIAutomationPropertyChangedEventHandlerVtbl struct {
+	QueryInterface             uintptr
+	AddRef                     uintptr
+	Release                    uintptr
+	HandlePropertyChangedEvent uintptr
+}
+
+type IUIAutomationPropertyChangedEventHandler struct {
+	LpVtbl *IUIAutomationPropertyChangedEventHandlerVtbl
 }
 
 type IUIAutomationRangeValuePatternVtbl struct {
@@ -1611,6 +1772,17 @@ func (obj *IUIAutomationSelectionPattern) Get_CachedCanSelectMultiple(retVal *BO
 func (obj *IUIAutomationSelectionPattern) Get_CachedIsSelectionRequired(retVal *BOOL) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedIsSelectionRequired, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
 	return HRESULT(r1)
+}
+
+type IUIAutomationStructureChangedEventHandlerVtbl struct {
+	QueryInterface              uintptr
+	AddRef                      uintptr
+	Release                     uintptr
+	HandleStructureChangedEvent uintptr
+}
+
+type IUIAutomationStructureChangedEventHandler struct {
+	LpVtbl *IUIAutomationStructureChangedEventHandlerVtbl
 }
 
 type IUIAutomationTextPatternVtbl struct {

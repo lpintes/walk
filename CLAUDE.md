@@ -573,6 +573,55 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     where `syscall.SyscallN` copies the arguments to the XMM registers
     too; `E_NOTIMPL` on arm64, where `SyscallN` sets no floating-point
     registers).
+- Step 13, part 3: pull request lpintes/walk#21, first stacked on
+  part 2. Deleting the branch of part 2 with
+  `gh pr merge --delete-branch` closed this pull request instead of
+  retargeting it; it had to be reopened with the base branch pushed
+  again, retargeted to `master` with `gh pr edit --base`, and the base
+  branch deleted afterwards. For stacked pull requests, retarget the
+  next one to `master` before deleting the merged branch.
+  Task 13 of `TESTING_ON_WINDOWS.md` (`tests/_wingui/uia`) passed on
+  Windows 11: `run.ps1 -Only uia` on 386 and amd64 with every check
+  PASS and no hang, twice per architecture. The focus checks used to
+  print SKIP when the window got the foreground only a moment after
+  the check; the test now waits up to three seconds for it (asking once
+  with `SetForegroundWindow`) and fails without it, and no run skipped
+  them any more. Two expectations of the test were
+  wrong and were fixed; both are Windows behavior:
+  - The proxies of Win32 controls raise no IsEnabled property change
+    for `EnableWindow` (not even with the root as scope). The test
+    checks the ToggleState change of a check box instead.
+  - They send the new value as `VT_EMPTY` for most properties
+    (ToggleState, Value, RangeValue; Name is an exception), so the Go
+    value is nil; `OnPropertyChanged` documents this.
+  - The live region changed event of a walk `Label` comes from the
+    label window (`Walk_Static_Class`, a Pane), which has the live
+    setting, not from the Static control (Text) inside it.
+  - Events: `Automation.OnFocusChanged`, `Element.OnEvent` (18
+    `EventID` values, among them `EventInvoked`, `EventWindowOpened`,
+    `EventTextChanged` and `EventLiveRegionChanged`),
+    `OnPropertyChanged` (new value converted to the Go type of the
+    property), `OnStructureChanged` (`StructureChange`) and
+    `OnNotification` (`Notification`, needs `IUIAutomation5`, Windows 10
+    1709). Each returns a `Subscription`.
+  - Threads: the handlers are COM objects made with `internal/com`
+    (vtables created once); UI Automation calls them on its own threads.
+    They only wrap the sender in an `Element` (with `AddRef`) and queue
+    the call; a goroutine per subscription calls the Go function, so the
+    function may call the package and even `Close` its own
+    subscription, and `Remove*EventHandler` on the package thread never
+    waits for a handler that waits for that thread. `Close` of the
+    Automation removes every handler still registered.
+  - New in `internal/win`: the five handler interfaces (vtables only)
+    and `IUIAutomation5` (vtable only) with their IIDs, the
+    `Add*`/`Remove*` handler methods of `IUIAutomation` (generated, with
+    `unsafe.Pointer` for the cache request), the event IDs, the
+    `StructureChangeType` and remaining `NotificationKind` constants,
+    `VT_R8` and other `VARTYPE` values. Hand-written:
+    `IUIAutomation5.AddNotificationEventHandler`,
+    `RemoveNotificationEventHandler` and `Release`, and
+    `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
+    `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 

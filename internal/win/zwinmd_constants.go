@@ -496,7 +496,11 @@ const (
 
 // NotificationKind
 const (
-	NotificationKind_Other = 4
+	NotificationKind_ActionAborted   = 3
+	NotificationKind_ActionCompleted = 2
+	NotificationKind_ItemAdded       = 0
+	NotificationKind_ItemRemoved     = 1
+	NotificationKind_Other           = 4
 )
 
 // NotificationProcessing
@@ -734,6 +738,16 @@ const (
 	Ok GpStatus = 0
 )
 
+// StructureChangeType
+const (
+	StructureChangeType_ChildAdded          = 0
+	StructureChangeType_ChildRemoved        = 1
+	StructureChangeType_ChildrenBulkAdded   = 3
+	StructureChangeType_ChildrenBulkRemoved = 4
+	StructureChangeType_ChildrenInvalidated = 2
+	StructureChangeType_ChildrenReordered   = 5
+)
+
 // TABITEMSTATES
 const (
 	TIS_SELECTED = 3
@@ -866,6 +880,28 @@ const (
 	UIA_WindowControlTypeId       = 0xc370
 )
 
+// UIA_EVENT_ID
+const (
+	UIA_AsyncContentLoadedEventId                        = 0x4e26
+	UIA_Invoke_InvokedEventId                            = 0x4e29
+	UIA_LiveRegionChangedEventId                         = 0x4e38
+	UIA_MenuClosedEventId                                = 0x4e27
+	UIA_MenuModeEndEventId                               = 0x4e33
+	UIA_MenuModeStartEventId                             = 0x4e32
+	UIA_MenuOpenedEventId                                = 0x4e23
+	UIA_SelectionItem_ElementAddedToSelectionEventId     = 0x4e2a
+	UIA_SelectionItem_ElementRemovedFromSelectionEventId = 0x4e2b
+	UIA_SelectionItem_ElementSelectedEventId             = 0x4e2c
+	UIA_Selection_InvalidatedEventId                     = 0x4e2d
+	UIA_SystemAlertEventId                               = 0x4e37
+	UIA_Text_TextChangedEventId                          = 0x4e2f
+	UIA_Text_TextSelectionChangedEventId                 = 0x4e2e
+	UIA_ToolTipClosedEventId                             = 0x4e21
+	UIA_ToolTipOpenedEventId                             = 0x4e20
+	UIA_Window_WindowClosedEventId                       = 0x4e31
+	UIA_Window_WindowOpenedEventId                       = 0x4e30
+)
+
 // UIA_PATTERN_ID
 const (
 	UIA_ExpandCollapsePatternId    = 0x2715
@@ -910,7 +946,11 @@ const (
 const (
 	VT_ARRAY VARTYPE = 0x2000
 	VT_EMPTY VARTYPE = 0
+	VT_I2    VARTYPE = 2
+	VT_R4    VARTYPE = 4
+	VT_R8    VARTYPE = 5
 	VT_UI1   VARTYPE = 0x11
+	VT_UI2   VARTYPE = 0x12
 )
 
 // VIRTUAL_KEY
