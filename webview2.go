@@ -86,6 +86,18 @@ type WebView2 struct {
 	disposed    bool
 	oleInit     bool
 
+	// removeHandlers remove the event handlers added to the browser.
+	removeHandlers []func()
+
+	// boundsForm is the form whose BoundsChanged event the widget is
+	// attached to, with the handle boundsHandle.
+	boundsForm   Form
+	boundsHandle int
+
+	// callbackDepth counts the WebView2 callbacks running on the stack;
+	// the browser is not released from inside one of them.
+	callbackDepth int
+
 	pendingNavigation func() error
 	url               string
 	title             string
@@ -177,34 +189,72 @@ func NewWebView2WithOptions(parent Container, options WebView2Options) (*WebView
 func (wv *WebView2) Dispose() {
 	if !wv.disposed {
 		wv.disposed = true
-		wv.releaseBrowser()
-		if wv.events != nil {
-			wv.events.Release()
-			wv.events = nil
-		}
-		if wv.oleInit {
-			wv.oleInit = false
-			defer win.OleUninitialize()
-		}
+		oleUninitialize := wv.oleInit
+		wv.oleInit = false
+		wv.releaseBrowser(oleUninitialize)
 	}
 	wv.WidgetBase.Dispose()
 }
 
-func (wv *WebView2) releaseBrowser() {
-	if wv.webView != nil {
-		wv.webView.Release()
-		wv.webView = nil
+// releaseBrowser removes the event handlers, closes the browser, releases
+// the COM objects and, if oleUninitialize is true, calls OleUninitialize.
+// Inside a WebView2 callback (for example a NavigationCompleted handler
+// that disposes the widget) the browser is only hidden at once; the rest
+// is done by the message loop after the callback has returned, because
+// WebView2 still uses its objects then.
+func (wv *WebView2) releaseBrowser(oleUninitialize bool) {
+	if wv.boundsForm != nil {
+		wv.boundsForm.BoundsChanged().Detach(wv.boundsHandle)
+		wv.boundsForm = nil
 	}
-	if wv.controller != nil {
-		// Close removes the event handlers and ends the browser.
-		wv.controller.Close()
-		wv.controller.Release()
-		wv.controller = nil
+
+	removeHandlers, events := wv.removeHandlers, wv.events
+	webView, controller, environment := wv.webView, wv.controller, wv.environment
+	wv.removeHandlers, wv.events = nil, nil
+	wv.webView, wv.controller, wv.environment = nil, nil, nil
+
+	release := func() {
+		for _, remove := range removeHandlers {
+			remove()
+		}
+		if webView != nil {
+			webView.Release()
+		}
+		if controller != nil {
+			controller.Close()
+			controller.Release()
+		}
+		if environment != nil {
+			environment.Release()
+		}
+		if events != nil {
+			events.Release()
+		}
+		if oleUninitialize {
+			win.OleUninitialize()
+		}
 	}
-	if wv.environment != nil {
-		wv.environment.Release()
-		wv.environment = nil
+
+	if wv.callbackDepth > 0 && wv.hWnd != 0 {
+		if root := win.GetAncestor(wv.hWnd, win.GA_ROOT); root != 0 {
+			if controller != nil {
+				controller.Put_IsVisible(win.FALSE)
+			}
+			// The message loop runs the queued functions after each
+			// message, so this runs right after the callback returns.
+			wv.group.Synchronize(release)
+			win.PostMessage(root, syncMsgId, 0, 0)
+			return
+		}
 	}
+	release()
+}
+
+// enterCallback is called at the start of each WebView2 callback; the
+// function it returns at its end.
+func (wv *WebView2) enterCallback() func() {
+	wv.callbackDepth++
+	return func() { wv.callbackDepth-- }
 }
 
 // IsReady reports whether the browser has been created.
@@ -234,7 +284,7 @@ func (wv *WebView2) failCreation(err error) {
 	}
 	wv.creationErr = err
 	wv.pendingNavigation = nil
-	wv.releaseBrowser()
+	wv.releaseBrowser(false)
 	wv.creationFailedPublisher.Publish(err)
 }
 
@@ -242,12 +292,22 @@ func webView2Error(funcName string, hr win.HRESULT) error {
 	return newErrorNoPanic(fmt.Sprintf("%s: HRESULT %#08x", funcName, uint32(hr)))
 }
 
+// webView2CreationError is webView2Error for the asynchronous creation of
+// the browser; a missing runtime gives an error wrapping
+// ErrWebView2RuntimeNotFound, as from NewWebView2.
+func webView2CreationError(funcName string, hr win.HRESULT) error {
+	if hr == win.HRESULT_FROM_WIN32(win.ERROR_FILE_NOT_FOUND) {
+		return wrapErrorNoPanic(fmt.Errorf("%s: %w", funcName, ErrWebView2RuntimeNotFound))
+	}
+	return webView2Error(funcName, hr)
+}
+
 func (wv *WebView2) onEnvironmentCompleted(hr win.HRESULT, env *win.ICoreWebView2Environment) {
 	if wv.disposed || wv.creationErr != nil {
 		return
 	}
 	if win.FAILED(hr) || env == nil {
-		wv.failCreation(webView2Error("CreateCoreWebView2Environment", hr))
+		wv.failCreation(webView2CreationError("CreateCoreWebView2Environment", hr))
 		return
 	}
 
@@ -279,7 +339,7 @@ func (wv *WebView2) onControllerCompleted(hr win.HRESULT, controller *win.ICoreW
 		return
 	}
 	if win.FAILED(hr) || controller == nil {
-		wv.failCreation(webView2Error("CreateCoreWebView2Controller", hr))
+		wv.failCreation(webView2CreationError("CreateCoreWebView2Controller", hr))
 		return
 	}
 
@@ -292,31 +352,60 @@ func (wv *WebView2) onControllerCompleted(hr win.HRESULT, controller *win.ICoreW
 		return
 	}
 
+	// From here on releaseBrowser releases webView.
+	wv.webView = webView
 	wv.events = newWebView2EventHandlers(wv)
 	ev := func(i int) unsafe.Pointer { return wv.events.Interface(i) }
-	var token win.EventRegistrationToken
-	for _, add := range []struct {
-		name string
-		hr   win.HRESULT
+	for _, h := range []struct {
+		name   string
+		add    func(token *win.EventRegistrationToken) win.HRESULT
+		remove func(token win.EventRegistrationToken) win.HRESULT
 	}{
-		{"Add_NavigationStarting", webView.Add_NavigationStarting((*win.ICoreWebView2NavigationStartingEventHandler)(ev(webView2EventsNavigationStarting)), &token)},
-		{"Add_NavigationCompleted", webView.Add_NavigationCompleted((*win.ICoreWebView2NavigationCompletedEventHandler)(ev(webView2EventsNavigationCompleted)), &token)},
-		{"Add_SourceChanged", webView.Add_SourceChanged((*win.ICoreWebView2SourceChangedEventHandler)(ev(webView2EventsSourceChanged)), &token)},
-		{"Add_HistoryChanged", webView.Add_HistoryChanged((*win.ICoreWebView2HistoryChangedEventHandler)(ev(webView2EventsHistoryChanged)), &token)},
-		{"Add_DocumentTitleChanged", webView.Add_DocumentTitleChanged((*win.ICoreWebView2DocumentTitleChangedEventHandler)(ev(webView2EventsDocumentTitleChanged)), &token)},
-		{"Add_WebMessageReceived", webView.Add_WebMessageReceived((*win.ICoreWebView2WebMessageReceivedEventHandler)(ev(webView2EventsWebMessageReceived)), &token)},
-		{"Add_MoveFocusRequested", controller.Add_MoveFocusRequested((*win.ICoreWebView2MoveFocusRequestedEventHandler)(ev(webView2EventsMoveFocusRequested)), &token)},
+		{"NavigationStarting", func(t *win.EventRegistrationToken) win.HRESULT {
+			return webView.Add_NavigationStarting((*win.ICoreWebView2NavigationStartingEventHandler)(ev(webView2EventsNavigationStarting)), t)
+		}, webView.Remove_NavigationStarting},
+		{"NavigationCompleted", func(t *win.EventRegistrationToken) win.HRESULT {
+			return webView.Add_NavigationCompleted((*win.ICoreWebView2NavigationCompletedEventHandler)(ev(webView2EventsNavigationCompleted)), t)
+		}, webView.Remove_NavigationCompleted},
+		{"SourceChanged", func(t *win.EventRegistrationToken) win.HRESULT {
+			return webView.Add_SourceChanged((*win.ICoreWebView2SourceChangedEventHandler)(ev(webView2EventsSourceChanged)), t)
+		}, webView.Remove_SourceChanged},
+		{"HistoryChanged", func(t *win.EventRegistrationToken) win.HRESULT {
+			return webView.Add_HistoryChanged((*win.ICoreWebView2HistoryChangedEventHandler)(ev(webView2EventsHistoryChanged)), t)
+		}, webView.Remove_HistoryChanged},
+		{"DocumentTitleChanged", func(t *win.EventRegistrationToken) win.HRESULT {
+			return webView.Add_DocumentTitleChanged((*win.ICoreWebView2DocumentTitleChangedEventHandler)(ev(webView2EventsDocumentTitleChanged)), t)
+		}, webView.Remove_DocumentTitleChanged},
+		{"WebMessageReceived", func(t *win.EventRegistrationToken) win.HRESULT {
+			return webView.Add_WebMessageReceived((*win.ICoreWebView2WebMessageReceivedEventHandler)(ev(webView2EventsWebMessageReceived)), t)
+		}, webView.Remove_WebMessageReceived},
+		{"MoveFocusRequested", func(t *win.EventRegistrationToken) win.HRESULT {
+			return controller.Add_MoveFocusRequested((*win.ICoreWebView2MoveFocusRequestedEventHandler)(ev(webView2EventsMoveFocusRequested)), t)
+		}, controller.Remove_MoveFocusRequested},
 	} {
-		if win.FAILED(add.hr) {
-			webView.Release()
-			wv.failCreation(webView2Error("ICoreWebView2."+add.name, add.hr))
+		var token win.EventRegistrationToken
+		if hr := h.add(&token); win.FAILED(hr) {
+			wv.failCreation(webView2Error("Add_"+h.name, hr))
 			return
 		}
+		remove := h.remove
+		wv.removeHandlers = append(wv.removeHandlers, func() { remove(token) })
 	}
-	wv.webView = webView
+
+	// Popups of the page, such as the list of a select element, are
+	// positioned from the parent window, so the browser must know when
+	// the form moves too.
+	if form := wv.Form(); form != nil {
+		wv.boundsForm = form
+		wv.boundsHandle = form.BoundsChanged().Attach(func() {
+			if wv.controller != nil {
+				wv.controller.NotifyParentWindowPositionChanged()
+			}
+		})
+	}
 
 	wv.updateBounds()
-	wv.controller.Put_IsVisible(win.BoolToBOOL(wv.visibleOnScreen()))
+	wv.controller.Put_IsVisible(win.BoolToBOOL(wv.visible()))
 	if win.GetFocus() == wv.hWnd {
 		wv.controller.MoveFocus(win.COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC)
 	}
@@ -332,10 +421,12 @@ func (wv *WebView2) onControllerCompleted(hr win.HRESULT, controller *win.ICoreW
 	wv.readyPublisher.Publish()
 }
 
-// visibleOnScreen reports whether the widget and all its ancestors are
-// visible.
-func (wv *WebView2) visibleOnScreen() bool {
-	return wv.hWnd != 0 && win.IsWindowVisible(wv.hWnd)
+// visible reports whether the widget window itself has the WS_VISIBLE
+// style. The ancestors do not matter: the browser windows are children of
+// the widget and are hidden with it, and the widget gets no WM_SHOWWINDOW
+// when an ancestor is shown, for example a TabPage that becomes current.
+func (wv *WebView2) visible() bool {
+	return wv.hWnd != 0 && win.GetWindowLong(wv.hWnd, win.GWL_STYLE)&win.WS_VISIBLE != 0
 }
 
 func (wv *WebView2) updateBounds() {
@@ -365,6 +456,26 @@ func (wv *WebView2) moveFocusOut(reason int32) bool {
 	}
 	win.SetFocus(next)
 	return true
+}
+
+// webView2FocusOwner returns the WebView2 widget window if hwnd is one of
+// the browser windows inside it, otherwise hwnd. A form remembers the
+// focused window when it is deactivated; for focus in the web content it
+// must remember the widget, whose WM_SETFOCUS moves the focus back into
+// the content when the form is activated again.
+func webView2FocusOwner(hwnd win.HWND) win.HWND {
+	for h := hwnd; h != 0; h = win.GetAncestor(h, win.GA_PARENT) {
+		if w := windowFromHandle(h); w != nil {
+			if wv, ok := w.(*WebView2); ok && h != hwnd {
+				return wv.hWnd
+			}
+			return hwnd
+		}
+		if win.GetWindowLong(h, win.GWL_STYLE)&win.WS_CHILD == 0 {
+			break
+		}
+	}
+	return hwnd
 }
 
 // URL returns the URL of the current page, or the URL a navigation
@@ -503,7 +614,7 @@ func (wv *WebView2) ExecuteScript(script string, callback func(resultJSON string
 	if wv.webView == nil {
 		return ErrWebView2NotReady
 	}
-	handler := com.NewObject(webView2ScriptCallback(callback), webView2ExecuteScriptCompletedVtbl)
+	handler := com.NewObject(&webView2ScriptCallback{wv, callback}, webView2ExecuteScriptCompletedVtbl)
 	defer handler.Release()
 	if hr := wv.webView.ExecuteScript(script16,
 		(*win.ICoreWebView2ExecuteScriptCompletedHandler)(handler.Interface(0))); win.FAILED(hr) {

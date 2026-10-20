@@ -22,3 +22,14 @@ func (obj *ICoreWebView2Controller) Put_Bounds(bounds RECT) HRESULT {
 		uintptr(bounds.Bottom))
 	return HRESULT(r1)
 }
+
+// removeEventHandler calls a Remove_ method, which takes an
+// EventRegistrationToken (an int64) by value. On 386 it is copied to the
+// stack as two 4-byte words, the low one first.
+func removeEventHandler(method uintptr, obj unsafe.Pointer, token EventRegistrationToken) HRESULT {
+	r1, _, _ := syscall.SyscallN(method,
+		uintptr(obj),
+		uintptr(uint32(token.Value)),
+		uintptr(uint32(token.Value>>32)))
+	return HRESULT(r1)
+}

@@ -1,8 +1,8 @@
 // Command webview2 checks walk.WebView2 (step 7) on Windows: the loader
 // without WebView2Loader.dll, the asynchronous creation, navigation to a
 // local file and to a string, the title and URL events, a web message
-// round trip, ExecuteScript, the history, and Dispose followed by a new
-// WebView2.
+// round trip, ExecuteScript, the history, Dispose followed by a new
+// WebView2, and Dispose called from inside a NavigationCompleted handler.
 //
 // It prints PASS, FAIL and SKIP lines and exits with 1 if a check failed
 // or did not finish in time. Without a WebView2 runtime it prints a SKIP
@@ -149,7 +149,8 @@ func main() {
 			skip("no WebView2 runtime installed: " + err.Error())
 		}
 		check("creation", false, "CreationFailed: %v", err)
-		finish()
+		// Not from inside the WebView2 callback.
+		mw.Synchronize(finish)
 	})
 
 	var started []string
@@ -281,15 +282,47 @@ func main() {
 			}
 			wv2.CreationFailed().Attach(func(err error) {
 				check("second WebView2", false, "CreationFailed: %v", err)
-				next()
+				mw.Synchronize(next)
 			})
 			wv2.NavigationCompleted().Once(func(succeeded bool, status walk.WebView2WebErrorStatus) {
 				check("second WebView2 NavigationCompleted", succeeded, "succeeded %v, web error status %d", succeeded, status)
-				wv2.Dispose()
-				runtime.GC()
-				next()
+				// Dispose after the WebView2 callback has returned.
+				mw.Synchronize(func() {
+					wv2.Dispose()
+					runtime.GC()
+					next()
+				})
 			})
 			wv2.NavigateToString("<!DOCTYPE html><title>second</title><p>Second WebView2.</p>")
+		},
+
+		// Dispose called from inside a NavigationCompleted handler: the
+		// widget releases the browser after the callback has returned.
+		func(next func()) {
+			wv3, err := walk.NewWebView2WithOptions(mw, options)
+			if err != nil {
+				check("third NewWebView2", false, "%v", err)
+				next()
+				return
+			}
+			wv3.CreationFailed().Attach(func(err error) {
+				check("third WebView2", false, "CreationFailed: %v", err)
+				mw.Synchronize(next)
+			})
+			wv3.NavigationCompleted().Once(func(succeeded bool, status walk.WebView2WebErrorStatus) {
+				check("third WebView2 NavigationCompleted", succeeded, "succeeded %v, web error status %d", succeeded, status)
+				wv3.Dispose()
+				check("Dispose in callback", wv3.IsDisposed() && !wv3.IsReady(), "IsDisposed %v, IsReady %v", wv3.IsDisposed(), wv3.IsReady())
+				// Let the message loop release the browser before the
+				// next step.
+				time.AfterFunc(500*time.Millisecond, func() {
+					mw.Synchronize(func() {
+						runtime.GC()
+						next()
+					})
+				})
+			})
+			wv3.NavigateToString("<!DOCTYPE html><title>third</title><p>Third WebView2.</p>")
 		},
 	}
 

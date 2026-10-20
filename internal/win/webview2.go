@@ -426,6 +426,10 @@ func (obj *ICoreWebView2Controller) Add_MoveFocusRequested(eventHandler *ICoreWe
 	return HRESULT(r1)
 }
 
+func (obj *ICoreWebView2Controller) Remove_MoveFocusRequested(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_MoveFocusRequested, unsafe.Pointer(obj), token)
+}
+
 func (obj *ICoreWebView2Controller) NotifyParentWindowPositionChanged() HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.NotifyParentWindowPositionChanged, uintptr(unsafe.Pointer(obj)))
 	return HRESULT(r1)
@@ -541,6 +545,30 @@ func (obj *ICoreWebView2) Add_DocumentTitleChanged(eventHandler *ICoreWebView2Do
 func (obj *ICoreWebView2) Get_DocumentTitle(title **uint16) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_DocumentTitle, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(title)))
 	return HRESULT(r1)
+}
+
+func (obj *ICoreWebView2) Remove_NavigationStarting(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_NavigationStarting, unsafe.Pointer(obj), token)
+}
+
+func (obj *ICoreWebView2) Remove_SourceChanged(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_SourceChanged, unsafe.Pointer(obj), token)
+}
+
+func (obj *ICoreWebView2) Remove_HistoryChanged(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_HistoryChanged, unsafe.Pointer(obj), token)
+}
+
+func (obj *ICoreWebView2) Remove_NavigationCompleted(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_NavigationCompleted, unsafe.Pointer(obj), token)
+}
+
+func (obj *ICoreWebView2) Remove_WebMessageReceived(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_WebMessageReceived, unsafe.Pointer(obj), token)
+}
+
+func (obj *ICoreWebView2) Remove_DocumentTitleChanged(token EventRegistrationToken) HRESULT {
+	return removeEventHandler(obj.LpVtbl.Remove_DocumentTitleChanged, unsafe.Pointer(obj), token)
 }
 
 // Event arguments

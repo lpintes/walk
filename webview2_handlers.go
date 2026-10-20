@@ -159,31 +159,50 @@ func webView2FromThis(this *com.This) *WebView2 {
 	return this.Object().Impl().(*WebView2)
 }
 
+// webView2Event returns the WebView2 of an event handler, or nil after
+// the widget has been disposed. The caller defers the function returned
+// with it (see WebView2.enterCallback).
+func webView2Event(this *com.This) (*WebView2, func()) {
+	wv := webView2FromThis(this)
+	if wv.disposed {
+		return nil, func() {}
+	}
+	return wv, wv.enterCallback()
+}
+
 func webView2_EnvironmentCompleted_Invoke(this *com.This, errorCode uintptr, env *win.ICoreWebView2Environment) uintptr {
-	webView2FromThis(this).onEnvironmentCompleted(win.HRESULT(int32(errorCode)), env)
+	wv := webView2FromThis(this)
+	defer wv.enterCallback()()
+	wv.onEnvironmentCompleted(win.HRESULT(int32(errorCode)), env)
 	return win.S_OK
 }
 
 func webView2_ControllerCompleted_Invoke(this *com.This, errorCode uintptr, controller *win.ICoreWebView2Controller) uintptr {
-	webView2FromThis(this).onControllerCompleted(win.HRESULT(int32(errorCode)), controller)
+	wv := webView2FromThis(this)
+	defer wv.enterCallback()()
+	wv.onControllerCompleted(win.HRESULT(int32(errorCode)), controller)
 	return win.S_OK
 }
 
 // webView2ScriptCallback is the implementation of an
 // ICoreWebView2ExecuteScriptCompletedHandler.
-type webView2ScriptCallback func(resultJSON string, err error)
+type webView2ScriptCallback struct {
+	wv       *WebView2
+	callback func(resultJSON string, err error)
+}
 
 func webView2_ExecuteScriptCompleted_Invoke(this *com.This, errorCode uintptr, resultJSON *uint16) uintptr {
-	callback := this.Object().Impl().(webView2ScriptCallback)
-	if callback == nil {
+	sc := this.Object().Impl().(*webView2ScriptCallback)
+	if sc.callback == nil {
 		return win.S_OK
 	}
+	defer sc.wv.enterCallback()()
 	if hr := win.HRESULT(int32(errorCode)); win.FAILED(hr) {
-		callback("", webView2Error("ExecuteScript", hr))
+		sc.callback("", webView2Error("ExecuteScript", hr))
 		return win.S_OK
 	}
 	// resultJSON belongs to WebView2; it is not freed here.
-	callback(win.UTF16PtrToString(resultJSON), nil)
+	sc.callback(win.UTF16PtrToString(resultJSON), nil)
 	return win.S_OK
 }
 
@@ -212,56 +231,79 @@ func newWebView2EventHandlers(wv *WebView2) *com.Object {
 }
 
 func webView2_NavigationStarting_Invoke(this *com.This, sender *win.ICoreWebView2, args *win.ICoreWebView2NavigationStartingEventArgs) uintptr {
+	wv, leave := webView2Event(this)
+	defer leave()
 	var uri *uint16
-	if args != nil && win.SUCCEEDED(args.Get_Uri(&uri)) {
-		webView2FromThis(this).navigationStartingPublisher.Publish(win.CoTaskMemString(uri))
+	if wv != nil && args != nil && win.SUCCEEDED(args.Get_Uri(&uri)) {
+		wv.navigationStartingPublisher.Publish(win.CoTaskMemString(uri))
 	}
 	return win.S_OK
 }
 
 func webView2_NavigationCompleted_Invoke(this *com.This, sender *win.ICoreWebView2, args *win.ICoreWebView2NavigationCompletedEventArgs) uintptr {
+	wv, leave := webView2Event(this)
+	defer leave()
+	if wv == nil {
+		return win.S_OK
+	}
 	var success win.BOOL
 	var status int32
 	if args != nil {
 		args.Get_IsSuccess(&success)
 		args.Get_WebErrorStatus(&status)
 	}
-	webView2FromThis(this).navigationCompletedPublisher.Publish(success != 0, WebView2WebErrorStatus(status))
+	wv.navigationCompletedPublisher.Publish(success != 0, WebView2WebErrorStatus(status))
 	return win.S_OK
 }
 
 func webView2_SourceChanged_Invoke(this *com.This, sender *win.ICoreWebView2, args unsafe.Pointer) uintptr {
-	webView2FromThis(this).onSourceChanged()
+	wv, leave := webView2Event(this)
+	defer leave()
+	if wv != nil {
+		wv.onSourceChanged()
+	}
 	return win.S_OK
 }
 
 func webView2_HistoryChanged_Invoke(this *com.This, sender *win.ICoreWebView2, args unsafe.Pointer) uintptr {
-	webView2FromThis(this).historyChangedPublisher.Publish()
+	wv, leave := webView2Event(this)
+	defer leave()
+	if wv != nil {
+		wv.historyChangedPublisher.Publish()
+	}
 	return win.S_OK
 }
 
 func webView2_DocumentTitleChanged_Invoke(this *com.This, sender *win.ICoreWebView2, args unsafe.Pointer) uintptr {
-	webView2FromThis(this).onDocumentTitleChanged()
+	wv, leave := webView2Event(this)
+	defer leave()
+	if wv != nil {
+		wv.onDocumentTitleChanged()
+	}
 	return win.S_OK
 }
 
 func webView2_WebMessageReceived_Invoke(this *com.This, sender *win.ICoreWebView2, args *win.ICoreWebView2WebMessageReceivedEventArgs) uintptr {
+	wv, leave := webView2Event(this)
+	defer leave()
 	var json *uint16
-	if args != nil && win.SUCCEEDED(args.Get_WebMessageAsJson(&json)) {
-		webView2FromThis(this).webMessageReceivedPublisher.Publish(win.CoTaskMemString(json))
+	if wv != nil && args != nil && win.SUCCEEDED(args.Get_WebMessageAsJson(&json)) {
+		wv.webMessageReceivedPublisher.Publish(win.CoTaskMemString(json))
 	}
 	return win.S_OK
 }
 
 func webView2_MoveFocusRequested_Invoke(this *com.This, sender *win.ICoreWebView2Controller, args *win.ICoreWebView2MoveFocusRequestedEventArgs) uintptr {
-	if args == nil {
+	wv, leave := webView2Event(this)
+	defer leave()
+	if wv == nil || args == nil {
 		return win.S_OK
 	}
 	var reason int32
 	if win.FAILED(args.Get_Reason(&reason)) {
 		return win.S_OK
 	}
-	if webView2FromThis(this).moveFocusOut(reason) {
+	if wv.moveFocusOut(reason) {
 		args.Put_Handled(win.TRUE)
 	}
 	return win.S_OK
