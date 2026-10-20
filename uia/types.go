@@ -95,7 +95,8 @@ func (t ControlType) String() string {
 	return "ControlType(" + strconv.Itoa(int(t)) + ")"
 }
 
-// PropertyID identifies an element property in a Condition.
+// PropertyID identifies an element property in a Condition, a
+// CacheRequest or PropertyValue.
 type PropertyID int32
 
 // The properties that have a getter method on Element, with the Go type of
@@ -122,4 +123,12 @@ const (
 	PropertyIsControlElement     PropertyID = win.UIA_IsControlElementPropertyId     // bool
 	PropertyIsContentElement     PropertyID = win.UIA_IsContentElementPropertyId     // bool
 	PropertyIsRequiredForForm    PropertyID = win.UIA_IsRequiredForFormPropertyId    // bool
+)
+
+// Properties without a getter method on Element, for PropertyValue,
+// CachedPropertyValue, CacheRequest and conditions.
+const (
+	// PropertyLiveSetting is the live setting of a live region: 0 off,
+	// 1 polite, 2 assertive.
+	PropertyLiveSetting PropertyID = win.UIA_LiveSettingPropertyId // int
 )
