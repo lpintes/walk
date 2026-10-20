@@ -622,7 +622,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Step 4: pull request not yet opened, not yet tested on Windows (task
+- Step 4: draft pull request lpintes/walk#24, not yet tested on Windows (task
   16 of `TESTING_ON_WINDOWS.md`, test program `tests/_wingui/dialogs`).
   Option A only; option B (`#32770` through `CreateDialogIndirectParam`)
   is not implemented.
