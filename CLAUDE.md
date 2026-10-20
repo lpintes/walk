@@ -622,6 +622,42 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
+- Step 13, part 4: pull request not yet opened, not yet tested on
+  Windows (task 15 of `TESTING_ON_WINDOWS.md`, `tests/_wingui/uia` and
+  `liveregion`).
+  - Cache requests: `CacheRequest` is a Go value built per call, like
+    `Condition` (`Properties`, `Scope`, where 0 means `ScopeElement`,
+    and `Filter`, where nil keeps the control view).
+    `FindFirstBuildCache`, `FindAllBuildCache`, `BuildUpdatedCache`;
+    `CachedName`, `CachedControlType`, `CachedAutomationID`,
+    `CachedClassName`, `CachedIsEnabled`, `CachedBoundingRectangle`,
+    `CachedPropertyValue`, `CachedChildren` and `CachedParent`.
+    `PropertyValue` reads any property by ID (same Go types as
+    `OnPropertyChanged`); new constant `PropertyLiveSetting`. Not done:
+    cached patterns (`AddPattern`, `GetCachedPatternAs`), the element
+    mode without a reference (`AutomationElementMode_None`) and the
+    `BuildCache` variants of `Root`, `ElementFromHandle` and the tree
+    walker (`BuildUpdatedCache` covers them).
+  - Patterns: Grid (`GridSize`, `GridItem`), GridItem (`GridPosition`,
+    `ContainingGrid`), Table (`ColumnHeaders`, `RowHeaders`,
+    `TableOrder`), TableItem (`ColumnHeaderItems`, `RowHeaderItems`)
+    and Scroll (`ScrollInfo`, `Scroll`, `SetScrollPercent`, `NoScroll`).
+    Skipped: Transform, MultipleView and Dock (little use for a screen
+    reader style client).
+  - New in `internal/win`: `IUIAutomationCacheRequest` and the five
+    pattern interfaces (generated with `methods`), their IIDs and
+    pattern IDs, the `RowOrColumnMajor` and `ScrollAmount` constants,
+    `UIA_LiveSettingPropertyId`, and the generated `CreateCacheRequest`,
+    `FindFirstBuildCache`, `FindAllBuildCache` and `BuildUpdatedCache`
+    (skipped before because the cache request interface was not
+    defined). Hand-written: `IUIAutomationScrollPattern.SetScrollPercent`
+    (two `float64`, like `SetRangeValue`; `E_NOTIMPL` on arm64).
+  - The client of `tests/_wingui/liveregion` uses `uia` (`PropertyValue`,
+    `OnEvent`, `OnNotification`) instead of its own COM code, with the
+    same checks; the sender's handle and name are now read on the
+    subscription goroutine, after the event.
+  - `tests/_wingui/uia` has a `TableView` (30 rows, 2 columns) for the
+    grid checks; `dump` reads the tree with one cache request.
 - Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
