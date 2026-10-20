@@ -228,8 +228,8 @@ func (e *Element) propertyValue(op string, id PropertyID, get func(*win.IUIAutom
 // CachedChildren returns the cached children of the element, in tree
 // order, when the cache request had a Scope with ScopeChildren or
 // ScopeDescendants: the children that match its Filter, with their
-// properties cached. It returns nil for an element without such children
-// and an error if the request did not cache children.
+// properties cached. It returns nil for an element without such children,
+// and nil or an error if the request did not cache children.
 func (e *Element) CachedChildren() ([]*Element, error) {
 	var children []*Element
 	err := e.call(func(p *win.IUIAutomationElement) error {
