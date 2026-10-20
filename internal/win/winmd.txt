@@ -226,6 +226,7 @@ const EM_SETSEL
 const EM_SETWORDBREAKPROC
 const EN_CHANGE
 const ERROR_CANCELLED
+const ERROR_FILE_NOT_FOUND
 const ERROR_INVALID_PARAMETER
 const ERROR_SUCCESS
 const ES_AUTOHSCROLL
@@ -593,6 +594,7 @@ const PropertyConditionFlags_MatchSubstring
 const PropertyConditionFlags_None
 const ProviderOptions_ServerSideProvider
 const ProviderOptions_UseComThreading
+const REG_SZ
 const RGN_DIFF
 const RGN_OR
 const ROLE_SYSTEM_ALERT
@@ -1176,6 +1178,7 @@ const WM_MOUSEACTIVATE
 const WM_MOUSELEAVE
 const WM_MOUSEMOVE
 const WM_MOUSEWHEEL
+const WM_MOVE
 const WM_NCCALCSIZE
 const WM_NCHITTEST
 const WM_NOTIFY
@@ -1193,6 +1196,7 @@ const WM_SETFONT
 const WM_SETICON
 const WM_SETREDRAW
 const WM_SETTEXT
+const WM_SHOWWINDOW
 const WM_SIZE
 const WM_SYSCOLORCHANGE
 const WM_SYSCOMMAND
