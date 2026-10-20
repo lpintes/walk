@@ -596,6 +596,59 @@ How to test, on 386 and amd64 (after `build.ps1`):
 - Optional manual test: none is needed; NVDA should behave as before,
   because the test only listens.
 
+## Task 16: dialogs that screen readers recognize, and TaskDialog
+
+Step 4 (option A of "Real dialogs for screen readers" in `CLAUDE.md`)
+gives every walk `Dialog` the MSAA role `ROLE_SYSTEM_DIALOG` on its
+client object and the UI Automation property `IsDialog` through Dynamic
+Annotation, raises `EVENT_SYSTEM_DIALOGSTART` when the dialog is first
+shown and `EVENT_SYSTEM_DIALOGEND` when it is destroyed, and adds
+`WS_EX_CONTROLPARENT`. NVDA treats any window whose client object has the
+dialog role as a dialog: it should say "dialog" and read the static texts
+of the dialog when it opens, as for system dialogs. New is also
+`walk.TaskDialog`, a wrapper of `TaskDialogIndirect` (common controls 6):
+title, main instruction, content, icon, common and custom buttons,
+command links, radio buttons, a verification check box, expandable
+information, a footer, `AllowCancel` and hyperlinks with
+`OnHyperlinkClicked`. `TASKDIALOGCONFIG` is packed by hand
+(`#pragma pack(1)`), so 386 and amd64 must both be tested. The package
+`uia` got `Element.IsDialog` and `Element.Role`.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only dialogs`. The test opens and
+  closes by itself: a reference message box (its UI Automation view is
+  printed as an INFO line), a walk dialog (role, `IsDialog`, name, static
+  text, the dialog start and end events, the MSAA client and window
+  objects read by the script, closed by invoking Cancel through UI
+  Automation) and three task dialogs (a radio button, the check box and a
+  custom button operated through UI Automation; one closed with
+  `WM_CLOSE`; one with a hyperlink invoked through UI Automation and
+  closed with `TDM_CLICK_BUTTON`). Report the FAIL lines with their
+  details and all INFO lines: they show how UI Automation sees the
+  message box, the walk dialog and the task dialog (control type,
+  localized control type, role, `IsDialog`, `IsModal`), which tells
+  whether option B is still needed. If a task dialog control is not
+  found, report it; the names and control types DirectUI gives them were
+  not known when the test was written.
+- `tests/_wingui/scripts/run.ps1` and `examples.ps1`, as a regression
+  test: dialogs are used by several examples (for example `databinding`).
+- Manually with NVDA on amd64: `tests\dialogs\dialogs.exe manual`.
+  - "Open a walk dialog": NVDA should say the title, "dialog" and read
+    the text "This dialog asks for your name...", then the focused
+    control. Compare with "Open a message box". Tab, Enter (OK) and
+    Escape (Cancel) must work as before; the result appears in the live
+    region below the buttons.
+  - "Open a task dialog": NVDA should read the title, the main
+    instruction and the content. Check that the radio buttons, the check
+    box, the expand button, the footer link (the result shows "Link:
+    ...") and the buttons are read and work, and that Escape and Alt+F4
+    close it (Cancel, 2).
+  - "Open a task dialog with command links": the two command links with
+    their second line; Escape closes it (`AllowCancel`).
+  - Optional: the same with Narrator and JAWS, if available; record
+    whether they announce the walk dialog as a dialog.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
