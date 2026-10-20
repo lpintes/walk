@@ -27,6 +27,13 @@
 //     added, notifications from walk.Announce, Close of a subscription,
 //     also from its own callback, and Close of the Automation with an open
 //     subscription.
+//   - Caching (step 13 part 4): FindAllBuildCache, FindFirstBuildCache and
+//     BuildUpdatedCache with the Cached getters, a cached value that stays
+//     after a change until BuildUpdatedCache, CachedChildren with and
+//     without a filter, CachedParent, CachedPropertyValue and
+//     PropertyValue.
+//   - The Grid, GridItem, Table, TableItem and Scroll patterns (step 13
+//     part 4) on a TableView with 30 rows and 2 columns.
 //
 // The checks run on a goroutine while the window runs its message loop, as
 // the package documentation requires. It prints PASS, FAIL and SKIP lines
@@ -35,7 +42,8 @@
 // With the argument "dump" it shows no window: after three seconds it
 // prints the control view tree of the foreground window, one element per
 // line, indented by depth, with control type, name, automation ID and
-// class name, and the value or state of the elements that have one. Start
+// class name, and the value or state of the elements that have one. The
+// properties are read with one cache request for the whole tree. Start
 // it, switch to another window with Alt+Tab and wait.
 package main
 
@@ -87,7 +95,16 @@ var (
 	volume         *walk.Slider
 	statusLabel    *walk.Label
 	disabledButton *walk.PushButton
+	table          *walk.TableView
 )
+
+// tableRow is a row of the TableView.
+type tableRow struct {
+	Name  string
+	Value string
+}
+
+const tableRows = 30
 
 // onUI runs f on the goroutine of the window and waits for it.
 func onUI(f func()) {
@@ -122,10 +139,15 @@ func main() {
 		return
 	}
 
+	var rows []*tableRow
+	for i := range tableRows {
+		rows = append(rows, &tableRow{Name: fmt.Sprintf("Item %d", i+1), Value: fmt.Sprintf("Value %d", i+1)})
+	}
+
 	if err := (MainWindow{
 		AssignTo: &mw,
 		Title:    title,
-		Size:     Size{Width: 400, Height: 600},
+		Size:     Size{Width: 400, Height: 760},
 		Layout:   VBox{},
 		Children: []Widget{
 			Label{Text: "Search:"},
@@ -138,6 +160,16 @@ func main() {
 			ComboBox{AssignTo: &colorBox, Model: []string{"Red", "Green", "Blue"}, CurrentIndex: 0, Accessibility: Accessibility{Name: "Color"}},
 			ListBox{AssignTo: &numberList, Model: []string{"One", "Two", "Three"}, Accessibility: Accessibility{Name: "Numbers"}},
 			Slider{AssignTo: &volume, MinValue: 0, MaxValue: 100, Value: 30, Accessibility: Accessibility{Name: "Volume"}},
+			TableView{
+				AssignTo: &table,
+				Columns: []TableViewColumn{
+					{Title: "Name", DataMember: "Name", Width: 120},
+					{Title: "Value", DataMember: "Value", Width: 120},
+				},
+				Model:   rows,
+				MinSize: Size{Height: 120},
+				MaxSize: Size{Height: 120},
+			},
 			Label{AssignTo: &statusLabel, Text: "Status", Accessibility: Accessibility{LiveSetting: AccLiveSettingPolite}},
 		},
 	}).Create(); err != nil {
@@ -194,6 +226,8 @@ func run(hwnd uintptr, closeWindow func(), closed <-chan struct{}) {
 	checkFocus(a, window, press, hwnd)
 	checkConcurrency(press)
 	checkPatterns(window, press, option)
+	checkCache(a, window, press, disabled)
+	checkGrid(window, press)
 	open := checkEvents(a, window, hwnd)
 	checkRelease(a, window, press)
 
@@ -264,8 +298,10 @@ func checkControls(window, press, disabled, option *uia.Element) {
 	name, err := option.Name()
 	check("check box Name", err == nil && name == "Option", "%q, %v", name, err)
 
-	edits, err := window.FindAll(uia.ScopeDescendants, uia.ByControlType(uia.ControlTypeEdit))
-	// The multiline TextEdit is a Document, not an Edit.
+	// The multiline TextEdit is a Document, not an Edit. The class name
+	// keeps out the cells of the TableView, should its proxy report them
+	// as edits.
+	edits, err := window.FindAll(uia.ScopeDescendants, uia.And(uia.ByControlType(uia.ControlTypeEdit), uia.ByClassName("Edit")))
 	if checkErr("FindAll edits", err) && check2("FindAll edits", len(edits) == 2, "%d edits, want 2", len(edits)) {
 		for i, want := range []struct {
 			name     string
@@ -498,21 +534,31 @@ func dump() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	dumpElement(a.ControlView(), e, 0)
+	// One cache request reads the properties of the whole control view
+	// tree.
+	cached, err := e.BuildUpdatedCache(uia.CacheRequest{
+		Properties: []uia.PropertyID{uia.PropertyControlType, uia.PropertyName, uia.PropertyAutomationID, uia.PropertyClassName},
+		Scope:      uia.ScopeSubtree,
+	})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	dumpElement(cached, 0)
 }
 
-func dumpElement(w *uia.TreeWalker, e *uia.Element, depth int) {
-	ct, _ := e.ControlType()
-	name, _ := e.Name()
-	id, _ := e.AutomationID()
-	class, _ := e.ClassName()
+func dumpElement(e *uia.Element, depth int) {
+	ct, _ := e.CachedControlType()
+	name, _ := e.CachedName()
+	id, _ := e.CachedAutomationID()
+	class, _ := e.CachedClassName()
 	fmt.Printf("%s%v, name %q, automation ID %q, class %q%s\n", strings.Repeat("  ", depth), ct, name, id, class, state(e))
-	children, err := w.Children(e)
+	children, err := e.CachedChildren()
 	if err != nil {
 		fmt.Printf("%s  error: %v\n", strings.Repeat("  ", depth), err)
 	}
 	for _, c := range children {
-		dumpElement(w, c, depth+1)
+		dumpElement(c, depth+1)
 		c.Release()
 	}
 }
@@ -534,6 +580,12 @@ func state(e *uia.Element) string {
 	}
 	if rv, err := e.RangeValue(); err == nil {
 		parts = append(parts, fmt.Sprintf("range value %g from %g to %g", rv.Value, rv.Minimum, rv.Maximum))
+	}
+	if rows, columns, err := e.GridSize(); err == nil {
+		parts = append(parts, fmt.Sprintf("%d rows, %d columns", rows, columns))
+	}
+	if pos, err := e.GridPosition(); err == nil {
+		parts = append(parts, fmt.Sprintf("row %d, column %d", pos.Row+1, pos.Column+1))
 	}
 	if enabled, err := e.IsEnabled(); err == nil && !enabled {
 		parts = append(parts, "disabled")
