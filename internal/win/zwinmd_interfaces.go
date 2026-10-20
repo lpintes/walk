@@ -453,6 +453,11 @@ func (obj *IUIAutomation) Get_ContentViewCondition(condition **IUIAutomationCond
 	return HRESULT(r1)
 }
 
+func (obj *IUIAutomation) CreateCacheRequest(cacheRequest **IUIAutomationCacheRequest) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateCacheRequest, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(cacheRequest)))
+	return HRESULT(r1)
+}
+
 func (obj *IUIAutomation) CreateTrueCondition(newCondition **IUIAutomationCondition) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.CreateTrueCondition, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(newCondition)))
 	return HRESULT(r1)
@@ -665,6 +670,85 @@ type IUIAutomation5 struct {
 	LpVtbl *IUIAutomation5Vtbl
 }
 
+type IUIAutomationCacheRequestVtbl struct {
+	QueryInterface            uintptr
+	AddRef                    uintptr
+	Release                   uintptr
+	AddProperty               uintptr
+	AddPattern                uintptr
+	Clone                     uintptr
+	Get_TreeScope             uintptr
+	Put_TreeScope             uintptr
+	Get_TreeFilter            uintptr
+	Put_TreeFilter            uintptr
+	Get_AutomationElementMode uintptr
+	Put_AutomationElementMode uintptr
+}
+
+type IUIAutomationCacheRequest struct {
+	LpVtbl *IUIAutomationCacheRequestVtbl
+}
+
+func (obj *IUIAutomationCacheRequest) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) AddProperty(propertyId int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddProperty, uintptr(unsafe.Pointer(obj)), uintptr(propertyId))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) AddPattern(patternId int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddPattern, uintptr(unsafe.Pointer(obj)), uintptr(patternId))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Clone(clonedRequest **IUIAutomationCacheRequest) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Clone, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(clonedRequest)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Get_TreeScope(scope *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_TreeScope, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(scope)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Put_TreeScope(scope int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Put_TreeScope, uintptr(unsafe.Pointer(obj)), uintptr(scope))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Get_TreeFilter(filter **IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_TreeFilter, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(filter)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Put_TreeFilter(filter *IUIAutomationCondition) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Put_TreeFilter, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(filter)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Get_AutomationElementMode(mode *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_AutomationElementMode, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(mode)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationCacheRequest) Put_AutomationElementMode(mode int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Put_AutomationElementMode, uintptr(unsafe.Pointer(obj)), uintptr(mode))
+	return HRESULT(r1)
+}
+
 type IUIAutomationConditionVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
@@ -814,6 +898,21 @@ func (obj *IUIAutomationElement) FindFirst(scope int32, condition *IUIAutomation
 
 func (obj *IUIAutomationElement) FindAll(scope int32, condition *IUIAutomationCondition, found **IUIAutomationElementArray) HRESULT {
 	r1, _, _ := syscall.SyscallN(obj.LpVtbl.FindAll, uintptr(unsafe.Pointer(obj)), uintptr(scope), uintptr(unsafe.Pointer(condition)), uintptr(unsafe.Pointer(found)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) FindFirstBuildCache(scope int32, condition *IUIAutomationCondition, cacheRequest *IUIAutomationCacheRequest, found **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.FindFirstBuildCache, uintptr(unsafe.Pointer(obj)), uintptr(scope), uintptr(unsafe.Pointer(condition)), uintptr(unsafe.Pointer(cacheRequest)), uintptr(unsafe.Pointer(found)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) FindAllBuildCache(scope int32, condition *IUIAutomationCondition, cacheRequest *IUIAutomationCacheRequest, found **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.FindAllBuildCache, uintptr(unsafe.Pointer(obj)), uintptr(scope), uintptr(unsafe.Pointer(condition)), uintptr(unsafe.Pointer(cacheRequest)), uintptr(unsafe.Pointer(found)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationElement) BuildUpdatedCache(cacheRequest *IUIAutomationCacheRequest, updatedElement **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.BuildUpdatedCache, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(cacheRequest)), uintptr(unsafe.Pointer(updatedElement)))
 	return HRESULT(r1)
 }
 
@@ -1300,6 +1399,146 @@ type IUIAutomationFocusChangedEventHandler struct {
 	LpVtbl *IUIAutomationFocusChangedEventHandlerVtbl
 }
 
+type IUIAutomationGridItemPatternVtbl struct {
+	QueryInterface            uintptr
+	AddRef                    uintptr
+	Release                   uintptr
+	Get_CurrentContainingGrid uintptr
+	Get_CurrentRow            uintptr
+	Get_CurrentColumn         uintptr
+	Get_CurrentRowSpan        uintptr
+	Get_CurrentColumnSpan     uintptr
+	Get_CachedContainingGrid  uintptr
+	Get_CachedRow             uintptr
+	Get_CachedColumn          uintptr
+	Get_CachedRowSpan         uintptr
+	Get_CachedColumnSpan      uintptr
+}
+
+type IUIAutomationGridItemPattern struct {
+	LpVtbl *IUIAutomationGridItemPatternVtbl
+}
+
+func (obj *IUIAutomationGridItemPattern) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CurrentContainingGrid(retVal **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentContainingGrid, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CurrentRow(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentRow, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CurrentColumn(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentColumn, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CurrentRowSpan(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentRowSpan, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CurrentColumnSpan(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentColumnSpan, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CachedContainingGrid(retVal **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedContainingGrid, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CachedRow(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedRow, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CachedColumn(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedColumn, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CachedRowSpan(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedRowSpan, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridItemPattern) Get_CachedColumnSpan(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedColumnSpan, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+type IUIAutomationGridPatternVtbl struct {
+	QueryInterface         uintptr
+	AddRef                 uintptr
+	Release                uintptr
+	GetItem                uintptr
+	Get_CurrentRowCount    uintptr
+	Get_CurrentColumnCount uintptr
+	Get_CachedRowCount     uintptr
+	Get_CachedColumnCount  uintptr
+}
+
+type IUIAutomationGridPattern struct {
+	LpVtbl *IUIAutomationGridPatternVtbl
+}
+
+func (obj *IUIAutomationGridPattern) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridPattern) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationGridPattern) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationGridPattern) GetItem(row int32, column int32, element **IUIAutomationElement) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetItem, uintptr(unsafe.Pointer(obj)), uintptr(row), uintptr(column), uintptr(unsafe.Pointer(element)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridPattern) Get_CurrentRowCount(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentRowCount, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridPattern) Get_CurrentColumnCount(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentColumnCount, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridPattern) Get_CachedRowCount(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedRowCount, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationGridPattern) Get_CachedColumnCount(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedColumnCount, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
 type IUIAutomationInvokePatternVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
@@ -1646,6 +1885,110 @@ func (obj *IUIAutomationScrollItemPattern) ScrollIntoView() HRESULT {
 	return HRESULT(r1)
 }
 
+type IUIAutomationScrollPatternVtbl struct {
+	QueryInterface                     uintptr
+	AddRef                             uintptr
+	Release                            uintptr
+	Scroll                             uintptr
+	SetScrollPercent                   uintptr
+	Get_CurrentHorizontalScrollPercent uintptr
+	Get_CurrentVerticalScrollPercent   uintptr
+	Get_CurrentHorizontalViewSize      uintptr
+	Get_CurrentVerticalViewSize        uintptr
+	Get_CurrentHorizontallyScrollable  uintptr
+	Get_CurrentVerticallyScrollable    uintptr
+	Get_CachedHorizontalScrollPercent  uintptr
+	Get_CachedVerticalScrollPercent    uintptr
+	Get_CachedHorizontalViewSize       uintptr
+	Get_CachedVerticalViewSize         uintptr
+	Get_CachedHorizontallyScrollable   uintptr
+	Get_CachedVerticallyScrollable     uintptr
+}
+
+type IUIAutomationScrollPattern struct {
+	LpVtbl *IUIAutomationScrollPatternVtbl
+}
+
+func (obj *IUIAutomationScrollPattern) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Scroll(horizontalAmount int32, verticalAmount int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Scroll, uintptr(unsafe.Pointer(obj)), uintptr(horizontalAmount), uintptr(verticalAmount))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CurrentHorizontalScrollPercent(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentHorizontalScrollPercent, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CurrentVerticalScrollPercent(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentVerticalScrollPercent, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CurrentHorizontalViewSize(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentHorizontalViewSize, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CurrentVerticalViewSize(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentVerticalViewSize, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CurrentHorizontallyScrollable(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentHorizontallyScrollable, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CurrentVerticallyScrollable(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentVerticallyScrollable, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CachedHorizontalScrollPercent(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedHorizontalScrollPercent, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CachedVerticalScrollPercent(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedVerticalScrollPercent, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CachedHorizontalViewSize(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedHorizontalViewSize, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CachedVerticalViewSize(retVal *float64) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedVerticalViewSize, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CachedHorizontallyScrollable(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedHorizontallyScrollable, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationScrollPattern) Get_CachedVerticallyScrollable(retVal *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedVerticallyScrollable, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
 type IUIAutomationSelectionItemPatternVtbl struct {
 	QueryInterface                uintptr
 	AddRef                        uintptr
@@ -1783,6 +2126,116 @@ type IUIAutomationStructureChangedEventHandlerVtbl struct {
 
 type IUIAutomationStructureChangedEventHandler struct {
 	LpVtbl *IUIAutomationStructureChangedEventHandlerVtbl
+}
+
+type IUIAutomationTableItemPatternVtbl struct {
+	QueryInterface              uintptr
+	AddRef                      uintptr
+	Release                     uintptr
+	GetCurrentRowHeaderItems    uintptr
+	GetCurrentColumnHeaderItems uintptr
+	GetCachedRowHeaderItems     uintptr
+	GetCachedColumnHeaderItems  uintptr
+}
+
+type IUIAutomationTableItemPattern struct {
+	LpVtbl *IUIAutomationTableItemPatternVtbl
+}
+
+func (obj *IUIAutomationTableItemPattern) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTableItemPattern) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationTableItemPattern) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationTableItemPattern) GetCurrentRowHeaderItems(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentRowHeaderItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTableItemPattern) GetCurrentColumnHeaderItems(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentColumnHeaderItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTableItemPattern) GetCachedRowHeaderItems(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedRowHeaderItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTableItemPattern) GetCachedColumnHeaderItems(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedColumnHeaderItems, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+type IUIAutomationTablePatternVtbl struct {
+	QueryInterface              uintptr
+	AddRef                      uintptr
+	Release                     uintptr
+	GetCurrentRowHeaders        uintptr
+	GetCurrentColumnHeaders     uintptr
+	Get_CurrentRowOrColumnMajor uintptr
+	GetCachedRowHeaders         uintptr
+	GetCachedColumnHeaders      uintptr
+	Get_CachedRowOrColumnMajor  uintptr
+}
+
+type IUIAutomationTablePattern struct {
+	LpVtbl *IUIAutomationTablePatternVtbl
+}
+
+func (obj *IUIAutomationTablePattern) QueryInterface(riid *syscall.GUID, ppvObject *unsafe.Pointer) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.QueryInterface, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(riid)), uintptr(unsafe.Pointer(ppvObject)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTablePattern) AddRef() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.AddRef, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationTablePattern) Release() uint32 {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Release, uintptr(unsafe.Pointer(obj)))
+	return uint32(r1)
+}
+
+func (obj *IUIAutomationTablePattern) GetCurrentRowHeaders(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentRowHeaders, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTablePattern) GetCurrentColumnHeaders(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCurrentColumnHeaders, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTablePattern) Get_CurrentRowOrColumnMajor(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CurrentRowOrColumnMajor, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTablePattern) GetCachedRowHeaders(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedRowHeaders, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTablePattern) GetCachedColumnHeaders(retVal **IUIAutomationElementArray) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.GetCachedColumnHeaders, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
+}
+
+func (obj *IUIAutomationTablePattern) Get_CachedRowOrColumnMajor(retVal *int32) HRESULT {
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.Get_CachedRowOrColumnMajor, uintptr(unsafe.Pointer(obj)), uintptr(unsafe.Pointer(retVal)))
+	return HRESULT(r1)
 }
 
 type IUIAutomationTextPatternVtbl struct {
