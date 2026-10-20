@@ -622,7 +622,67 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
+- Step 4: pull request not yet opened, not yet tested on Windows (task
+  16 of `TESTING_ON_WINDOWS.md`, test program `tests/_wingui/dialogs`).
+  Option A only; option B (`#32770` through `CreateDialogIndirectParam`)
+  is not implemented.
+  - Every `Dialog` gets, through Dynamic Annotation when it is created,
+    the MSAA role `ROLE_SYSTEM_DIALOG` on its client object and the UI
+    Automation property `IsDialog` (`IsDialog_Property_GUID`, Windows 10
+    1809). The client object, not `OBJID_WINDOW`, because that is where
+    oleacc reports the dialog role for `#32770` windows (their window
+    object has `ROLE_SYSTEM_WINDOW`) and the object NVDA reads: NVDA
+    uses `OBJID_CLIENT` for windows and maps `(any class,
+    ROLE_SYSTEM_DIALOG)` to its `Dialog` behavior, which says "dialog"
+    and reads the static texts (`getDialogText` in
+    `NVDAObjects/behaviors.py`), so option A should be enough for NVDA.
+    Annotating the window object too could make clients that show window
+    objects report two dialogs. NVDA reads `IsDialog` only for windows it
+    handles through UI Automation (Narrator does). A program can still
+    set another role with `SetRole` or the declarative `Accessibility`.
+  - `Dialog.Show` raises `EVENT_SYSTEM_DIALOGSTART` the first time, and
+    `WM_DESTROY` raises `EVENT_SYSTEM_DIALOGEND`, as the dialog manager
+    does for `#32770` dialogs (NVDA ignores them; JAWS may use them).
+  - Dialogs get `WS_EX_CONTROLPARENT` like `MainWindow` (no change for
+    their own tab navigation, `IsDialogMessage` already recursed into the
+    client composite). Not added: `WS_EX_DLGMODALFRAME`; it only changes
+    the frame and hides the caption icon, and no screen reader uses it.
+  - New public API: `Accessibility.SetIsDialog`; `TaskDialog` with
+    `Show(owner)` returning `TaskDialogResult` (button, radio button,
+    verification check box), `TaskDialogButton`, `TaskDialogIcon`,
+    `TaskDialogCommonButtons` and `TaskDialogAvailable`. Fields: title,
+    main instruction, content, icon, common buttons, custom buttons
+    (optionally command links), default button, radio buttons with a
+    default or none, verification text and state, expanded information
+    with the control texts and the initial state, footer, `AllowCancel`
+    and `OnHyperlinkClicked` (enables links; one shared
+    `syscall.NewCallback` finds the dialog through its callback data).
+    Common buttons return the `DlgCmd` values. Without common controls 6
+    `Show` returns an error; all examples have the manifest.
+  - In `uia`: `Element.IsDialog`, `Element.Role` (MSAA role through
+    LegacyIAccessible) and `PropertyIsDialog`.
+  - New in `internal/win` (generated): `taskDialogIndirect` (unexported,
+    `unsafe.Pointer` config), the `TDF_`, `TDCBF_`, `TDN_` constants
+    used and `TDM_CLICK_BUTTON`, `EVENT_SYSTEM_DIALOGSTART`,
+    `EVENT_SYSTEM_DIALOGEND`, `OBJID_WINDOW`, `UIA_IsDialogPropertyId`,
+    `IsDialog_Property_GUID`. Hand-written: `TASKDIALOGCONFIG` and
+    `TASKDIALOG_BUTTON` (`#pragma pack(1)`: on 64-bit `hwndParent` is at
+    offset 4), as Go structs with natural fields that the hand-written
+    `TaskDialogIndirect` packs into pinned memory laid out as in C; the
+    build checks the packed sizes against the SDK (96 and 8 bytes on 386,
+    160 and 12 on 64-bit). Also `TD_*_ICON` (`MAKEINTRESOURCEW(-1)` to
+    `(-4)`) and `TaskDialogIndirectAvailable`.
+  - To check on Windows: whether UI Automation passes the annotated
+    `IsDialog` on (the test compares with a message box), what
+    `IsModal` reports (walk dialogs cannot annotate it; it is printed),
+    and how NVDA, Narrator and JAWS announce the dialog. A concrete
+    reason for option B would be a screen reader that ignores the role
+    and looks for the `#32770` class, or `IsDialog` not passed on by UI
+    Automation.
+  - Not done: `Announce` for validation errors (step 10 leftover), a
+    declarative counterpart of `TaskDialog` (it is a plain struct
+    already), progress bars and timers in task dialogs.
+- Steps 5, 7, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
@@ -702,6 +762,8 @@ and real dialogs all need new Win32/COM declarations.
   role `ROLE_SYSTEM_DIALOG` on the window object, or by the UI Automation
   `IsDialog` property. Walk dialogs have none of these, so for example NVDA
   does not announce "dialog" and does not read the dialog text when it opens.
+- Option A was done in step 4 (see "Status"), on the client object
+  instead of `OBJID_WINDOW`, without `WS_EX_DLGMODALFRAME`.
 - Option A (cheap, try first): set `ROLE_SYSTEM_DIALOG` through Dynamic
   Annotation on `OBJID_WINDOW` (the existing `Accessibility.SetRole`
   annotates `OBJID_CLIENT` only) and add `WS_EX_DLGMODALFRAME` and
