@@ -28,6 +28,30 @@ const (
 	BP_PUSHBUTTON = 1
 )
 
+// CFE_EFFECTS
+const (
+	CFE_AUTOBACKCOLOR = 0x4000000
+	CFE_AUTOCOLOR     = 0x40000000
+	CFE_BOLD          = 1
+	CFE_ITALIC        = 2
+	CFE_LINK          = 0x20
+	CFE_STRIKEOUT     = 8
+	CFE_UNDERLINE     = 4
+)
+
+// CFM_MASK
+const (
+	CFM_BACKCOLOR = 0x4000000
+	CFM_BOLD      = 1
+	CFM_COLOR     = 0x40000000
+	CFM_FACE      = 0x20000000
+	CFM_ITALIC    = 2
+	CFM_LINK      = 0x20
+	CFM_SIZE      = 0x80000000
+	CFM_STRIKEOUT = 8
+	CFM_UNDERLINE = 4
+)
+
 // CLIPBOARD_FORMAT
 const (
 	CF_UNICODETEXT = 0xd
@@ -155,6 +179,13 @@ const (
 	FOF_WANTNUKEWARNING  = 0x4000
 )
 
+// FINDREPLACE_FLAGS
+const (
+	FR_DOWN      = 1
+	FR_MATCHCASE = 4
+	FR_WHOLEWORD = 2
+)
+
 // FLASHWINFO_FLAGS
 const (
 	FLASHW_TIMERNOFG = 0xc
@@ -201,6 +232,13 @@ const (
 const (
 	IMAGE_BITMAP = 0
 	IMAGE_ICON   = 1
+)
+
+// GETTEXTLENGTHEX_FLAGS
+const (
+	GTL_NUMCHARS = 8
+	GTL_PRECISE  = 2
+	GTL_USECRLF  = 1
 )
 
 // GET_ANCESTOR_FLAGS
@@ -544,6 +582,42 @@ const (
 	OFN_FILEMUSTEXIST    = 0x1000
 	OFN_HIDEREADONLY     = 4
 	OFN_NOCHANGEDIR      = 8
+)
+
+// PARAFORMAT_ALIGNMENT
+const (
+	PFA_CENTER  = 3
+	PFA_JUSTIFY = 4
+	PFA_LEFT    = 1
+	PFA_RIGHT   = 2
+)
+
+// PARAFORMAT_MASK
+const (
+	PFM_ALIGNMENT      = 8
+	PFM_NUMBERING      = 0x20
+	PFM_NUMBERINGSTART = 0x8000
+	PFM_NUMBERINGSTYLE = 0x2000
+	PFM_OFFSET         = 4
+	PFM_RIGHTINDENT    = 2
+	PFM_SPACEAFTER     = 0x80
+	PFM_SPACEBEFORE    = 0x40
+	PFM_STARTINDENT    = 1
+)
+
+// PARAFORMAT_NUMBERING
+const (
+	PFN_ARABIC   = 2
+	PFN_BULLET   = 1
+	PFN_LCLETTER = 3
+	PFN_LCROMAN  = 5
+	PFN_UCLETTER = 4
+	PFN_UCROMAN  = 6
+)
+
+// PARAFORMAT_NUMBERING_STYLE
+const (
+	PFNS_PERIOD = 0x200
 )
 
 // PEN_STYLE
@@ -1282,11 +1356,14 @@ const (
 	DTN_DATETIMECHANGE           uint32 = 0xfffffd09
 	DTS_SHORTDATEFORMAT                 = 0
 	DTS_SHOWNONE                        = 2
+	EM_CANUNDO                          = 0xc6
 	EM_CHARFROMPOS                      = 0xd7
+	EM_EMPTYUNDOBUFFER                  = 0xcd
 	EM_GETCARETINDEX                    = 0x1512
 	EM_GETCUEBANNER                     = 0x1502
 	EM_GETLIMITTEXT                     = 0xd5
 	EM_GETLINECOUNT                     = 0xba
+	EM_GETMODIFY                        = 0xb8
 	EM_GETPASSWORDCHAR                  = 0xd2
 	EM_GETRECT                          = 0xb2
 	EM_GETSEL                           = 0xb0
@@ -1297,10 +1374,12 @@ const (
 	EM_SCROLLCARET                      = 0xb7
 	EM_SETCUEBANNER                     = 0x1501
 	EM_SETLIMITTEXT                     = 0xc5
+	EM_SETMODIFY                        = 0xb9
 	EM_SETPASSWORDCHAR                  = 0xcc
 	EM_SETREADONLY                      = 0xcf
 	EM_SETSEL                           = 0xb1
 	EM_SETWORDBREAKPROC                 = 0xd0
+	EM_UNDO                             = 0xc7
 	GDTR_MAX                            = 2
 	GDTR_MIN                            = 1
 	HDM_GETBITMAPMARGIN                 = 0x1215
@@ -1477,6 +1556,46 @@ const (
 	WM_MOUSELEAVE                       = 0x2a3
 )
 
+// Windows.Win32.UI.Controls.RichEdit
+const (
+	AURL_ENABLEURL          = 1
+	EM_AUTOURLDETECT        = 0x45b
+	EM_CANREDO              = 0x455
+	EM_EXGETSEL             = 0x434
+	EM_EXLIMITTEXT          = 0x435
+	EM_EXSETSEL             = 0x437
+	EM_FINDTEXTEXW          = 0x47c
+	EM_GETAUTOURLDETECT     = 0x45c
+	EM_GETCHARFORMAT        = 0x43a
+	EM_GETEVENTMASK         = 0x43b
+	EM_GETPARAFORMAT        = 0x43d
+	EM_GETSELTEXT           = 0x43e
+	EM_GETTEXTLENGTHEX      = 0x45f
+	EM_GETTEXTRANGE         = 0x44b
+	EM_REDO                 = 0x454
+	EM_SETBKGNDCOLOR        = 0x443
+	EM_SETCHARFORMAT        = 0x444
+	EM_SETEVENTMASK         = 0x445
+	EM_SETPARAFORMAT        = 0x447
+	EM_SETTYPOGRAPHYOPTIONS = 0x4ca
+	EM_STREAMIN             = 0x449
+	EM_STREAMOUT            = 0x44a
+	ENM_CHANGE              = 1
+	ENM_LINK                = 0x4000000
+	ENM_SELCHANGE           = 0x80000
+	EN_LINK                 = 0x70b
+	EN_SELCHANGE            = 0x702
+	ES_SAVESEL              = 0x8000
+	SCF_ALL                 = 4
+	SCF_DEFAULT             = 0
+	SCF_SELECTION           = 1
+	SFF_SELECTION           = 0x8000
+	SF_RTF                  = 2
+	SF_TEXT                 = 1
+	SF_UNICODE              = 0x10
+	TO_ADVANCEDTYPOGRAPHY   = 1
+)
+
 // Windows.Win32.UI.Shell
 const (
 	CSIDL_APPDATA        = 0x1a
@@ -1538,6 +1657,7 @@ const (
 	ES_LEFT                             = 0
 	ES_LOWERCASE                        = 0x10
 	ES_MULTILINE                        = 4
+	ES_NOHIDESEL                        = 0x100
 	ES_READONLY                         = 0x800
 	ES_RIGHT                            = 2
 	ES_UPPERCASE                        = 8
@@ -1642,12 +1762,15 @@ const (
 	WM_APP                              = 0x8000
 	WM_CHANGEUISTATE                    = 0x127
 	WM_CHAR                             = 0x102
+	WM_CLEAR                            = 0x303
 	WM_CLIPBOARDUPDATE                  = 0x31d
 	WM_CLOSE                            = 0x10
 	WM_COMMAND                          = 0x111
 	WM_CONTEXTMENU                      = 0x7b
+	WM_COPY                             = 0x301
 	WM_CTLCOLOREDIT                     = 0x133
 	WM_CTLCOLORSTATIC                   = 0x138
+	WM_CUT                              = 0x300
 	WM_DESTROY                          = 2
 	WM_DPICHANGED                       = 0x2e0
 	WM_DRAWITEM                         = 0x2b
@@ -1695,6 +1818,7 @@ const (
 	WM_SYSCOMMAND                       = 0x112
 	WM_THEMECHANGED                     = 0x31a
 	WM_TIMER                            = 0x113
+	WM_UNDO                             = 0x304
 	WM_UPDATEUISTATE                    = 0x128
 	WM_USER                             = 0x400
 	WM_VSCROLL                          = 0x115
