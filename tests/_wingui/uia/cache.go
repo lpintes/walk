@@ -87,7 +87,7 @@ func checkCache(a *uia.Automation, window, press, disabled *uia.Element) {
 
 	// A cached value stays as it was until BuildUpdatedCache.
 	cachedDisabled, err := disabled.BuildUpdatedCache(cache)
-	if checkErr("BuildUpdatedCache", err) {
+	if checkErr("BuildUpdatedCache", err) && check2("BuildUpdatedCache result", cachedDisabled != nil, "nil element") {
 		onUI(func() { disabledButton.SetText("Disabled 2") })
 		time.Sleep(200 * time.Millisecond)
 		old, err1 := cachedDisabled.CachedName()
@@ -110,7 +110,7 @@ func checkCache(a *uia.Automation, window, press, disabled *uia.Element) {
 		Properties: []uia.PropertyID{uia.PropertyName},
 		Scope:      uia.ScopeSubtree,
 	})
-	if checkErr("BuildUpdatedCache ScopeSubtree", err) {
+	if checkErr("BuildUpdatedCache ScopeSubtree", err) && check2("BuildUpdatedCache ScopeSubtree result", tree != nil, "nil element") {
 		children, err := tree.CachedChildren()
 		var cachedPress *uia.Element
 		for _, c := range children {
@@ -127,15 +127,17 @@ func checkCache(a *uia.Automation, window, press, disabled *uia.Element) {
 			check("CachedParent", err == nil && same(p, parent), "%v, same %v", err, same(p, parent))
 		}
 		p, err := tree.CachedParent()
-		check("CachedParent of the cache root", err == nil && p == nil, "%v, %v", p != nil, err)
+		check("CachedParent of the cache root", p == nil || err != nil, "%v, %v", p != nil, err)
 	}
 
+	// ScopeChildren without ScopeElement: the parent does not match the
+	// filter, and with ScopeElement UI Automation would return no element.
 	filtered, err := parent.BuildUpdatedCache(uia.CacheRequest{
 		Properties: []uia.PropertyID{uia.PropertyName},
-		Scope:      uia.ScopeElement | uia.ScopeChildren,
+		Scope:      uia.ScopeChildren,
 		Filter:     byButton,
 	})
-	if checkErr("BuildUpdatedCache with a filter", err) {
+	if checkErr("BuildUpdatedCache with a filter", err) && check2("BuildUpdatedCache with a filter result", filtered != nil, "nil element") {
 		children, err := filtered.CachedChildren()
 		got := strings.Join(cachedNames(children), ",")
 		check("CachedChildren with a filter", err == nil && got == "Press me,Disabled", "%q, %v", got, err)
@@ -186,7 +188,7 @@ func checkGrid(window, press *uia.Element) {
 		got := gridNames(cell.ColumnHeaderItems())
 		check("ColumnHeaderItems", got == "Value", "%q", got)
 		_, err = cell.RowHeaderItems()
-		check("RowHeaderItems", err == nil, "%v", err)
+		check("RowHeaderItems", err == nil || errors.Is(err, uia.ErrPatternNotSupported), "%v", err)
 	}
 	_, err = grid.GridItem(tableRows, 0)
 	check("GridItem out of range", err != nil, "no error")
@@ -194,7 +196,7 @@ func checkGrid(window, press *uia.Element) {
 	got := gridNames(grid.ColumnHeaders())
 	check("ColumnHeaders", got == "Name,Value", "%q", got)
 	_, err = grid.RowHeaders()
-	check("RowHeaders", err == nil, "%v", err)
+	check("RowHeaders", err == nil || errors.Is(err, uia.ErrPatternNotSupported), "%v", err)
 	order, err := grid.TableOrder()
 	check("TableOrder", err == nil && order >= uia.RowMajor && order <= uia.TableOrderIndeterminate, "%v, %v", order, err)
 

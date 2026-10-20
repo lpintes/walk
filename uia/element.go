@@ -17,7 +17,8 @@ import (
 
 // Element is an object in the UI Automation tree, such as a window, a
 // button or a list item. Its properties are read from the program that
-// owns it at each call, so they are always current.
+// owns it at each call, so they are always current. The methods of a nil
+// *Element return an error.
 type Element struct {
 	a *Automation
 	p *win.IUIAutomationElement // used only on the thread of a
@@ -25,8 +26,11 @@ type Element struct {
 
 // Release frees the element. Its methods return ErrReleased afterwards.
 // Release returns nil, also when called again; after Close of the
-// Automation it returns ErrClosed.
+// Automation it returns ErrClosed. Release of a nil Element returns nil.
 func (e *Element) Release() error {
+	if e == nil {
+		return nil
+	}
 	err := e.a.do(func() error {
 		if e.p != nil {
 			e.p.Release()
@@ -41,7 +45,12 @@ func (e *Element) Release() error {
 }
 
 // call runs f with the COM object of e on the thread of the Automation.
+// For a nil e it returns an error instead, so that the methods of a nil
+// Element, such as one a search did not find, fail without a panic.
 func (e *Element) call(f func(p *win.IUIAutomationElement) error) error {
+	if e == nil {
+		return errNilElement
+	}
 	return e.a.do(func() error {
 		if e.p == nil {
 			return ErrReleased
@@ -260,6 +269,9 @@ func (e *Element) SetFocus() error {
 // Two Element values returned by different calls can be equal. Both must
 // come from the same Automation.
 func (e *Element) Equal(other *Element) (bool, error) {
+	if e == nil {
+		return false, errNilElement
+	}
 	if other == nil {
 		return false, nil
 	}

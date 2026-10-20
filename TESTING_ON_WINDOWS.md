@@ -630,11 +630,16 @@ How to test, on 386 and amd64 (after `build.ps1`):
   item "Item 2" and cell (1, 1) is "Value 2"); if one fails, also run
   `tests\uia\uia.exe dump` on the test window (see below) and report the
   lines of the table.
-- Manually: `tests\uia\uia.exe dump`, as in task 11, but now the whole
-  tree is read with one cache request. Check that the output is the same
-  as before (apart from the new grid sizes and cell positions, like
-  "30 rows, 2 columns" and "row 2, column 1") and that it comes faster
-  for a large window, for example Explorer with a folder of many files.
+- Manually: `tests\uia\uia.exe dump`, as in task 11, but now the
+  tree and the names, control types, automation IDs and class names are
+  read with one cache request. Check that the output is the same as
+  before (apart from the new grid sizes and cell positions, like
+  "30 rows, 2 columns" and "row 2, column 1"). Do not expect it to be
+  much faster: the value, toggle, expand, selection, range, grid and
+  enabled state of each element are still read with separate calls. If
+  the first line says that `BuildUpdatedCache` failed and the tree is
+  walked instead, report that line; the rest of the output must still
+  be the tree.
   Switch to the test window of `tests\uia\uia.exe` (start it in a second
   console; it closes after its checks, so be quick) or to any program
   with a list in details view to see the grid lines.

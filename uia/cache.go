@@ -101,7 +101,9 @@ func (e *Element) withCache(cond Condition, cache *CacheRequest, f func(p *win.I
 }
 
 // FindFirstBuildCache is FindFirst that also caches what cache asks for in
-// the element it returns.
+// the element it returns. It returns nil and no error if no element
+// matches cond, and also if the element found does not match the Filter
+// of cache while the Scope of cache includes ScopeElement.
 func (e *Element) FindFirstBuildCache(scope Scope, cond Condition, cache CacheRequest) (*Element, error) {
 	var found *Element
 	if cond == nil {
@@ -141,6 +143,12 @@ func (e *Element) FindAllBuildCache(scope Scope, cond Condition, cache CacheRequ
 // object as e, with what cache asks for cached. The cache of e itself does
 // not change. Use it to cache the properties of an element got without a
 // cache, such as Root or ElementFromHandle, or to read them again.
+//
+// BuildUpdatedCache can return nil and no error: UI Automation returns no
+// element when e does not match the Filter of cache and the Scope includes
+// ScopeElement. Use a Filter that also matches e, or a Scope without
+// ScopeElement, such as ScopeChildren alone, to get the children of e
+// whatever e is, and check the result for nil.
 func (e *Element) BuildUpdatedCache(cache CacheRequest) (*Element, error) {
 	var updated *Element
 	err := e.withCache(nil, &cache, func(p *win.IUIAutomationElement, _ *win.IUIAutomationCondition, r *win.IUIAutomationCacheRequest) error {

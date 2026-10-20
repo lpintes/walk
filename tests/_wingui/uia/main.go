@@ -147,7 +147,7 @@ func main() {
 	if err := (MainWindow{
 		AssignTo: &mw,
 		Title:    title,
-		Size:     Size{Width: 400, Height: 760},
+		Size:     Size{Width: 400, Height: 600},
 		Layout:   VBox{},
 		Children: []Widget{
 			Label{Text: "Search:"},
@@ -167,8 +167,8 @@ func main() {
 					{Title: "Value", DataMember: "Value", Width: 120},
 				},
 				Model:   rows,
-				MinSize: Size{Height: 120},
-				MaxSize: Size{Height: 120},
+				MinSize: Size{Height: 100},
+				MaxSize: Size{Height: 100},
 			},
 			Label{AssignTo: &statusLabel, Text: "Status", Accessibility: Accessibility{LiveSetting: AccLiveSettingPolite}},
 		},
@@ -535,18 +535,39 @@ func dump() {
 		os.Exit(1)
 	}
 	// One cache request reads the properties of the whole control view
-	// tree.
+	// tree. If it fails, walk the tree and read the properties of each
+	// element instead.
 	cached, err := e.BuildUpdatedCache(uia.CacheRequest{
 		Properties: []uia.PropertyID{uia.PropertyControlType, uia.PropertyName, uia.PropertyAutomationID, uia.PropertyClassName},
 		Scope:      uia.ScopeSubtree,
 	})
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if err != nil || cached == nil {
+		fmt.Printf("BuildUpdatedCache failed (%v), walking the tree instead\n", err)
+		dumpWalk(a.ControlView(), e, 0)
+		return
 	}
 	dumpElement(cached, 0)
 }
 
+// dumpWalk prints e and the elements below it, walking the tree with w
+// and reading the current properties.
+func dumpWalk(w *uia.TreeWalker, e *uia.Element, depth int) {
+	ct, _ := e.ControlType()
+	name, _ := e.Name()
+	id, _ := e.AutomationID()
+	class, _ := e.ClassName()
+	fmt.Printf("%s%v, name %q, automation ID %q, class %q%s\n", strings.Repeat("  ", depth), ct, name, id, class, state(e))
+	children, err := w.Children(e)
+	if err != nil {
+		fmt.Printf("%s  error: %v\n", strings.Repeat("  ", depth), err)
+	}
+	for _, c := range children {
+		dumpWalk(w, c, depth+1)
+		c.Release()
+	}
+}
+
+// dumpElement prints e and the elements below it from the cached tree.
 func dumpElement(e *uia.Element, depth int) {
 	ct, _ := e.CachedControlType()
 	name, _ := e.CachedName()
