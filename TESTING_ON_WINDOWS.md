@@ -596,6 +596,45 @@ How to test, on 386 and amd64 (after `build.ps1`):
 - Optional manual test: none is needed; NVDA should behave as before,
   because the test only listens.
 
+## Task 14: RichEdit widget
+
+Step 5 adds the widget `RichEdit` (and `declarative.RichEdit`) on the
+RichEdit control of `msftedit.dll` (window class `RICHEDIT50W`): plain
+text and Rich Text Format, the selection, character and paragraph
+formatting, `Find`, undo and redo, automatic URL detection with
+`LinkClicked`, read-only mode, and the events `TextChanged`,
+`SelectionChanged` and `ReadOnlyChanged`. `EDITSTREAM` and `ENLINK` have
+pointer-sized fields at offsets Go cannot express on 64-bit (the SDK
+declares them with `#pragma pack(4)`), so `internal/win` reads and writes
+them as arrays of 4-byte words; a wrong offset would break `RTF`,
+`SetRTF` or `LinkClicked` on one architecture only.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only richedit`. Report the FAIL lines
+  with their details. Two checks depend on how msftedit handles synthetic
+  input, so a FAIL there may be a problem of the test, not of the widget:
+  "LinkClicked by click" (button messages sent to the link) and
+  "LinkClicked by Enter" (Enter on a link in a read-only control). Check
+  them by hand in the manual test before changing the widget. "UIA name"
+  checks that the name set with `Accessibility` reaches UI Automation;
+  msftedit has its own UI Automation provider, so this may fail; report
+  what name NVDA says for the field.
+- Manual test with NVDA on amd64: `richedit.exe manual`. The field
+  "Document" has a centered bold heading, a paragraph with bold, italic
+  and underlined words, two bullets and a paragraph with a link.
+  - Read the text with the arrow keys and say all (NVDA+Down arrow).
+    Does NVDA say the bullets? With NVDA+F (report formatting), does it
+    say bold, italic, underlined, the font and the alignment?
+  - Select a word with Shift+Ctrl+Right arrow and press Ctrl+B. Does NVDA
+    say the selection? The button "Read format" (Tab to it, then Space)
+    should announce "bold" for the word; Tab back to the field.
+  - Move to the link and press Enter, and click the link with the mouse
+    if possible: each should announce "Link https://github.com/lpintes/walk".
+  - Tab and Shift+Tab must move the focus out of the field (no tab
+    character is inserted).
+- Optional: the same with Narrator or JAWS, if available.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
