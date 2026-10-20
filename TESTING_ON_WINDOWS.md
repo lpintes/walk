@@ -596,6 +596,74 @@ How to test, on 386 and amd64 (after `build.ps1`):
 - Optional manual test: none is needed; NVDA should behave as before,
   because the test only listens.
 
+## Task 17: step 7, the WebView2 widget
+
+(Tasks 14 to 16 belong to other branches.)
+
+Step 7 adds the widget `WebView2`, a browser based on Microsoft Edge
+WebView2 (Chromium), and marks the old `WebView` deprecated. Nothing of it
+has run yet: it was written in a Linux container. Points to watch:
+
+- The WebView2 interfaces are hand-written in `internal/win/webview2.go`
+  from `WebView2.h` of SDK 1.0.1150.38. A wrong vtable slot shows up as a
+  crash or a wrong method being called (for example a navigation that
+  never completes).
+- `WebView2Loader.dll` is not used: walk finds the runtime in the
+  registry (`SOFTWARE\Microsoft\EdgeUpdate\ClientState\{GUID}` value
+  `EBWebView`, then `...\Clients\{GUID}` value `pv`, 32-bit view, HKLM
+  before HKCU) and calls `CreateWebViewEnvironmentWithOptionsInternal` of
+  `EBWebView\<arch>\EmbeddedBrowserWebView.dll`.
+- `ICoreWebView2Controller.Put_Bounds` takes a `RECT` by value: four stack
+  words on 386, a pointer to a copy on amd64. If the browser does not
+  fill the widget or is drawn in a wrong place, this is the first
+  suspect.
+- The keyboard: when the widget gets the focus it calls `MoveFocus`, so
+  Tab moves into the page; at the end of the page WebView2 raises
+  `MoveFocusRequested` and walk moves the focus to the next or previous
+  tab stop (`GetNextDlgTabItem`).
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- Check that the WebView2 runtime is installed (Settings, Apps, "Microsoft
+  Edge WebView2 Runtime"; it is part of Windows 11). Without it the test
+  prints `SKIP` and the task cannot be done.
+- `tests/_wingui/scripts/run.ps1 -Only webview2`. Report every FAIL line
+  and the INFO lines (the result of a script exception and where the
+  focus went after `SetFocus`). Also report a crash or a hang: the test
+  is killed after 120 seconds.
+- `webview2.exe manual` (in `%TEMP%\walk-wingui\<arch>\tests\webview2`)
+  with NVDA on amd64, and the keyboard part also on 386:
+  - When the window opens, focus is on "Button before the browser". Press
+    Tab: focus must move into the page and NVDA must read the page (the
+    heading "WebView2 manual test" or the first focusable element, the
+    link). Tab through the link, the edit field and the button "Send to
+    the program"; one more Tab must reach "Button after the browser".
+  - Shift+Tab from "Button after the browser" must go back into the
+    page, to the button "Send to the program"; Shift+Tab through the page
+    must reach "Button before the browser".
+  - In the page, NVDA's browse mode must work (arrow keys read the
+    paragraphs, H jumps to the heading).
+  - Type a name into the edit field and activate "Send to the program":
+    NVDA must announce "The page sent ..." and standard output shows
+    `WebMessageReceived`. Activate "Button after the browser": the status
+    line of the page must change to "Message from the program: ...".
+  - Press F6 in the page and report what happens (WebView2 may move focus
+    to the next pane, which walk does not handle yet).
+  - Resize and maximize the window: the page must fill the area between
+    the two buttons.
+  - Close the window with Alt+F4 while a page is loading and after it has
+    loaded: no crash, exit code 0.
+- Optional: the fallback loader. On a machine without the runtime,
+  `NewWebView2` fails with `ErrWebView2RuntimeNotFound` unless
+  `WebView2Loader.dll` (NuGet package `Microsoft.Web.WebView2`,
+  `build\native\<arch>`) is next to the exe; with it the error comes
+  from the loader DLL instead. Report what the test prints in both cases
+  if such a machine is available.
+- Also check the resize and the position of the page programmatically,
+  not by asking the user: for example with `uia.exe dump` or the window
+  tree of `WinTest.cs`, the bounds of the `Chrome_WidgetWin` child must
+  match the client area of the widget.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
