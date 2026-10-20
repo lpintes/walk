@@ -622,7 +622,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Step 7: pull request not yet opened, not yet tested on Windows (task
+- Step 7: draft pull request lpintes/walk#25, not yet tested on Windows (task
   17 of `TESTING_ON_WINDOWS.md`, `tests/_wingui/webview2`).
   - Widget `WebView2` (`webview2.go`): `NewWebView2`,
     `NewWebView2WithOptions` (`WebView2Options`: `UserDataFolder`,
