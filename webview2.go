@@ -380,9 +380,13 @@ func (wv *WebView2) SetURL(url string) error {
 }
 
 // Navigate navigates to url, which must be a complete URL such as
-// https://example.com/ or file:///C:/page.html. Before the browser is
+// https://example.com/ or file:///C:/page.html; an empty url is
+// about:blank. Before the browser is
 // ready, the navigation is remembered and carried out when it is.
 func (wv *WebView2) Navigate(url string) error {
+	if url == "" {
+		url = "about:blank"
+	}
 	url16, err := syscall.UTF16PtrFromString(url)
 	if err != nil {
 		return wrapError(err)
