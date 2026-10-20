@@ -622,7 +622,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Step 13, part 4: pull request not yet opened, not yet tested on
+- Step 13, part 4: draft pull request lpintes/walk#23, not yet tested on
   Windows (task 15 of `TESTING_ON_WINDOWS.md`, `tests/_wingui/uia` and
   `liveregion`).
   - Cache requests: `CacheRequest` is a Go value built per call, like
