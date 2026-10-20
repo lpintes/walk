@@ -32,6 +32,7 @@ type RichEdit struct {
 	selectionChangedPublisher EventPublisher
 	linkClickedPublisher      StringEventPublisher
 	settingText               int
+	linkKeyDown               bool
 }
 
 var (
@@ -60,7 +61,7 @@ func NewRichEditWithStyle(parent Container, style uint32) (*RichEdit, error) {
 		re,
 		parent,
 		win.MSFTEDIT_CLASS,
-		win.WS_TABSTOP|win.WS_VISIBLE|win.ES_MULTILINE|win.ES_WANTRETURN|style,
+		win.WS_TABSTOP|win.WS_VISIBLE|win.ES_MULTILINE|win.ES_WANTRETURN|win.ES_AUTOVSCROLL|style,
 		win.WS_EX_CLIENTEDGE); err != nil {
 		return nil, err
 	}
@@ -101,18 +102,19 @@ func (re *RichEdit) Text() string {
 	return re.text()
 }
 
-// SetText replaces the whole text with text without formatting. It clears
-// the undo buffer.
+// SetText replaces the whole text and its formatting with text in the
+// default format. It clears the undo buffer. Like WM_SETTEXT, it reads
+// text starting with "{\rtf" as Rich Text Format.
 func (re *RichEdit) SetText(text string) error {
-	if text == re.Text() {
-		return nil
-	}
+	changed := text != re.Text()
 
 	re.settingText++
 	err := re.setText(text)
 	re.settingText--
 
-	re.textChangedPublisher.Publish()
+	if err == nil && changed {
+		re.textChangedPublisher.Publish()
+	}
 
 	return err
 }
@@ -152,6 +154,10 @@ func (re *RichEdit) SelectedRTF() (string, error) {
 // calls run synchronously on the thread of the window, and the callback
 // finds the stream by the cookie.
 type richEditStream struct {
+	// es is passed to RichEdit. It is here, on the heap, because RichEdit
+	// keeps its address while the callbacks run, and they may move the
+	// goroutine stack.
+	es  win.EDITSTREAM
 	in  []byte
 	out bytes.Buffer
 }
@@ -224,19 +230,21 @@ func (re *RichEdit) streamIn(format uintptr, data string) error {
 	cookie := newRichEditStream(s)
 	defer deleteRichEditStream(cookie)
 
-	var es win.EDITSTREAM
+	es := &s.es
 	es.SetCookie(cookie)
 	es.SetCallback(richEditStreamInCb)
 
 	re.settingText++
-	re.SendMessage(win.EM_STREAMIN, format, uintptr(unsafe.Pointer(&es)))
+	re.SendMessage(win.EM_STREAMIN, format, uintptr(unsafe.Pointer(es)))
 	re.settingText--
-
-	re.textChangedPublisher.Publish()
 
 	if e := es.Error(); e != 0 {
 		return newError("EM_STREAMIN failed")
 	}
+
+	re.textChangedPublisher.Publish()
+	re.notifyLiveRegionChanged()
+
 	return nil
 }
 
@@ -245,11 +253,11 @@ func (re *RichEdit) streamOut(format uintptr) ([]byte, error) {
 	cookie := newRichEditStream(s)
 	defer deleteRichEditStream(cookie)
 
-	var es win.EDITSTREAM
+	es := &s.es
 	es.SetCookie(cookie)
 	es.SetCallback(richEditStreamOutCb)
 
-	re.SendMessage(win.EM_STREAMOUT, format, uintptr(unsafe.Pointer(&es)))
+	re.SendMessage(win.EM_STREAMOUT, format, uintptr(unsafe.Pointer(es)))
 
 	if e := es.Error(); e != 0 {
 		return nil, newError("EM_STREAMOUT failed")
@@ -307,6 +315,7 @@ func (re *RichEdit) ReplaceSelectedText(text string, canUndo bool) {
 	re.SendMessage(win.EM_REPLACESEL,
 		uintptr(win.BoolToBOOL(canUndo)),
 		uintptr(unsafe.Pointer(win.StringToUTF16Ptr(text))))
+	re.notifyLiveRegionChanged()
 }
 
 // AppendText adds text at the end and keeps the selection.
@@ -365,7 +374,9 @@ func (re *RichEdit) ScrollToCaret() {
 }
 
 func (re *RichEdit) ReadOnly() bool {
-	return re.hasStyleBits(win.ES_READONLY)
+	// RichEdit keeps the read-only state in its options, not necessarily
+	// in the window style.
+	return re.SendMessage(win.EM_GETOPTIONS, 0, 0)&win.ECO_READONLY != 0
 }
 
 func (re *RichEdit) SetReadOnly(readOnly bool) error {
@@ -755,8 +766,22 @@ func (re *RichEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 
 		case win.EN_LINK:
 			enl := ptrFromUintptr[win.ENLINK](lParam)
-			activated := enl.Msg() == win.WM_LBUTTONUP ||
-				(enl.Msg() == win.WM_CHAR || enl.Msg() == win.WM_KEYDOWN) && enl.WParam() == win.VK_RETURN
+			var activated bool
+			switch enl.Msg() {
+			case win.WM_LBUTTONUP:
+				// Not at the end of a selection by mouse.
+				start, end := re.TextSelection()
+				activated = start == end
+
+			case win.WM_KEYDOWN:
+				activated = enl.WParam() == win.VK_RETURN
+				re.linkKeyDown = activated
+
+			case win.WM_CHAR:
+				// One Enter may report both WM_KEYDOWN and WM_CHAR.
+				activated = enl.WParam() == '\r' && !re.linkKeyDown
+				re.linkKeyDown = false
+			}
 			if chrg := enl.Chrg(); activated && chrg.CpMin < chrg.CpMax {
 				re.linkClickedPublisher.Publish(re.TextRange(int(chrg.CpMin), int(chrg.CpMax)))
 			}

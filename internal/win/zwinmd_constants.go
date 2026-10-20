@@ -1559,6 +1559,7 @@ const (
 // Windows.Win32.UI.Controls.RichEdit
 const (
 	AURL_ENABLEURL          = 1
+	ECO_READONLY            = 0x800
 	EM_AUTOURLDETECT        = 0x45b
 	EM_CANREDO              = 0x455
 	EM_EXGETSEL             = 0x434
@@ -1568,6 +1569,7 @@ const (
 	EM_GETAUTOURLDETECT     = 0x45c
 	EM_GETCHARFORMAT        = 0x43a
 	EM_GETEVENTMASK         = 0x43b
+	EM_GETOPTIONS           = 0x44e
 	EM_GETPARAFORMAT        = 0x43d
 	EM_GETSELTEXT           = 0x43e
 	EM_GETTEXTLENGTHEX      = 0x45f
@@ -1653,6 +1655,7 @@ const (
 	DLGC_WANTCHARS                      = 0x80
 	EN_CHANGE                           = 0x300
 	ES_AUTOHSCROLL                      = 0x80
+	ES_AUTOVSCROLL                      = 0x40
 	ES_CENTER                           = 1
 	ES_LEFT                             = 0
 	ES_LOWERCASE                        = 0x10

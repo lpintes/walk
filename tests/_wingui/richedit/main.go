@@ -393,7 +393,9 @@ func checkLinks() {
 		re.SetFocus()
 		re.SetText("See https://example.com/walk now")
 		start = 4
-		re.SetTextSelection(start+2, start+2)
+		// A range: the format of a caret is the insertion format, which
+		// does not carry the link effect.
+		re.SetTextSelection(start+2, start+6)
 	})
 	var cf walk.CharFormat
 	var mask walk.CharFormatMask
@@ -438,6 +440,12 @@ func checkLinks() {
 		check("LinkClicked by Enter", url == "https://example.com/walk", "URL %q", url)
 	case <-time.After(2 * time.Second):
 		check("LinkClicked by Enter", false, "not published")
+	}
+	select {
+	case url := <-links:
+		check("LinkClicked once per Enter", false, "published again: %q", url)
+	case <-time.After(500 * time.Millisecond):
+		check("LinkClicked once per Enter", true, "")
 	}
 	onUI(func() {
 		re.SetReadOnly(false)
