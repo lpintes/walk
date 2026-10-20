@@ -183,8 +183,8 @@ func taskDialogButtons(buttons []TaskDialogButton) []win.TASKDIALOG_BUTTON {
 
 // Show shows the task dialog, modal to owner if owner is not nil, and returns when the user
 // has chosen a button. It returns an error if task dialogs are not available (see
-// TaskDialogAvailable) or the dialog cannot be created, for example for a DefaultButton that
-// does not exist.
+// TaskDialogAvailable) or the dialog cannot be created. A DefaultButton or
+// DefaultRadioButton that does not exist is no error: Windows then uses the first button.
 func (td *TaskDialog) Show(owner Form) (TaskDialogResult, error) {
 	if !win.TaskDialogIndirectAvailable() {
 		return TaskDialogResult{}, newError("TaskDialogIndirect not available (common controls version 6 needed)")

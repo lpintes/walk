@@ -901,7 +901,7 @@ func (wb *WindowBase) Dispose() {
 	}
 
 	if hWnd != 0 {
-		wb.group.accClearHwndProps(wb.hWnd)
+		wb.group.accClearHwndProps(hWnd)
 		wb.group.Done()
 	}
 }

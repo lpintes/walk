@@ -111,8 +111,11 @@ func packButtons(pinner *runtime.Pinner, buttons []TASKDIALOG_BUTTON) uintptr {
 // and calls TaskDialogIndirect of comctl32 version 6 (see
 // TaskDialogIndirectAvailable). The strings config points to must be Go
 // heap memory (as from StringToUTF16Ptr) or memory Windows does not move;
-// the packed copies are pinned for the duration of the call, because the
-// callback runs on the calling goroutine, whose stack may move.
+// the packed copies and the results are in pinned heap memory for the
+// duration of the call, because the callback runs on the calling
+// goroutine, whose stack may move. The results are copied to pnButton,
+// pnRadioButton and pfVerificationFlagChecked (each may be nil) after the
+// call.
 func TaskDialogIndirect(config *TASKDIALOGCONFIG, pnButton, pnRadioButton *int32, pfVerificationFlagChecked *BOOL) HRESULT {
 	var pinner runtime.Pinner
 	defer pinner.Unpin()
@@ -147,8 +150,37 @@ func TaskDialogIndirect(config *TASKDIALOGCONFIG, pnButton, pnRadioButton *int32
 		panic("win: TASKDIALOGCONFIG packed into the wrong size")
 	}
 
-	hr := taskDialogIndirect(unsafe.Pointer(&p.buf[0]), pnButton, pnRadioButton, pfVerificationFlagChecked)
+	// Windows writes the results through these pointers, possibly while
+	// the callback runs Go code that grows and moves the goroutine stack,
+	// so they point to pinned heap memory, not to the caller's variables.
+	out := new(struct {
+		button, radio int32
+		checked       BOOL
+	})
+	pinner.Pin(out)
+	var outButton, outRadio *int32
+	var outChecked *BOOL
+	if pnButton != nil {
+		outButton = &out.button
+	}
+	if pnRadioButton != nil {
+		outRadio = &out.radio
+	}
+	if pfVerificationFlagChecked != nil {
+		outChecked = &out.checked
+	}
+
+	hr := taskDialogIndirect(unsafe.Pointer(&p.buf[0]), outButton, outRadio, outChecked)
 	runtime.KeepAlive(config)
+	if pnButton != nil {
+		*pnButton = out.button
+	}
+	if pnRadioButton != nil {
+		*pnRadioButton = out.radio
+	}
+	if pfVerificationFlagChecked != nil {
+		*pfVerificationFlagChecked = out.checked
+	}
 	return hr
 }
 

@@ -363,7 +363,6 @@ func checkWalkDialog(a *uia.Automation, ref view) {
 	}
 
 	fmt.Printf("DIALOG_HWND %d\n", h)
-	fmt.Println("MSAA_READY")
 	waitForScript()
 
 	if e != nil {
@@ -385,15 +384,19 @@ func checkWalkDialog(a *uia.Automation, ref view) {
 	check("walk dialog EVENT_SYSTEM_DIALOGEND", waitDialogEvent("end", h), "not raised; events %v", dialogEventList())
 }
 
-// waitForScript waits up to 15 seconds for run.ps1 to read the MSAA objects
-// of the dialog and set the named event Local\walk-dialogs-msaa.
+// waitForScript creates the named event Local\walk-dialogs-msaa, prints
+// MSAA_READY and waits up to 15 seconds for run.ps1 to read the MSAA objects
+// of the dialog and set the event. The event exists before MSAA_READY is
+// printed, so run.ps1 can always open it.
 func waitForScript() {
 	ev, err := windows.CreateEvent(nil, 1, 0, windows.StringToUTF16Ptr(`Local\walk-dialogs-msaa`))
 	if err != nil {
 		info("CreateEvent: %v", err)
+		fmt.Println("MSAA_READY")
 		return
 	}
 	defer windows.CloseHandle(ev)
+	fmt.Println("MSAA_READY")
 	if r, _ := windows.WaitForSingleObject(ev, 15000); r != windows.WAIT_OBJECT_0 {
 		info("run.ps1 did not signal Local\\walk-dialogs-msaa; MSAA objects not checked")
 	}

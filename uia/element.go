@@ -239,6 +239,10 @@ func (e *Element) IsDialog() (bool, error) {
 	err := e.call(func(p *win.IUIAutomationElement) error {
 		var v win.VARIANT
 		if hr := p.GetCurrentPropertyValue(win.UIA_IsDialogPropertyId, &v); win.FAILED(hr) {
+			if uint32(hr) == win.E_INVALIDARG {
+				// Before Windows 10 1809 UI Automation does not know the property.
+				return nil
+			}
 			return hresultError("IsDialog", hr)
 		}
 		defer win.VariantClear(&v)
