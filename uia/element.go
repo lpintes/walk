@@ -230,6 +230,26 @@ func (e *Element) IsRequiredForForm() (bool, error) {
 	return e.boolProperty("IsRequiredForForm", (*win.IUIAutomationElement).Get_CurrentIsRequiredForForm)
 }
 
+// IsDialog reports whether the element is a dialog window, as UI Automation
+// reports for system dialogs (the #32770 window class) and for windows
+// annotated as dialogs, such as walk dialogs. The property exists since
+// Windows 10 version 1809; before it IsDialog returns false.
+func (e *Element) IsDialog() (bool, error) {
+	var isDialog bool
+	err := e.call(func(p *win.IUIAutomationElement) error {
+		var v win.VARIANT
+		if hr := p.GetCurrentPropertyValue(win.UIA_IsDialogPropertyId, &v); win.FAILED(hr) {
+			return hresultError("IsDialog", hr)
+		}
+		defer win.VariantClear(&v)
+		if b, err := v.Bool(); err == nil {
+			isDialog = b != win.VARIANT_FALSE
+		}
+		return nil
+	})
+	return isDialog, err
+}
+
 // LabeledBy returns the element that labels this one, usually a text next
 // to an edit field, or nil if there is none.
 func (e *Element) LabeledBy() (*Element, error) {
