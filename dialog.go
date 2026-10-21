@@ -47,6 +47,7 @@ type Dialog struct {
 	defaultButton        *PushButton
 	cancelButton         *PushButton
 	centerInOwnerWhenRun bool
+	dialogStarted        bool
 }
 
 func NewDialog(owner Form) (*Dialog, error) {
@@ -69,7 +70,7 @@ func newDialogWithStyle(owner Form, style uint32) (*Dialog, error) {
 		owner,
 		dialogWindowClass,
 		win.WS_CAPTION|win.WS_SYSMENU|style,
-		0); err != nil {
+		win.WS_EX_CONTROLPARENT); err != nil {
 		return nil, err
 	}
 
@@ -83,6 +84,8 @@ func newDialogWithStyle(owner Form, style uint32) (*Dialog, error) {
 	dlg.centerInOwnerWhenRun = owner != nil
 
 	dlg.result = DlgCmdNone
+
+	dlg.markAsDialog()
 
 	succeeded = true
 
@@ -191,6 +194,25 @@ func (dlg *Dialog) Show() {
 	dlg.FormBase.Show()
 
 	dlg.startLayout()
+
+	if !dlg.dialogStarted {
+		dlg.dialogStarted = true
+		win.NotifyWinEvent(win.EVENT_SYSTEM_DIALOGSTART, dlg.hWnd, win.OBJID_WINDOW, win.CHILDID_SELF)
+	}
+}
+
+// markAsDialog makes screen readers recognize the window as a dialog, as they recognize the
+// system dialogs of the #32770 window class (option A of "Real dialogs for screen readers" in
+// CLAUDE.md). Dynamic Annotation gives the client object of the window the MSAA role
+// ROLE_SYSTEM_DIALOG, the role oleacc reports for the client object of a #32770 window, and
+// the UI Automation IsDialog property. NVDA reads the role of the client object: it treats any
+// window with that role as a dialog, says "dialog" and reads the static texts of the dialog
+// when it opens. The window object keeps the role ROLE_SYSTEM_WINDOW, as for #32770 windows.
+// Errors are ignored: without Dynamic Annotation the dialog works as before.
+func (dlg *Dialog) markAsDialog() {
+	acc := dlg.Accessibility()
+	acc.SetRole(AccRoleDialog)
+	acc.SetIsDialog(true)
 }
 
 // fitRectToScreen fits rectangle to screen. Input and output rectangles are in native pixels.
@@ -240,6 +262,12 @@ func (dlg *Dialog) Run() int {
 
 func (dlg *Dialog) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case win.WM_DESTROY:
+		if dlg.dialogStarted {
+			dlg.dialogStarted = false
+			win.NotifyWinEvent(win.EVENT_SYSTEM_DIALOGEND, hwnd, win.OBJID_WINDOW, win.CHILDID_SELF)
+		}
+
 	case win.WM_COMMAND:
 		if win.HIWORD(uint32(wParam)) == 0 {
 			switch win.LOWORD(uint32(wParam)) {

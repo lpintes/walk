@@ -97,6 +97,30 @@ foreach ($n in "dragfinish", "hdn", "ods", "upstream", "shell", "uia") {
 	Report $n $p (Stop-Test $p 30)
 }
 
+if (Want "dialogs") {
+	# The test prints the handle of an open walk dialog and waits for the
+	# named event Local\walk-dialogs-msaa while the script reads its MSAA
+	# objects.
+	$p = Start-Test (Join-Path $root "dialogs") "dialogs"
+	$extra = @()
+	$m = Wait-Line $p "(?s)DIALOG_HWND (\d+).*MSAA_READY" 40
+	if ($m) {
+		$h = [IntPtr][int64]$m[1]
+		$client = [WinTest]::Acc($h, [WinTest]::OBJID_CLIENT)
+		$window = [WinTest]::Acc($h, [WinTest]::OBJID_WINDOW)
+		# As for #32770 dialogs: ROLE_SYSTEM_DIALOG (18) on the client
+		# object, ROLE_SYSTEM_WINDOW (9) on the window object.
+		$extra += "$(if ($client -match '\(18\) name=') { 'PASS' } else { 'FAIL' }) MSAA client object of the walk dialog: $client"
+		$extra += "$(if ($window -match '\(9\) name=') { 'PASS' } else { 'FAIL' }) MSAA window object of the walk dialog: $window"
+		$ev = [System.Threading.EventWaitHandle]::OpenExisting("Local\walk-dialogs-msaa")
+		$null = $ev.Set()
+		$ev.Dispose()
+	} else {
+		$extra += "FAIL MSAA_READY not printed"
+	}
+	Report "dialogs" $p (Stop-Test $p 90) $extra
+}
+
 if (Want "webview") {
 	$p = Start-Test (Join-Path $root "webview") "webview"
 	Report "webview" $p (Stop-Test $p 90)

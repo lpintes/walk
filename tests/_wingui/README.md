@@ -3,8 +3,9 @@
 Test programs and scripts that run walk on a real Windows desktop. They were
 written for the Windows tasks in `TESTING_ON_WINDOWS.md` (the smoke test of
 step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, the COM objects of
-`WebView` in step 6, the live regions of step 10 and the changes ported
-from lxn/walk pull requests) and can be rerun as
+`WebView` in step 6, the live regions of step 10, the changes ported
+from lxn/walk pull requests, the UI Automation client of step 13 and the
+dialogs of step 4) and can be rerun as
 regression tests after changes to `internal/win`, `internal/com` or the
 affected widgets. `com` is not a directory here: `build.ps1` builds the
 unit tests of `internal/com` into `tests\com\com.exe`.
@@ -132,6 +133,23 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   notifications from `walk.Announce` and closing subscriptions. `uia.exe dump`
   prints the control view tree of the foreground window after 3
   seconds, with the value or state of each element.
+- `dialogs`: the dialogs of step 4. A reference `MsgBox` (its UI
+  Automation view is printed as INFO), a walk `Dialog` (through `uia`:
+  MSAA role `ROLE_SYSTEM_DIALOG`, `IsDialog`, name and static text, like
+  the message box; a WinEvent hook must see `EVENT_SYSTEM_DIALOGSTART`
+  and `EVENT_SYSTEM_DIALOGEND`; closed by invoking Cancel through UI
+  Automation, `Run` must return `DlgCmdCancel`), and three `TaskDialog`s:
+  one with custom and common buttons, radio buttons and a verification
+  check box operated through UI Automation (`Show` must return them), one
+  with `AllowCancel` closed with `WM_CLOSE`, and one whose hyperlink is
+  invoked through UI Automation (`OnHyperlinkClicked`) and that is closed
+  with `TDM_CLICK_BUTTON`. While the walk dialog is open the test prints
+  `DIALOG_HWND` and `MSAA_READY` and waits up to 15 seconds for the named
+  event `Local\walk-dialogs-msaa`; `run.ps1` reads the MSAA client
+  object (role dialog) and window object (role window) meanwhile and then
+  sets the event. `dialogs.exe manual` shows buttons that open a walk
+  dialog, two task dialogs and a message box, for a test with a screen
+  reader; results go to a polite live region and standard output.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With
