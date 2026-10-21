@@ -601,6 +601,13 @@ const (
 	SRCCOPY = 0xcc0020
 )
 
+// RowOrColumnMajor
+const (
+	RowOrColumnMajor_ColumnMajor   = 1
+	RowOrColumnMajor_Indeterminate = 2
+	RowOrColumnMajor_RowMajor      = 0
+)
+
 // SCROLLBAR_COMMAND
 const (
 	SB_ENDSCROLL     = 8
@@ -731,6 +738,15 @@ const (
 	COLOR_WINDOW                  = 5
 	COLOR_WINDOWFRAME             = 6
 	COLOR_WINDOWTEXT              = 8
+)
+
+// ScrollAmount
+const (
+	ScrollAmount_LargeDecrement = 0
+	ScrollAmount_LargeIncrement = 3
+	ScrollAmount_NoAmount       = 2
+	ScrollAmount_SmallDecrement = 1
+	ScrollAmount_SmallIncrement = 4
 )
 
 // Status
@@ -905,12 +921,17 @@ const (
 // UIA_PATTERN_ID
 const (
 	UIA_ExpandCollapsePatternId    = 0x2715
+	UIA_GridItemPatternId          = 0x2717
+	UIA_GridPatternId              = 0x2716
 	UIA_InvokePatternId            = 0x2710
 	UIA_LegacyIAccessiblePatternId = 0x2722
 	UIA_RangeValuePatternId        = 0x2713
 	UIA_ScrollItemPatternId        = 0x2721
+	UIA_ScrollPatternId            = 0x2714
 	UIA_SelectionItemPatternId     = 0x271a
 	UIA_SelectionPatternId         = 0x2711
+	UIA_TableItemPatternId         = 0x271d
+	UIA_TablePatternId             = 0x271c
 	UIA_TextPatternId              = 0x271e
 	UIA_TogglePatternId            = 0x271f
 	UIA_ValuePatternId             = 0x2712
@@ -936,6 +957,7 @@ const (
 	UIA_IsRequiredForFormPropertyId    = 0x7549
 	UIA_ItemStatusPropertyId           = 0x754a
 	UIA_ItemTypePropertyId             = 0x7545
+	UIA_LiveSettingPropertyId          = 0x75b7
 	UIA_LocalizedControlTypePropertyId = 0x7534
 	UIA_NamePropertyId                 = 0x7535
 	UIA_NativeWindowHandlePropertyId   = 0x7544

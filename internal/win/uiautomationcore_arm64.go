@@ -12,3 +12,9 @@ package win
 func (obj *IUIAutomationRangeValuePattern) SetValue(val float64) HRESULT {
 	return -((E_NOTIMPL ^ 0xFFFFFFFF) + 1)
 }
+
+// SetScrollPercent takes two float64 values and returns E_NOTIMPL for the
+// same reason as SetValue.
+func (obj *IUIAutomationScrollPattern) SetScrollPercent(horizontalPercent, verticalPercent float64) HRESULT {
+	return -((E_NOTIMPL ^ 0xFFFFFFFF) + 1)
+}
