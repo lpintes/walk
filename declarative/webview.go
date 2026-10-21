@@ -10,6 +10,9 @@ import (
 	"github.com/lpintes/walk"
 )
 
+// WebView creates a walk.WebView.
+//
+// Deprecated: use WebView2.
 type WebView struct {
 	// Window
 

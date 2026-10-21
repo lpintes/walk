@@ -24,6 +24,11 @@ func init() {
 	})
 }
 
+// WebView hosts the Internet Explorer WebBrowser control (MSHTML), which
+// renders pages in IE7 mode and cannot move the keyboard focus into the
+// page.
+//
+// Deprecated: use WebView2.
 type WebView struct {
 	WidgetBase
 	site                                     *com.Object // IOleClientSite and the other host interfaces
@@ -68,6 +73,9 @@ type WebView struct {
 	documentTitleChangedPublisher            EventPublisher
 }
 
+// NewWebView creates a WebView.
+//
+// Deprecated: use NewWebView2.
 func NewWebView(parent Container) (*WebView, error) {
 	if hr := win.OleInitialize(); hr != win.S_OK && hr != win.S_FALSE {
 		return nil, newError(fmt.Sprint("OleInitialize Error: ", hr))

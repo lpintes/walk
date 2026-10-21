@@ -66,3 +66,10 @@ pointers (`GlobalLock`), functions with a fallback for older Windows
 versions, functions whose hand-written signature or body differs from the
 metadata (see "Known issues" in `CLAUDE.md`), and helpers such as
 `BoolToBOOL` or `UTF16PtrToString`.
+
+The WebView2 interfaces (`webview2.go`, with `Put_Bounds` in
+`webview2_32.go`, `webview2_amd64.go` and `webview2_arm64.go`) are not
+in the Win32 metadata; they come from the WebView2 SDK and are
+hand-written from its `WebView2.h` (the SDK version is in `webview2.go`).
+Add new WebView2 interfaces there, with all methods of each vtable in
+the order of the header.
