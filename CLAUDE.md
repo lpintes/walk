@@ -622,7 +622,49 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Steps 4, 5, 7, 9 and 11: not started; step 8 can continue (generic
+- Step 5: draft pull request lpintes/walk#22, not yet tested on Windows
+  (task 14 of `TESTING_ON_WINDOWS.md`, test program
+  `tests/_wingui/richedit` with a `manual` mode).
+  - New widget `RichEdit` and `declarative.RichEdit` on the RichEdit
+    control of `msftedit.dll` (`RICHEDIT50W`, loaded on the first
+    `NewRichEdit`). Plain text (`Text`, `SetText`, `TextLength`; the
+    limit is raised from 32767 characters to the maximum), Rich Text
+    Format (`RTF`, `SetRTF`, `SelectedRTF`, `ReplaceSelectedRTF`, with
+    `EM_STREAMIN` and `EM_STREAMOUT` and a callback that finds its
+    buffer by the cookie), selection (`TextSelection`,
+    `SetTextSelection`, `SelectedText`, `TextRange`,
+    `ReplaceSelectedText`, `AppendText`), `Find` (`FindFlags`), undo
+    and redo, clipboard, `Modified`, `MaxLength`, `ReadOnly`,
+    `AutoURLDetect`.
+  - Formatting of the selection: `CharFormat` with `CharFormatMask`
+    (bold, italic, underline, strikeout, link, font family, size in
+    points, text and background color or the default colors; the mask
+    returned says which fields are the same in the whole selection),
+    `SetDefaultCharFormat`, and `ParaFormat` with `ParaFormatMask`
+    (alignment including justified, which needs
+    `TO_ADVANCEDTYPOGRAPHY`, bullets and numbering starting at 1 with a
+    period, indents and spacing in points).
+  - Events: `TextChanged` (once per method call; `EN_CHANGE` during
+    `SetText` and `SetRTF` is ignored), `SelectionChanged`
+    (`EN_SELCHANGE`), `ReadOnlyChanged` and `LinkClicked` (a
+    `StringEvent` with the link text, for `EN_LINK` with
+    `WM_LBUTTONUP`, or `WM_CHAR` or `WM_KEYDOWN` with Enter).
+  - Keyboard: Tab moves the focus, as in `TextEdit`; a live setting
+    announces the text with `Announce`, as for `LineEdit` and
+    `TextEdit`.
+  - New in `internal/win`: the `EM_*`, `EN_*`, `ENM_*`, `CFM_*`,
+    `CFE_*`, `PFM_*`, `PFA_*`, `PFN_*`, `SF_*`, `SCF_*` and `FR_*`
+    constants and `CHARRANGE` and `GETTEXTLENGTHEX` (generated).
+    Hand-written in `richedit.go`: `MSFTEDIT_CLASS`, `LoadMsftedit`,
+    `CHARFORMAT2` and `PARAFORMAT2` (anonymous unions; the build fails
+    if their sizes differ from the SDK), `TEXTRANGE` and `FINDTEXTEX`
+    (only the alignment differs from `#pragma pack(4)`), and
+    `EDITSTREAM` and `ENLINK` as arrays of 4-byte words with accessors,
+    because `#pragma pack(4)` puts their pointer-sized fields at
+    offsets Go cannot express on 64-bit.
+  - Not done: the Text Object Model (`ITextDocument`), OLE objects
+    (`IRichEditOleCallback`), printing, zoom and background color.
+- Steps 4, 7, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
@@ -840,9 +882,9 @@ and real dialogs all need new Win32/COM declarations.
     `EDITSTREAM`, `GETTEXTEX`, `MSGFILTER`, `SELCHANGE`) are wrong on
     64-bit: `richedit.h` uses `#pragma pack(4)` there, so pointer-sized
     fields can sit at offsets that are not a multiple of 8, which Go
-    cannot express with plain fields. Walk does not use them yet; step 5
-    (RichEdit) must handle this, for example with byte arrays and
-    accessors. `TABLEROWPARMS` and `TABLECELLPARMS` are wrong on every
+    cannot express with plain fields. Step 5 (RichEdit) declares
+    `EDITSTREAM` and `ENLINK` as arrays of 4-byte words with accessors
+    and does not use the others. `TABLEROWPARMS` and `TABLECELLPARMS` are wrong on every
     architecture.
 - Constants whose value differs from the metadata only in representation
   (for example `E_NOTIMPL` as a positive untyped constant, `HWND_TOPMOST`,
