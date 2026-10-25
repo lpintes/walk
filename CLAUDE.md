@@ -702,9 +702,15 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     offsets Go cannot express on 64-bit.
   - Not done: the Text Object Model (`ITextDocument`), OLE objects
     (`IRichEditOleCallback`), printing, zoom and background color.
-- Step 13, part 4: draft pull request lpintes/walk#23, not yet tested on
-  Windows (task 15 of `TESTING_ON_WINDOWS.md`, `tests/_wingui/uia` and
-  `liveregion`).
+- Step 13, part 4: pull request lpintes/walk#23, merged. Task 15 of
+  `TESTING_ON_WINDOWS.md` passed on Windows 11: `run.ps1 -Only
+  uia,liveregion` on 386 and amd64 with every check PASS, and the
+  manual test on amd64: `uia.exe dump` read the tree with one cache
+  request (no fallback) and printed grid sizes and cell positions of
+  the Explorer details view ("14 rows, 4 columns", "row 1, column 1").
+  The test first failed: a `TableView` sorts a slice model by the
+  first column, so "Item 10" came right after "Item 1"; the test rows
+  now have two-digit numbers.
   - Cache requests: `CacheRequest` is a Go value built per call, like
     `Condition` (`Properties`, `Scope`, where 0 means `ScopeElement`,
     and `Filter`, where nil keeps the control view).
