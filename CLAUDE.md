@@ -622,7 +622,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Step 5: draft pull request lpintes/walk#22. Task 14 of
+- Step 5: pull request lpintes/walk#22, merged. Task 14 of
   `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/richedit` with a
   `manual` mode) passed on Windows 11 after the fixes below:
   `run.ps1 -Only richedit` on 386 and amd64 with every check PASS, and
