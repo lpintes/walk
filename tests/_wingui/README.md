@@ -132,6 +132,16 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   notifications from `walk.Announce` and closing subscriptions. `uia.exe dump`
   prints the control view tree of the foreground window after 3
   seconds, with the value or state of each element.
+- `richedit`: the `RichEdit` widget (step 5): plain text (also not
+  ASCII and above the default limit of 32767 characters), selection,
+  `Find`, undo and redo, character and paragraph formatting of the
+  selection, `RTF` and `SetRTF` round trips, `ReplaceSelectedRTF`,
+  automatic URL detection with `LinkClicked` by a click and by Enter,
+  read-only mode, and through the `uia` package the control type, the
+  name and the Text pattern. `richedit.exe manual` shows formatted text
+  for listening with a screen reader; Ctrl+B, Ctrl+I and Ctrl+U format
+  the selection, the button "Read format" announces the formatting at
+  the caret, and activating a link announces its URL.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

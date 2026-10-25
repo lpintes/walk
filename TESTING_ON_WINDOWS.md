@@ -596,6 +596,58 @@ How to test, on 386 and amd64 (after `build.ps1`):
 - Optional manual test: none is needed; NVDA should behave as before,
   because the test only listens.
 
+## Task 14: RichEdit widget
+
+Step 5 adds the widget `RichEdit` (and `declarative.RichEdit`) on the
+RichEdit control of `msftedit.dll` (window class `RICHEDIT50W`): plain
+text and Rich Text Format, the selection, character and paragraph
+formatting, `Find`, undo and redo, automatic URL detection with
+`LinkClicked`, read-only mode, and the events `TextChanged`,
+`SelectionChanged` and `ReadOnlyChanged`. `EDITSTREAM` and `ENLINK` have
+pointer-sized fields at offsets Go cannot express on 64-bit (the SDK
+declares them with `#pragma pack(4)`), so `internal/win` reads and writes
+them as arrays of 4-byte words; a wrong offset would break `RTF`,
+`SetRTF` or `LinkClicked` on one architecture only.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only richedit`. Report the FAIL lines
+  with their details. Two checks depend on how msftedit handles synthetic
+  input: "LinkClicked by click" (button messages sent to the link while
+  part of it is selected) and "LinkClicked by Enter" (Enter on a link in
+  a read-only control). On Windows 11 both pass; msftedit reports Enter
+  on a link as a button down and up pair. If one fails on another
+  version, check it by hand in the manual test before changing the
+  widget. "UIA name" checks that the name set with `Accessibility`
+  reaches UI Automation.
+- Manual test with NVDA on amd64: `richedit.exe manual`. The field
+  "Document" has the focus. It has a centered bold heading, a paragraph
+  with bold, italic and underlined words, a paragraph "This word is
+  plain.", two bullets and a paragraph with a link.
+  - Read the text with the arrow keys and say all (NVDA+Down arrow).
+    With NVDA+F (report formatting), does NVDA say bold, italic,
+    underlined, the font and the alignment? (NVDA 2026.2 does not say
+    the bullets.)
+  - Ctrl+B, Ctrl+I and Ctrl+U are shortcut actions of the test program
+    (msftedit has none): select "plain" with Shift+Ctrl+Right arrow and
+    press each; the program announces for example "bold on" and, the
+    second time, "bold off", and the word must stay. NVDA+F with the
+    caret inside the word (the caret after the selection is on the
+    space) says the formatting. The button "Read format" (Tab twice,
+    then Space) announces the formatting at the caret.
+  - Move to the link and press Enter, and click the link with the mouse
+    if possible: each announces "Link <n> https://github.com/lpintes/walk"
+    once, with a counter.
+  - Tab and Shift+Tab must move the focus out of the field (no tab
+    character is inserted), and Tab back into the field must not select
+    the whole text.
+  - Alt+Tab to another window and back, holding Alt so that the task
+    switcher shows, with the focus in "Document": NVDA must say the field
+    and its line, not only the window title, and the arrows must read.
+- Optional: the same with Narrator or JAWS, if available.
+- Result on Windows 11 (2026-10-25): passed on 386 and amd64 after the
+  fixes recorded under step 5 in `CLAUDE.md`.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

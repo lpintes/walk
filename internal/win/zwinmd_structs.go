@@ -464,6 +464,18 @@ type TVITEM struct {
 	LParam         uintptr
 }
 
+// Windows.Win32.UI.Controls.RichEdit
+
+type CHARRANGE struct {
+	CpMin int32
+	CpMax int32
+}
+
+type GETTEXTLENGTHEX struct {
+	Flags    uint32
+	Codepage uint32
+}
+
 // Windows.Win32.UI.Input.KeyboardAndMouse
 
 type TRACKMOUSEEVENT struct {
