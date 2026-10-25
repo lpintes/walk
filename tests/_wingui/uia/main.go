@@ -139,9 +139,11 @@ func main() {
 		return
 	}
 
+	// The TableView sorts a slice model by the first column, so the
+	// numbers have two digits to keep the rows in this order.
 	var rows []*tableRow
 	for i := range tableRows {
-		rows = append(rows, &tableRow{Name: fmt.Sprintf("Item %d", i+1), Value: fmt.Sprintf("Value %d", i+1)})
+		rows = append(rows, &tableRow{Name: fmt.Sprintf("Item %02d", i+1), Value: fmt.Sprintf("Value %02d", i+1)})
 	}
 
 	if err := (MainWindow{

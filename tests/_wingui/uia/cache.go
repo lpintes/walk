@@ -177,10 +177,10 @@ func checkGrid(window, press *uia.Element) {
 
 	first, err := grid.GridItem(1, 0)
 	name := nameOf(first)
-	check("GridItem column 0", err == nil && strings.Contains(name, "Item 2"), "%q, %v", name, err)
+	check("GridItem column 0", err == nil && strings.Contains(name, "Item 02"), "%q, %v", name, err)
 	cell, err := grid.GridItem(1, 1)
 	name = nameOf(cell)
-	if check2("GridItem column 1", err == nil && name == "Value 2", "%q, %v", name, err) {
+	if check2("GridItem column 1", err == nil && name == "Value 02", "%q, %v", name, err) {
 		pos, err := cell.GridPosition()
 		check("GridPosition", err == nil && pos == uia.GridPosition{Row: 1, Column: 1, RowSpan: 1, ColumnSpan: 1}, "%+v, %v", pos, err)
 		g, err := cell.ContainingGrid()

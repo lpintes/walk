@@ -671,15 +671,16 @@ Step 13 part 4 adds to the package `uia`:
 How to test, on 386 and amd64 (after `build.ps1`):
 
 - `tests/_wingui/scripts/run.ps1 -Only uia,liveregion`. The uia test
-  window now also has a `TableView` with 30 rows ("Item 1", "Value 1",
-  ...) and the columns "Name" and "Value". The cache checks change the
+  window now also has a `TableView` with 30 rows ("Item 01", "Value 01",
+  ...; two digits, because the `TableView` sorts the rows by the first
+  column) and the columns "Name" and "Value". The cache checks change the
   text of the button "Disabled" for a moment; the grid checks read cells
   and headers of the table and scroll it down and back up. The
   `liveregion` test must pass as before (the client makes the same
   checks through the package). Report the FAIL lines with their
   details: some grid checks assume how the list view proxy of Windows
   exposes the cells (for example that cell (1, 0) is named after the
-  item "Item 2" and cell (1, 1) is "Value 2"); if one fails, also run
+  item "Item 02" and cell (1, 1) is "Value 02"); if one fails, also run
   `tests\uia\uia.exe dump` on the test window (see below) and report the
   lines of the table.
 - Manually: `tests\uia\uia.exe dump`, as in task 11, but now the
