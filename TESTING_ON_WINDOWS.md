@@ -648,6 +648,55 @@ How to test, on 386 and amd64 (after `build.ps1`):
 - Result on Windows 11 (2026-10-25): passed on 386 and amd64 after the
   fixes recorded under step 5 in `CLAUDE.md`.
 
+## Task 15: UI Automation cache requests, grids, tables and scrolling
+
+Step 13 part 4 adds to the package `uia`:
+
+- Cache requests: a `CacheRequest` value (properties, scope, tree
+  filter) for `FindFirstBuildCache`, `FindAllBuildCache` and
+  `BuildUpdatedCache`; the `Cached...` getters (`CachedName`,
+  `CachedControlType`, `CachedPropertyValue`, ...) read the cached
+  values, `CachedChildren` and `CachedParent` move through the cached
+  tree. `PropertyValue` reads any property by its ID.
+- The Grid, GridItem, Table, TableItem and Scroll patterns: `GridSize`,
+  `GridItem`, `GridPosition`, `ContainingGrid`, `ColumnHeaders`,
+  `RowHeaders`, `TableOrder`, `ColumnHeaderItems`, `RowHeaderItems`,
+  `ScrollInfo`, `Scroll` and `SetScrollPercent`.
+  `IUIAutomationScrollPattern.SetScrollPercent` takes two `float64`
+  values and is hand-written like `SetRangeValue` (stack words on 386,
+  registers on amd64, `E_NOTIMPL` on arm64).
+- The client of the live region test (`tests/_wingui/liveregion/client`)
+  now uses the package instead of COM code of its own.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only uia,liveregion`. The uia test
+  window now also has a `TableView` with 30 rows ("Item 01", "Value 01",
+  ...; two digits, because the `TableView` sorts the rows by the first
+  column) and the columns "Name" and "Value". The cache checks change the
+  text of the button "Disabled" for a moment; the grid checks read cells
+  and headers of the table and scroll it down and back up. The
+  `liveregion` test must pass as before (the client makes the same
+  checks through the package). Report the FAIL lines with their
+  details: some grid checks assume how the list view proxy of Windows
+  exposes the cells (for example that cell (1, 0) is named after the
+  item "Item 02" and cell (1, 1) is "Value 02"); if one fails, also run
+  `tests\uia\uia.exe dump` on the test window (see below) and report the
+  lines of the table.
+- Manually: `tests\uia\uia.exe dump`, as in task 11, but now the
+  tree and the names, control types, automation IDs and class names are
+  read with one cache request. Check that the output is the same as
+  before (apart from the new grid sizes and cell positions, like
+  "30 rows, 2 columns" and "row 2, column 1"). Do not expect it to be
+  much faster: the value, toggle, expand, selection, range, grid and
+  enabled state of each element are still read with separate calls. If
+  the first line says that `BuildUpdatedCache` failed and the tree is
+  walked instead, report that line; the rest of the output must still
+  be the tree.
+  Switch to the test window of `tests\uia\uia.exe` (start it in a second
+  console; it closes after its checks, so be quick) or to any program
+  with a list in details view to see the grid lines.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

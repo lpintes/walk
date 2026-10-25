@@ -39,6 +39,28 @@
 //   - ScrollItem: ScrollIntoView.
 //   - LegacyIAccessible: DefaultAction, DoDefaultAction and Description,
 //     the MSAA properties, for elements of Win32 and MSAA programs.
+//   - Grid: GridSize and GridItem; GridItem: GridPosition and
+//     ContainingGrid, for list views in details view, tables and their
+//     cells.
+//   - Table: ColumnHeaders, RowHeaders and TableOrder; TableItem:
+//     ColumnHeaderItems and RowHeaderItems, the headers screen readers
+//     read with a cell.
+//   - Scroll: ScrollInfo, Scroll and SetScrollPercent, for lists,
+//     documents and other scrollable elements.
+//
+// PropertyValue reads any property by its PropertyID.
+//
+// # Caching
+//
+// Each getter is a call to the program that owns the element. A client
+// that reads several properties of many elements, like a screen reader
+// reading a list, asks for them at once with a CacheRequest:
+// FindFirstBuildCache, FindAllBuildCache and BuildUpdatedCache return
+// elements with the requested properties cached, and CachedName,
+// CachedControlType, CachedPropertyValue and the other Cached methods read
+// them without another call. With a Scope below the element, a cache
+// request also caches the elements below it, which CachedChildren and
+// CachedParent return.
 //
 // Events report changes as they happen: OnFocusChanged of the Automation,
 // and OnEvent, OnPropertyChanged, OnStructureChanged and OnNotification of

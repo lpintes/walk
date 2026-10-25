@@ -55,3 +55,16 @@ func (obj *IUIAutomationRangeValuePattern) SetValue(val float64) HRESULT {
 		uintptr(uint32(bits>>32)))
 	return HRESULT(r1)
 }
+
+// SetScrollPercent passes each float64 as two stack words.
+func (obj *IUIAutomationScrollPattern) SetScrollPercent(horizontalPercent, verticalPercent float64) HRESULT {
+	h := math.Float64bits(horizontalPercent)
+	v := math.Float64bits(verticalPercent)
+	r1, _, _ := syscall.SyscallN(obj.LpVtbl.SetScrollPercent,
+		uintptr(unsafe.Pointer(obj)),
+		uintptr(uint32(h)),
+		uintptr(uint32(h>>32)),
+		uintptr(uint32(v)),
+		uintptr(uint32(v>>32)))
+	return HRESULT(r1)
+}
