@@ -622,9 +622,45 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
-- Step 5: draft pull request lpintes/walk#22, not yet tested on Windows
-  (task 14 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/richedit` with a `manual` mode).
+- Step 5: draft pull request lpintes/walk#22. Task 14 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/richedit` with a
+  `manual` mode) passed on Windows 11 after the fixes below:
+  `run.ps1 -Only richedit` on 386 and amd64 with every check PASS, and
+  the manual test with NVDA 2026.2 on amd64 (text by arrows and say all,
+  formatting with NVDA+F, Enter and a real mouse click on a link, Tab
+  and Shift+Tab, Ctrl+B, Ctrl+I and Ctrl+U of the test program). NVDA
+  does not say the bullets (it reads the control through TOM). Narrator
+  and JAWS not tested. Findings fixed during the test:
+  - `LinkClicked` by mouse never fired when text was selected: a click
+    on a link does not change the selection, so the old check "empty
+    selection at `WM_LBUTTONUP`" was wrong. The widget now remembers the
+    link and the selection at `WM_LBUTTONDOWN` and fires at
+    `WM_LBUTTONUP` if both are unchanged (a drag that selects text does
+    not fire). msftedit reports Enter on a link as the same button pair,
+    in read-only and editable controls; no `WM_KEYDOWN` or `WM_CHAR`
+    came on Windows 11 (those cases are kept for other versions).
+  - Tab into the control selected the whole document (`DLGC_HASSETSEL`
+    copied from `TextEdit`); removed, the caret stays where it was.
+  - After Alt+Tab with the Windows 11 task switcher NVDA said only the
+    form title and ignored the arrows when a `RichEdit` had the focus
+    (an `EDIT` or a button was fine). Cause, from the NVDA source
+    (`IAccessibleHandler/orderedWinEventLimiter.py`) and a WinEvent log:
+    while NVDA waits for the foreground to change it keeps only the last
+    four focus and foreground events, the switcher fires a late
+    foreground and two focus events of its own, and msftedit raises a
+    second focus event (positive object ID, its UI Automation proxy),
+    which pushes the control's real focus event out. Workaround:
+    `WM_SETFOCUS` from a window that is not walk's starts a 100 ms timer
+    that raises `EVENT_OBJECT_FOCUS` again; NVDA drops it as a duplicate
+    when it has the focus already. Tested by the user with the switcher,
+    several times on every control.
+  - msftedit has no Ctrl+B, Ctrl+I or Ctrl+U; the widget adds no
+    shortcuts (as the system control), applications add them. The test
+    program uses shortcut actions (`ShortcutActions`), which run before
+    the key reaches the control; a `KeyDown` handler is not enough,
+    because Ctrl+I then also inserts a tab character.
+  - Test program: the focus is set after the window is shown, a link
+    is announced once through the live status label, with a counter.
   - New widget `RichEdit` and `declarative.RichEdit` on the RichEdit
     control of `msftedit.dll` (`RICHEDIT50W`, loaded on the first
     `NewRichEdit`). Plain text (`Text`, `SetText`, `TextLength`; the
@@ -648,13 +684,15 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `SetText` and `SetRTF` is ignored), `SelectionChanged`
     (`EN_SELCHANGE`), `ReadOnlyChanged` and `LinkClicked` (a
     `StringEvent` with the link text, for `EN_LINK` with
-    `WM_LBUTTONUP`, or `WM_CHAR` or `WM_KEYDOWN` with Enter).
-  - Keyboard: Tab moves the focus, as in `TextEdit`; a live setting
+    `WM_LBUTTONDOWN` and `WM_LBUTTONUP` on the same link with the same
+    selection, or `WM_CHAR` or `WM_KEYDOWN` with Enter).
+  - Keyboard: Tab moves the focus, as in `TextEdit`, without selecting
+    the whole text; a live setting
     announces the text with `Announce`, as for `LineEdit` and
     `TextEdit`.
   - New in `internal/win`: the `EM_*`, `EN_*`, `ENM_*`, `CFM_*`,
     `CFE_*`, `PFM_*`, `PFA_*`, `PFN_*`, `SF_*`, `SCF_*` and `FR_*`
-    constants and `CHARRANGE` and `GETTEXTLENGTHEX` (generated).
+    constants, `EVENT_OBJECT_FOCUS` and `CHARRANGE` and `GETTEXTLENGTHEX` (generated).
     Hand-written in `richedit.go`: `MSFTEDIT_CLASS`, `LoadMsftedit`,
     `CHARFORMAT2` and `PARAFORMAT2` (anonymous unions; the build fails
     if their sizes differ from the SDK), `TEXTRANGE` and `FINDTEXTEX`

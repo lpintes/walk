@@ -33,7 +33,19 @@ type RichEdit struct {
 	linkClickedPublisher      StringEventPublisher
 	settingText               int
 	linkKeyDown               bool
+	linkButtonDown            bool
+	linkDownRange             win.CHARRANGE
+	linkDownSelection         [2]int
 }
+
+const (
+	// richEditFocusTimerID is far from the small IDs msftedit uses for
+	// its own timers.
+	richEditFocusTimerID = 0x57414C4B
+	// richEditFocusDelay in milliseconds is after the late events of the
+	// task switcher.
+	richEditFocusDelay = 100
+)
 
 var (
 	loadMsfteditOnce sync.Once
@@ -768,10 +780,24 @@ func (re *RichEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			enl := ptrFromUintptr[win.ENLINK](lParam)
 			var activated bool
 			switch enl.Msg() {
-			case win.WM_LBUTTONUP:
-				// Not at the end of a selection by mouse.
+			case win.WM_LBUTTONDOWN:
+				// A click on a link does not move the selection, so the
+				// selection at the button up only tells a click from a
+				// drag that selects text.
 				start, end := re.TextSelection()
-				activated = start == end
+				re.linkButtonDown = true
+				re.linkDownRange = enl.Chrg()
+				re.linkDownSelection = [2]int{start, end}
+
+			case win.WM_LBUTTONUP:
+				// msftedit also reports Enter on a link as a
+				// WM_LBUTTONDOWN and WM_LBUTTONUP pair, in read-only and
+				// editable controls.
+				start, end := re.TextSelection()
+				activated = re.linkButtonDown &&
+					re.linkDownRange == enl.Chrg() &&
+					re.linkDownSelection == [2]int{start, end}
+				re.linkButtonDown = false
 
 			case win.WM_KEYDOWN:
 				activated = enl.WParam() == win.VK_RETURN
@@ -787,13 +813,37 @@ func (re *RichEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			}
 		}
 
+	case win.WM_SETFOCUS:
+		// The focus comes back with the activation of the form, for
+		// example after Alt+Tab. msftedit raises a second focus event of
+		// its own, and with the late events of the Windows 11 task
+		// switcher NVDA can lose the focus event of the control: it keeps
+		// only the last four focus and foreground events while it waits
+		// for the foreground to change, and then announces only the
+		// title of the form. A focus event a little later repeats it;
+		// NVDA drops it as a duplicate if it has the focus already.
+		if windowFromHandle(win.HWND(wParam)) == nil {
+			win.SetTimer(re.hWnd, richEditFocusTimerID, richEditFocusDelay, 0)
+		}
+
+	case win.WM_TIMER:
+		if wParam == richEditFocusTimerID {
+			win.KillTimer(re.hWnd, richEditFocusTimerID)
+			if win.GetFocus() == re.hWnd {
+				win.NotifyWinEvent(win.EVENT_OBJECT_FOCUS, re.hWnd, win.OBJID_CLIENT, win.CHILDID_SELF)
+			}
+			return 0
+		}
+
 	case win.WM_GETDLGCODE:
 		if wParam == win.VK_RETURN {
 			return win.DLGC_WANTALLKEYS
 		}
 
-		// Tab moves the focus, as in TextEdit.
-		return win.DLGC_HASSETSEL | win.DLGC_WANTARROWS | win.DLGC_WANTCHARS
+		// Tab moves the focus, as in TextEdit. Without DLGC_HASSETSEL the
+		// dialog manager does not select the whole document when the
+		// focus comes with Tab; the caret stays where it was.
+		return win.DLGC_WANTARROWS | win.DLGC_WANTCHARS
 	}
 
 	return re.WidgetBase.WndProc(hwnd, msg, wParam, lParam)

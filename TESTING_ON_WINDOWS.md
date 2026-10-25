@@ -613,27 +613,40 @@ How to test, on 386 and amd64 (after `build.ps1`):
 
 - `tests/_wingui/scripts/run.ps1 -Only richedit`. Report the FAIL lines
   with their details. Two checks depend on how msftedit handles synthetic
-  input, so a FAIL there may be a problem of the test, not of the widget:
-  "LinkClicked by click" (button messages sent to the link) and
-  "LinkClicked by Enter" (Enter on a link in a read-only control). Check
-  them by hand in the manual test before changing the widget. "UIA name"
-  checks that the name set with `Accessibility` reaches UI Automation;
-  msftedit has its own UI Automation provider, so this may fail; report
-  what name NVDA says for the field.
+  input: "LinkClicked by click" (button messages sent to the link while
+  part of it is selected) and "LinkClicked by Enter" (Enter on a link in
+  a read-only control). On Windows 11 both pass; msftedit reports Enter
+  on a link as a button down and up pair. If one fails on another
+  version, check it by hand in the manual test before changing the
+  widget. "UIA name" checks that the name set with `Accessibility`
+  reaches UI Automation.
 - Manual test with NVDA on amd64: `richedit.exe manual`. The field
-  "Document" has a centered bold heading, a paragraph with bold, italic
-  and underlined words, two bullets and a paragraph with a link.
+  "Document" has the focus. It has a centered bold heading, a paragraph
+  with bold, italic and underlined words, a paragraph "This word is
+  plain.", two bullets and a paragraph with a link.
   - Read the text with the arrow keys and say all (NVDA+Down arrow).
-    Does NVDA say the bullets? With NVDA+F (report formatting), does it
-    say bold, italic, underlined, the font and the alignment?
-  - Select a word with Shift+Ctrl+Right arrow and press Ctrl+B. Does NVDA
-    say the selection? The button "Read format" (Tab to it, then Space)
-    should announce "bold" for the word; Tab back to the field.
+    With NVDA+F (report formatting), does NVDA say bold, italic,
+    underlined, the font and the alignment? (NVDA 2026.2 does not say
+    the bullets.)
+  - Ctrl+B, Ctrl+I and Ctrl+U are shortcut actions of the test program
+    (msftedit has none): select "plain" with Shift+Ctrl+Right arrow and
+    press each; the program announces for example "bold on" and, the
+    second time, "bold off", and the word must stay. NVDA+F with the
+    caret inside the word (the caret after the selection is on the
+    space) says the formatting. The button "Read format" (Tab twice,
+    then Space) announces the formatting at the caret.
   - Move to the link and press Enter, and click the link with the mouse
-    if possible: each should announce "Link https://github.com/lpintes/walk".
+    if possible: each announces "Link <n> https://github.com/lpintes/walk"
+    once, with a counter.
   - Tab and Shift+Tab must move the focus out of the field (no tab
-    character is inserted).
+    character is inserted), and Tab back into the field must not select
+    the whole text.
+  - Alt+Tab to another window and back, holding Alt so that the task
+    switcher shows, with the focus in "Document": NVDA must say the field
+    and its line, not only the window title, and the arrows must read.
 - Optional: the same with Narrator or JAWS, if available.
+- Result on Windows 11 (2026-10-25): passed on 386 and amd64 after the
+  fixes recorded under step 5 in `CLAUDE.md`.
 
 ## Reporting
 

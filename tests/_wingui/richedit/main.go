@@ -20,9 +20,10 @@
 // It prints PASS and FAIL lines and exits with code 1 if a check failed.
 //
 // With the argument "manual" it skips the checks and shows a window with
-// formatted text (a heading, a bulleted and a numbered list, bold and
-// italic words and a link) for a test by hand with a screen reader:
-// Ctrl+B, Ctrl+I and Ctrl+U format the selection, the button "Read
+// formatted text (a heading, bold, italic and underlined words, a plain
+// word, two bullets and a link) for a test by hand with a screen reader:
+// Ctrl+B, Ctrl+I and Ctrl+U (shortcut actions of this program) turn the
+// effect of the selection on or off, the button "Read
 // format" announces the formatting at the caret, and clicking a link or
 // pressing Enter on it announces its URL.
 package main
@@ -58,6 +59,7 @@ var (
 	textChanged      int
 	selectionChanged int
 	readOnlyChanged  int
+	linkCount        int
 	links            = make(chan string, 10)
 )
 
@@ -74,6 +76,7 @@ func onUI(f func()) {
 const sampleRTF = `{\rtf1\ansi\deff0{\fonttbl{\f0 Segoe UI;}}` +
 	`{\pard\qc\b\fs32 RichEdit test\par}` +
 	`{\pard This text has \b bold\b0 , \i italic\i0  and \ul underlined\ul0  words.\par}` +
+	`{\pard This word is plain.\par}` +
 	`{\pard{\pntext\'B7\tab}{\*\pn\pnlvlblt\pnf0\pnindent360{\pntxtb\'B7}}\fi-360\li360 First bullet\par}` +
 	`{\pard{\pntext\'B7\tab}{\*\pn\pnlvlblt\pnf0\pnindent360{\pntxtb\'B7}}\fi-360\li360 Second bullet\par}` +
 	`{\pard Visit https://github.com/lpintes/walk for the source.\par}}`
@@ -92,8 +95,10 @@ func main() {
 			OnSelectionChanged: func() { selectionChanged++ },
 			OnLinkClicked: func(url string) {
 				if manual {
-					status.SetText("Link: " + url)
-					walk.Announce(mw, "Link "+url, walk.AnnounceImportantAll)
+					// The status is a live region, so this is announced.
+					// The count makes each activation change the text.
+					linkCount++
+					status.SetText(fmt.Sprintf("Link %d %s", linkCount, url))
 				}
 				select {
 				case links <- url:
@@ -126,7 +131,27 @@ func main() {
 		if err := re.SetRTF(sampleRTF); err != nil {
 			fmt.Println("SetRTF:", err)
 		}
-		re.SetFocus()
+		// msftedit has no shortcuts for character formatting, so the
+		// test adds them as an application would. Shortcut actions run
+		// before the key reaches the control, so Ctrl+I does not also
+		// insert a tab character.
+		for _, s := range []struct {
+			key   walk.Key
+			name  string
+			m     walk.CharFormatMask
+			field func(*walk.CharFormat) *bool
+		}{
+			{walk.KeyB, "bold", walk.CharFormatBold, func(cf *walk.CharFormat) *bool { return &cf.Bold }},
+			{walk.KeyI, "italic", walk.CharFormatItalic, func(cf *walk.CharFormat) *bool { return &cf.Italic }},
+			{walk.KeyU, "underlined", walk.CharFormatUnderline, func(cf *walk.CharFormat) *bool { return &cf.Underline }},
+		} {
+			a := walk.NewAction()
+			a.SetShortcut(walk.Shortcut{Modifiers: walk.ModControl, Key: s.key})
+			a.Triggered().Attach(func() { toggleFormat(s.name, s.m, s.field) })
+			re.ShortcutActions().Add(a)
+		}
+		// After the window has shown and focused its first widget.
+		mw.Synchronize(func() { re.SetFocus() })
 		mw.Run()
 		return
 	}
@@ -154,6 +179,24 @@ func main() {
 	if failed {
 		os.Exit(1)
 	}
+}
+
+// toggleFormat turns an effect of the selection on, or off if the whole
+// selection has it, and announces the result in the manual test.
+func toggleFormat(name string, m walk.CharFormatMask, field func(*walk.CharFormat) *bool) {
+	cf, mask := re.SelectionCharFormat()
+	on := !(mask&m != 0 && *field(&cf))
+	var f walk.CharFormat
+	*field(&f) = on
+	if err := re.SetSelectionCharFormat(f, m); err != nil {
+		walk.Announce(mw, err.Error(), walk.AnnounceImportantAll)
+		return
+	}
+	state := "off"
+	if on {
+		state = "on"
+	}
+	walk.Announce(mw, name+" "+state, walk.AnnounceImportantAll)
 }
 
 // readFormat announces the formatting at the caret in the manual test.
