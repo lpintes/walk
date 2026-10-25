@@ -401,6 +401,9 @@ func handleAutomationEvent(this *com.This, sender *win.IUIAutomationElement, eve
 // elements in scope of e, with the element the event is about. Close the
 // returned Subscription to stop.
 func (e *Element) OnEvent(id EventID, scope Scope, f func(sender *Element, id EventID)) (*Subscription, error) {
+	if e == nil {
+		return nil, errNilElement
+	}
 	initVTables()
 	s := newSubscription(e.a)
 	s.handler = automationEvent{f: f}
@@ -491,6 +494,9 @@ func variantValue(id PropertyID, v *win.VARIANT) any {
 // every change raises an event: the Win32 proxies raise none for
 // IsEnabled, for example. Close the returned Subscription to stop.
 func (e *Element) OnPropertyChanged(scope Scope, f func(sender *Element, id PropertyID, value any), ids ...PropertyID) (*Subscription, error) {
+	if e == nil {
+		return nil, errNilElement
+	}
 	if len(ids) == 0 {
 		return nil, errors.New("uia: OnPropertyChanged: no property")
 	}
@@ -528,6 +534,9 @@ func handleStructureChangedEvent(this *com.This, sender *win.IUIAutomationElemen
 // child; for the other changes it is the parent. Close the returned
 // Subscription to stop.
 func (e *Element) OnStructureChanged(scope Scope, f func(sender *Element, change StructureChange)) (*Subscription, error) {
+	if e == nil {
+		return nil, errNilElement
+	}
 	initVTables()
 	s := newSubscription(e.a)
 	s.handler = structureChangedEvent{f: f}
@@ -564,6 +573,9 @@ func handleNotificationEvent(this *com.This, sender *win.IUIAutomationElement, k
 // with walk.Announce. It needs Windows 10 version 1709 or later. Close the
 // returned Subscription to stop.
 func (e *Element) OnNotification(scope Scope, f func(sender *Element, n Notification)) (*Subscription, error) {
+	if e == nil {
+		return nil, errNilElement
+	}
 	initVTables()
 	s := newSubscription(e.a)
 	s.handler = notificationEvent{f: f}

@@ -702,6 +702,49 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     offsets Go cannot express on 64-bit.
   - Not done: the Text Object Model (`ITextDocument`), OLE objects
     (`IRichEditOleCallback`), printing, zoom and background color.
+- Step 13, part 4: pull request lpintes/walk#23, merged. Task 15 of
+  `TESTING_ON_WINDOWS.md` passed on Windows 11: `run.ps1 -Only
+  uia,liveregion` on 386 and amd64 with every check PASS, and the
+  manual test on amd64: `uia.exe dump` read the tree with one cache
+  request (no fallback) and printed grid sizes and cell positions of
+  the Explorer details view ("14 rows, 4 columns", "row 1, column 1").
+  The test first failed: a `TableView` sorts a slice model by the
+  first column, so "Item 10" came right after "Item 1"; the test rows
+  now have two-digit numbers.
+  - Cache requests: `CacheRequest` is a Go value built per call, like
+    `Condition` (`Properties`, `Scope`, where 0 means `ScopeElement`,
+    and `Filter`, where nil keeps the control view).
+    `FindFirstBuildCache`, `FindAllBuildCache`, `BuildUpdatedCache`;
+    `CachedName`, `CachedControlType`, `CachedAutomationID`,
+    `CachedClassName`, `CachedIsEnabled`, `CachedBoundingRectangle`,
+    `CachedPropertyValue`, `CachedChildren` and `CachedParent`.
+    `PropertyValue` reads any property by ID (same Go types as
+    `OnPropertyChanged`); new constant `PropertyLiveSetting`. Not done:
+    cached patterns (`AddPattern`, `GetCachedPatternAs`), the element
+    mode without a reference (`AutomationElementMode_None`) and the
+    `BuildCache` variants of `Root`, `ElementFromHandle` and the tree
+    walker (`BuildUpdatedCache` covers them).
+  - Patterns: Grid (`GridSize`, `GridItem`), GridItem (`GridPosition`,
+    `ContainingGrid`), Table (`ColumnHeaders`, `RowHeaders`,
+    `TableOrder`), TableItem (`ColumnHeaderItems`, `RowHeaderItems`)
+    and Scroll (`ScrollInfo`, `Scroll`, `SetScrollPercent`, `NoScroll`).
+    Skipped: Transform, MultipleView and Dock (little use for a screen
+    reader style client).
+  - New in `internal/win`: `IUIAutomationCacheRequest` and the five
+    pattern interfaces (generated with `methods`), their IIDs and
+    pattern IDs, the `RowOrColumnMajor` and `ScrollAmount` constants,
+    `UIA_LiveSettingPropertyId`, and the generated `CreateCacheRequest`,
+    `FindFirstBuildCache`, `FindAllBuildCache` and `BuildUpdatedCache`
+    (skipped before because the cache request interface was not
+    defined). Hand-written: `IUIAutomationScrollPattern.SetScrollPercent`
+    (two `float64`, like `SetRangeValue`; `E_NOTIMPL` on arm64).
+  - The client of `tests/_wingui/liveregion` uses `uia` (`PropertyValue`,
+    `OnEvent`, `OnNotification`) instead of its own COM code, with the
+    same checks; the sender's handle and name are now read on the
+    subscription goroutine, after the event.
+  - `tests/_wingui/uia` has a `TableView` (30 rows, 2 columns) for the
+    grid checks; `dump` reads the tree with one cache request and falls
+    back to the tree walker if that fails.
 - Step 4: draft pull request lpintes/walk#24, not yet tested on Windows (task
   16 of `TESTING_ON_WINDOWS.md`, test program `tests/_wingui/dialogs`).
   Option A only; option B (`#32770` through `CreateDialogIndirectParam`)
