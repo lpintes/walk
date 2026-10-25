@@ -94,7 +94,7 @@ try {
 	Copy-Item -Recurse -Force (Join-Path $repo "examples\img") (Join-Path $dest "examples")
 
 	$tests = @()
-	foreach ($n in "part3", "dragfinish", "webview", "upstream", "shell", "uia") {
+	foreach ($n in "part3", "dragfinish", "webview", "upstream", "shell", "uia", "richedit") {
 		$tests += , @("./tests/_wingui/$n", (Join-Path $dest "tests\$n"))
 	}
 	foreach ($n in "source", "target") {
