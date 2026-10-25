@@ -233,7 +233,7 @@ func (a *Accessibility) NotifyLiveRegionChanged() {
 		return
 	}
 	switch a.wb.window.(type) {
-	case *LineEdit, *TextEdit:
+	case *LineEdit, *TextEdit, *RichEdit:
 		processing := AnnounceAll
 		if a.liveSetting == AccLiveSettingAssertive {
 			processing = AnnounceImportantMostRecent

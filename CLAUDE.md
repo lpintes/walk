@@ -622,6 +622,86 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `RemoveNotificationEventHandler` and `Release`, and
     `VARIANT.Double`. In `uia`, `HandlePropertyChangedEvent` takes the
     `VARIANT` as four stack words on 386 and as a pointer on 64-bit.
+- Step 5: pull request lpintes/walk#22, merged. Task 14 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/richedit` with a
+  `manual` mode) passed on Windows 11 after the fixes below:
+  `run.ps1 -Only richedit` on 386 and amd64 with every check PASS, and
+  the manual test with NVDA 2026.2 on amd64 (text by arrows and say all,
+  formatting with NVDA+F, Enter and a real mouse click on a link, Tab
+  and Shift+Tab, Ctrl+B, Ctrl+I and Ctrl+U of the test program). NVDA
+  does not say the bullets (it reads the control through TOM). Narrator
+  and JAWS not tested. Findings fixed during the test:
+  - `LinkClicked` by mouse never fired when text was selected: a click
+    on a link does not change the selection, so the old check "empty
+    selection at `WM_LBUTTONUP`" was wrong. The widget now remembers the
+    link and the selection at `WM_LBUTTONDOWN` and fires at
+    `WM_LBUTTONUP` if both are unchanged (a drag that selects text does
+    not fire). msftedit reports Enter on a link as the same button pair,
+    in read-only and editable controls; no `WM_KEYDOWN` or `WM_CHAR`
+    came on Windows 11 (those cases are kept for other versions).
+  - Tab into the control selected the whole document (`DLGC_HASSETSEL`
+    copied from `TextEdit`); removed, the caret stays where it was.
+  - After Alt+Tab with the Windows 11 task switcher NVDA said only the
+    form title and ignored the arrows when a `RichEdit` had the focus
+    (an `EDIT` or a button was fine). Cause, from the NVDA source
+    (`IAccessibleHandler/orderedWinEventLimiter.py`) and a WinEvent log:
+    while NVDA waits for the foreground to change it keeps only the last
+    four focus and foreground events, the switcher fires a late
+    foreground and two focus events of its own, and msftedit raises a
+    second focus event (positive object ID, its UI Automation proxy),
+    which pushes the control's real focus event out. Workaround:
+    `WM_SETFOCUS` from a window that is not walk's starts a 100 ms timer
+    that raises `EVENT_OBJECT_FOCUS` again; NVDA drops it as a duplicate
+    when it has the focus already. Tested by the user with the switcher,
+    several times on every control.
+  - msftedit has no Ctrl+B, Ctrl+I or Ctrl+U; the widget adds no
+    shortcuts (as the system control), applications add them. The test
+    program uses shortcut actions (`ShortcutActions`), which run before
+    the key reaches the control; a `KeyDown` handler is not enough,
+    because Ctrl+I then also inserts a tab character.
+  - Test program: the focus is set after the window is shown, a link
+    is announced once through the live status label, with a counter.
+  - New widget `RichEdit` and `declarative.RichEdit` on the RichEdit
+    control of `msftedit.dll` (`RICHEDIT50W`, loaded on the first
+    `NewRichEdit`). Plain text (`Text`, `SetText`, `TextLength`; the
+    limit is raised from 32767 characters to the maximum), Rich Text
+    Format (`RTF`, `SetRTF`, `SelectedRTF`, `ReplaceSelectedRTF`, with
+    `EM_STREAMIN` and `EM_STREAMOUT` and a callback that finds its
+    buffer by the cookie), selection (`TextSelection`,
+    `SetTextSelection`, `SelectedText`, `TextRange`,
+    `ReplaceSelectedText`, `AppendText`), `Find` (`FindFlags`), undo
+    and redo, clipboard, `Modified`, `MaxLength`, `ReadOnly`,
+    `AutoURLDetect`.
+  - Formatting of the selection: `CharFormat` with `CharFormatMask`
+    (bold, italic, underline, strikeout, link, font family, size in
+    points, text and background color or the default colors; the mask
+    returned says which fields are the same in the whole selection),
+    `SetDefaultCharFormat`, and `ParaFormat` with `ParaFormatMask`
+    (alignment including justified, which needs
+    `TO_ADVANCEDTYPOGRAPHY`, bullets and numbering starting at 1 with a
+    period, indents and spacing in points).
+  - Events: `TextChanged` (once per method call; `EN_CHANGE` during
+    `SetText` and `SetRTF` is ignored), `SelectionChanged`
+    (`EN_SELCHANGE`), `ReadOnlyChanged` and `LinkClicked` (a
+    `StringEvent` with the link text, for `EN_LINK` with
+    `WM_LBUTTONDOWN` and `WM_LBUTTONUP` on the same link with the same
+    selection, or `WM_CHAR` or `WM_KEYDOWN` with Enter).
+  - Keyboard: Tab moves the focus, as in `TextEdit`, without selecting
+    the whole text; a live setting
+    announces the text with `Announce`, as for `LineEdit` and
+    `TextEdit`.
+  - New in `internal/win`: the `EM_*`, `EN_*`, `ENM_*`, `CFM_*`,
+    `CFE_*`, `PFM_*`, `PFA_*`, `PFN_*`, `SF_*`, `SCF_*` and `FR_*`
+    constants, `EVENT_OBJECT_FOCUS` and `CHARRANGE` and `GETTEXTLENGTHEX` (generated).
+    Hand-written in `richedit.go`: `MSFTEDIT_CLASS`, `LoadMsftedit`,
+    `CHARFORMAT2` and `PARAFORMAT2` (anonymous unions; the build fails
+    if their sizes differ from the SDK), `TEXTRANGE` and `FINDTEXTEX`
+    (only the alignment differs from `#pragma pack(4)`), and
+    `EDITSTREAM` and `ENLINK` as arrays of 4-byte words with accessors,
+    because `#pragma pack(4)` puts their pointer-sized fields at
+    offsets Go cannot express on 64-bit.
+  - Not done: the Text Object Model (`ITextDocument`), OLE objects
+    (`IRichEditOleCallback`), printing, zoom and background color.
 - Step 7: draft pull request lpintes/walk#25, not yet tested on Windows (task
   17 of `TESTING_ON_WINDOWS.md`, `tests/_wingui/webview2`).
   - Widget `WebView2` (`webview2.go`): `NewWebView2`,
@@ -683,7 +763,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     top-level window moves, settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Steps 4, 5, 9 and 11: not started; step 8 can continue (generic
+- Steps 4, 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
@@ -902,9 +982,9 @@ and real dialogs all need new Win32/COM declarations.
     `EDITSTREAM`, `GETTEXTEX`, `MSGFILTER`, `SELCHANGE`) are wrong on
     64-bit: `richedit.h` uses `#pragma pack(4)` there, so pointer-sized
     fields can sit at offsets that are not a multiple of 8, which Go
-    cannot express with plain fields. Walk does not use them yet; step 5
-    (RichEdit) must handle this, for example with byte arrays and
-    accessors. `TABLEROWPARMS` and `TABLECELLPARMS` are wrong on every
+    cannot express with plain fields. Step 5 (RichEdit) declares
+    `EDITSTREAM` and `ENLINK` as arrays of 4-byte words with accessors
+    and does not use the others. `TABLEROWPARMS` and `TABLECELLPARMS` are wrong on every
     architecture.
 - Constants whose value differs from the metadata only in representation
   (for example `E_NOTIMPL` as a positive untyped constant, `HWND_TOPMOST`,
