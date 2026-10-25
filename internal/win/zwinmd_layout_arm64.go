@@ -52,6 +52,13 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(CHARRANGE{})-8]
+	_ = layoutCheck[unsafe.Alignof(CHARRANGE{})-4]
+	_ = layoutCheck[unsafe.Offsetof(CHARRANGE{}.CpMin)-0]
+	_ = layoutCheck[unsafe.Offsetof(CHARRANGE{}.CpMax)-4]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(CIEXYZ{})-12]
 	_ = layoutCheck[unsafe.Alignof(CIEXYZ{})-4]
 	_ = layoutCheck[unsafe.Offsetof(CIEXYZ{}.CiexyzX)-0]
@@ -148,6 +155,13 @@ func _() {
 	_ = layoutCheck[unsafe.Offsetof(FLASHWINFO{}.DwFlags)-16]
 	_ = layoutCheck[unsafe.Offsetof(FLASHWINFO{}.UCount)-20]
 	_ = layoutCheck[unsafe.Offsetof(FLASHWINFO{}.DwTimeout)-24]
+}
+
+func _() {
+	_ = layoutCheck[unsafe.Sizeof(GETTEXTLENGTHEX{})-8]
+	_ = layoutCheck[unsafe.Alignof(GETTEXTLENGTHEX{})-4]
+	_ = layoutCheck[unsafe.Offsetof(GETTEXTLENGTHEX{}.Flags)-0]
+	_ = layoutCheck[unsafe.Offsetof(GETTEXTLENGTHEX{}.Codepage)-4]
 }
 
 func _() {

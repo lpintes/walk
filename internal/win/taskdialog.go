@@ -62,8 +62,6 @@ type TASKDIALOGCONFIG struct {
 	CxWidth                 uint32
 }
 
-const ptrSize = unsafe.Sizeof(uintptr(0))
-
 // The sizes of the packed C structs: TASKDIALOGCONFIG has 8 fields of 4
 // bytes and 16 pointer-sized fields, TASKDIALOG_BUTTON one of each.
 // taskdialog_32.go and taskdialog_64.go check them against the sizes of
