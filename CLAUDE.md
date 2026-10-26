@@ -903,7 +903,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 14, part 1: draft pull request (number pending), not yet tested
+- Step 14, part 1: draft pull request lpintes/walk#28, not yet tested
   on Windows (task 19 of `TESTING_ON_WINDOWS.md`, test program
   `tests/_wingui/hotkeys` with a `manual` mode). Global hotkeys and
   single instance; upstream lxn/walk #228 was only the model (rewritten,
