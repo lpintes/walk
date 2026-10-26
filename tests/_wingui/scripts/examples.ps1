@@ -23,7 +23,11 @@ if ($Only) { $dirs = $dirs | Where-Object { $Only -contains $_.Name } }
 foreach ($d in $dirs) {
 	$n = $d.Name
 	$err = Join-Path $d.FullName "stderr.txt"
-	$p = Start-Process -FilePath (Join-Path $d.FullName "$n.exe") -WorkingDirectory $d.FullName -RedirectStandardError $err -PassThru
+	# The examples are console programs. Without -NoNewWindow each one gets
+	# a console window, which can become its MainWindowHandle where the
+	# classic console host is used (Windows Sandbox), and WM_CLOSE then closes
+	# the console instead of the example.
+	$p = Start-Process -FilePath (Join-Path $d.FullName "$n.exe") -WorkingDirectory $d.FullName -RedirectStandardError $err -NoNewWindow -PassThru
 	$null = $p.Handle
 	$top = [IntPtr]::Zero
 	for ($i = 0; $i -lt 40; $i++) {

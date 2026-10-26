@@ -3,8 +3,9 @@
 Test programs and scripts that run walk on a real Windows desktop. They were
 written for the Windows tasks in `TESTING_ON_WINDOWS.md` (the smoke test of
 step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, the COM objects of
-`WebView` in step 6, the live regions of step 10 and the changes ported
-from lxn/walk pull requests) and can be rerun as
+`WebView` in step 6, the live regions of step 10, the changes ported
+from lxn/walk pull requests, the UI Automation client of step 13 and the
+dialogs of step 4) and can be rerun as
 regression tests after changes to `internal/win`, `internal/com` or the
 affected widgets. `com` is not a directory here: `build.ps1` builds the
 unit tests of `internal/com` into `tests\com\com.exe`.
@@ -64,6 +65,40 @@ says `focus=<none>`. `olednd` moves the real mouse pointer and restores it.
 KNOWN marks a check that fails because of an inherited bug listed under
 "Known issues" in `CLAUDE.md`; it does not fail the test. If such a bug is
 fixed, the check prints PASS, and the KNOWN handling should be removed.
+
+## Running in Windows Sandbox
+
+The windows of the tests take the focus of the desktop, which makes the
+machine unusable while they run. `sandbox\sandbox.ps1` runs them in Windows
+Sandbox instead (Windows 10 or 11 Pro or Enterprise; enable the optional
+feature `Containers-DisposableClientVM` and reboot once):
+
+```
+.\tests\_wingui\sandbox\sandbox.ps1
+.\tests\_wingui\sandbox\sandbox.ps1 -Arch amd64 -Only dialogs
+.\tests\_wingui\sandbox\sandbox.ps1 -Examples
+```
+
+- It builds with `build.ps1` on the host into
+  `%LOCALAPPDATA%\walk-sandbox\out` (`-NoBuild` reuses the last build),
+  starts the sandbox with PowerShell 7 of the host, the `tests\_wingui`
+  directory (read-only) and the build output mapped, and waits.
+  `sandbox\inside.ps1`, the logon command of the sandbox, runs `run.ps1`
+  (and `examples.ps1` with `-Examples`; `-NoRun` runs only that) for each
+  architecture, writes their output to
+  `%LOCALAPPDATA%\walk-sandbox\results` and shuts the sandbox down. The host
+  script then prints every line that is not PASS (`-Full` prints all) and
+  exits with 1 if a line is FAIL.
+- The `.out.txt` files that the output names under `C:\walk-wingui` are in
+  `%LOCALAPPDATA%\walk-sandbox\out` on the host.
+- The sandbox has no network and no shared clipboard. Its window appears on
+  the host desktop once, when it starts, and captures the keyboard while it
+  has the focus; the tests themselves run inside it. `-Minimize` minimizes
+  the window as soon as it appears. The shutdown inside the sandbox does not
+  close the window, so the host script closes it after the results are
+  written; `-Keep` leaves it running.
+- Only automated tests belong there: the manual modes need a screen reader
+  on the real desktop, and `olednd` (`-Drag`) is not run.
 
 ## Tests
 
@@ -142,6 +177,23 @@ fixed, the check prints PASS, and the KNOWN handling should be removed.
   for listening with a screen reader; Ctrl+B, Ctrl+I and Ctrl+U format
   the selection, the button "Read format" announces the formatting at
   the caret, and activating a link announces its URL.
+- `dialogs`: the dialogs of step 4. A reference `MsgBox` (its UI
+  Automation view is printed as INFO), a walk `Dialog` (through `uia`:
+  MSAA role `ROLE_SYSTEM_DIALOG`, `IsDialog`, name and static text, like
+  the message box; a WinEvent hook must see `EVENT_SYSTEM_DIALOGSTART`
+  and `EVENT_SYSTEM_DIALOGEND`; closed by invoking Cancel through UI
+  Automation, `Run` must return `DlgCmdCancel`), and three `TaskDialog`s:
+  one with custom and common buttons, radio buttons and a verification
+  check box operated through UI Automation (`Show` must return them), one
+  with `AllowCancel` closed with `WM_CLOSE`, and one whose hyperlink is
+  invoked through UI Automation (`OnHyperlinkClicked`) and that is closed
+  with `TDM_CLICK_BUTTON`. While the walk dialog is open the test prints
+  `DIALOG_HWND` and `MSAA_READY` and waits up to 15 seconds for the named
+  event `Local\walk-dialogs-msaa`; `run.ps1` reads the MSAA client
+  object (role dialog) and window object (role window) meanwhile and then
+  sets the event. `dialogs.exe manual` shows buttons that open a walk
+  dialog, two task dialogs and a message box, for a test with a screen
+  reader; results go to a polite live region and standard output.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

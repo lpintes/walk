@@ -37,7 +37,7 @@
 //   - Window: CloseWindow, WindowVisualState, SetWindowVisualState and
 //     IsModal, for top-level windows.
 //   - ScrollItem: ScrollIntoView.
-//   - LegacyIAccessible: DefaultAction, DoDefaultAction and Description,
+//   - LegacyIAccessible: DefaultAction, DoDefaultAction, Description and Role,
 //     the MSAA properties, for elements of Win32 and MSAA programs.
 //   - Grid: GridSize and GridItem; GridItem: GridPosition and
 //     ContainingGrid, for list views in details view, tables and their

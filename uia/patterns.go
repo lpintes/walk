@@ -500,3 +500,14 @@ func (e *Element) Description() (string, error) {
 	})
 	return description, err
 }
+
+// Role returns the MSAA role of the element, such as ROLE_SYSTEM_DIALOG
+// (18) for a dialog or ROLE_SYSTEM_PUSHBUTTON (43) for a button (the
+// LegacyIAccessible pattern).
+func (e *Element) Role() (int, error) {
+	var role uint32
+	err := withPattern(e, "Role", win.UIA_LegacyIAccessiblePatternId, &win.IID_IUIAutomationLegacyIAccessiblePattern, func(p *win.IUIAutomationLegacyIAccessiblePattern) error {
+		return check("Role", p.Get_CurrentRole(&role))
+	})
+	return int(role), err
+}

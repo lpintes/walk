@@ -299,6 +299,8 @@ const EVENT_OBJECT_HELPCHANGE
 const EVENT_OBJECT_LIVEREGIONCHANGED
 const EVENT_OBJECT_NAMECHANGE
 const EVENT_OBJECT_STATECHANGE
+const EVENT_SYSTEM_DIALOGEND
+const EVENT_SYSTEM_DIALOGSTART
 const ExpandCollapseState_Collapsed
 const ExpandCollapseState_Expanded
 const ExpandCollapseState_LeafNode
@@ -606,6 +608,7 @@ const NotificationProcessing_ImportantAll
 const NotificationProcessing_ImportantMostRecent
 const NotificationProcessing_MostRecent
 const OBJID_CLIENT int32
+const OBJID_WINDOW int32
 const ODA_DRAWENTIRE
 const ODS_SELECTED
 const OFN_ALLOWMULTISELECT
@@ -908,6 +911,27 @@ const TCM_INSERTITEM
 const TCM_SETCURSEL
 const TCM_SETIMAGELIST
 const TCM_SETITEM
+const TDCBF_CANCEL_BUTTON
+const TDCBF_CLOSE_BUTTON
+const TDCBF_NO_BUTTON
+const TDCBF_OK_BUTTON
+const TDCBF_RETRY_BUTTON
+const TDCBF_YES_BUTTON
+const TDF_ALLOW_DIALOG_CANCELLATION
+const TDF_CAN_BE_MINIMIZED
+const TDF_ENABLE_HYPERLINKS
+const TDF_EXPANDED_BY_DEFAULT
+const TDF_EXPAND_FOOTER_AREA
+const TDF_NO_DEFAULT_RADIO_BUTTON
+const TDF_POSITION_RELATIVE_TO_WINDOW
+const TDF_SIZE_TO_CONTENT
+const TDF_USE_COMMAND_LINKS
+const TDF_USE_COMMAND_LINKS_NO_ICON
+const TDF_VERIFICATION_FLAG_CHECKED
+const TDM_CLICK_BUTTON
+const TDN_CREATED
+const TDN_DESTROYED
+const TDN_HYPERLINK_CLICKED
 const TIS_SELECTED
 const TME_LEAVE
 const TMT_FILLCOLOR
@@ -1017,6 +1041,7 @@ const UIA_InvokePatternId
 const UIA_Invoke_InvokedEventId
 const UIA_IsContentElementPropertyId
 const UIA_IsControlElementPropertyId
+const UIA_IsDialogPropertyId
 const UIA_IsEnabledPropertyId
 const UIA_IsKeyboardFocusablePropertyId
 const UIA_IsOffscreenPropertyId
@@ -1529,6 +1554,7 @@ func SizeofResource
 func StretchBlt
 func SysFreeString
 func SystemParametersInfo
+func taskDialogIndirect entry=TaskDialogIndirect pTaskConfig:unsafe.Pointer
 func TrackMouseEvent
 func TrackPopupMenuEx rawbool
 func TranslateMessage
@@ -1679,6 +1705,7 @@ guid IID_IUIAutomationValuePattern
 guid IID_IUIAutomationWindowPattern
 guid IID_IUnknown
 guid IID_IWebBrowser2
+guid IsDialog_Property_GUID MSAAPROPID
 guid LiveSetting_Property_GUID MSAAPROPID
 guid PROPID_ACC_DEFAULTACTION MSAAPROPID
 guid PROPID_ACC_DESCRIPTION MSAAPROPID
