@@ -745,7 +745,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - `tests/_wingui/uia` has a `TableView` (30 rows, 2 columns) for the
     grid checks; `dump` reads the tree with one cache request and falls
     back to the tree walker if that fails.
-- Step 4: draft pull request lpintes/walk#24. Task 16 of
+- Step 4: pull request lpintes/walk#24, merged. Task 16 of
   `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/dialogs`) passed
   on Windows 11 (2026-10-26): `run.ps1` and `examples.ps1` on 386 and
   amd64 on the host and in Windows Sandbox, and the manual test with
