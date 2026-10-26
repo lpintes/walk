@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/lpintes/walk/internal/win"
@@ -40,7 +41,9 @@ type GlobalHotkeyOptions struct {
 // FormBase.BringToForeground: Windows allows it, because the key press
 // counts as the last input event of the program.
 type GlobalHotkey struct {
-	wb                 *WindowBase
+	wb                 *WindowBase // not changed after NewGlobalHotkey
+	threadID           uint32      // of the owner window
+	disposed           atomic.Bool
 	owner              Window
 	id                 int32
 	shortcut           Shortcut
@@ -104,6 +107,7 @@ func NewGlobalHotkeyWithOptions(owner Window, shortcut Shortcut, opts GlobalHotk
 
 	h := &GlobalHotkey{
 		wb:       wb,
+		threadID: win.GetCurrentThreadId(),
 		owner:    owner,
 		id:       id,
 		shortcut: shortcut,
@@ -162,20 +166,21 @@ func (h *GlobalHotkey) Activated() *Event {
 }
 
 // IsDisposed returns whether the hotkey is no longer registered.
+//
+// After Dispose on another thread than the owner's it becomes true only
+// when the owner's thread has unregistered the hotkey.
 func (h *GlobalHotkey) IsDisposed() bool {
-	return h.wb == nil
+	return h.disposed.Load()
 }
 
 // Dispose unregisters the hotkey. Called on another thread than the
 // owner's, it unregisters the hotkey later on the owner's thread through
 // Synchronize. Disposing of the owner window disposes of its hotkeys.
 func (h *GlobalHotkey) Dispose() {
-	wb := h.wb
-	if wb == nil {
-		return
-	}
-	if wb.hWnd != 0 && win.GetWindowThreadProcessId(wb.hWnd, nil) != win.GetCurrentThreadId() {
-		wb.Synchronize(h.Dispose)
+	if win.GetCurrentThreadId() != h.threadID {
+		// The state of the hotkey and its window is only touched on
+		// the owner's thread.
+		h.wb.Synchronize(h.unregister)
 		return
 	}
 
@@ -184,8 +189,11 @@ func (h *GlobalHotkey) Dispose() {
 
 // unregister unregisters the hotkey on the owner's thread.
 func (h *GlobalHotkey) unregister() {
+	if h.disposed.Load() {
+		return
+	}
+	h.disposed.Store(true)
 	wb := h.wb
-	h.wb = nil
 	wb.globalHotkeys = slices.DeleteFunc(wb.globalHotkeys, func(x *GlobalHotkey) bool { return x == h })
 	if wb.hWnd != 0 {
 		win.UnregisterHotKey(wb.hWnd, h.id)

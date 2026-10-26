@@ -948,16 +948,24 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     string)`), `Close`. The window procedure activates the form with
     `BringToForeground` during `WM_COPYDATA` and posts itself a message
     to publish the event, so the second instance does not wait for the
-    handlers. An elevated first instance does not get `WM_COPYDATA` from
-    a normal one (UIPI); the second gets an error.
+    handlers. A failed send (`SMTO_ABORTIFHUNG`, a refused message, a
+    first instance that is ending) is retried until the deadline. The
+    message window is destroyed when the form given to `Listen` is
+    disposed, and it rejects data of 0 bytes or above 1 MiB. An elevated
+    first instance: the mutex cannot be opened (`ERROR_ACCESS_DENIED`,
+    taken as "another instance exists") and UIPI blocks `WM_COPYDATA`,
+    so the second instance gets an error at once saying so. `Close`
+    must run on the thread of `NewSingleInstance` (error otherwise).
+    `GlobalHotkey.Dispose` from another goroutine only queues the
+    unregistration; `IsDisposed` is an atomic flag.
   - New in `internal/win` (generated): `RegisterHotKey`,
     `UnregisterHotKey`, `CreateMutex` (`uintptr` for the security
     attributes), `ReleaseMutex`, `WaitForSingleObject`, `CloseHandle`,
     `FindWindowEx`, `SendMessageTimeout`, `AllowSetForegroundWindow`,
     `GetWindowThreadProcessId`, `IsIconic`,
     `SetWindowText`, `COPYDATASTRUCT`, `WM_HOTKEY`, `WM_COPYDATA`,
-    `MOD_*`, `ERROR_HOTKEY_ALREADY_REGISTERED`, `WAIT_*`,
-    `SMTO_NORMAL` and `SW_RESTORE`.
+    `MOD_*`, `ERROR_HOTKEY_ALREADY_REGISTERED`, `ERROR_ACCESS_DENIED`,
+    `WAIT_*`, `SMTO_ABORTIFHUNG` and `SW_RESTORE`.
   - Not done (next parts of step 14): power and session events, system
     settings, more clipboard formats.
 - Steps 9 and 11: not started; step 8 can continue (generic

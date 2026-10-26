@@ -184,11 +184,12 @@ func (fb *FormBase) BringToForeground() error {
 	if fb.hWnd == 0 {
 		return newError("BringToForeground: the form is disposed")
 	}
-	if win.IsIconic(fb.hWnd) {
-		win.ShowWindow(fb.hWnd, win.SW_RESTORE)
-	}
+	// SW_RESTORE would show a hidden window, so check visibility first.
 	if !win.IsWindowVisible(fb.hWnd) {
 		return nil
+	}
+	if win.IsIconic(fb.hWnd) {
+		win.ShowWindow(fb.hWnd, win.SW_RESTORE)
 	}
 	if !win.SetForegroundWindow(fb.hWnd) {
 		return newErrorNoPanic("BringToForeground: Windows did not let the program take the foreground")

@@ -622,6 +622,10 @@ func manual() {
 	}
 
 	si.OtherInstanceStarted().Attach(func(args []string, dir string) {
+		// The other instance was started as "hotkeys.exe manual ...".
+		if len(args) > 0 && args[0] == "manual" {
+			args = args[1:]
+		}
 		report(fmt.Sprintf("Another instance started in %s with %d arguments: %s", dir, len(args), strings.Join(args, ", ")))
 	})
 	if err := si.Listen(mw); err != nil {

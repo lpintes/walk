@@ -97,6 +97,9 @@ const SingleInstanceTimeout = 30 * time.Second
 // SingleInstance ("WKS" and the format version 1).
 const singleInstanceCopyDataID = 0x574B5301
 
+// singleInstanceMaxData is the largest WM_COPYDATA payload accepted.
+const singleInstanceMaxData = 1 << 20
+
 // singleInstancePublishMsg is posted by the window of the first instance to
 // itself, so that the event is published after WM_COPYDATA has returned.
 const singleInstancePublishMsg = win.WM_APP + 1
@@ -152,7 +155,7 @@ type SingleInstance struct {
 	first     bool
 	mutex     win.HANDLE
 	hWnd      win.HWND
-	threadID  uint32
+	threadID  uint32 // of NewSingleInstance, which owns the mutex
 	form      Form
 	pending   []singleInstanceMessage
 	publisher SingleInstanceEventPublisher
@@ -172,8 +175,9 @@ type SingleInstance struct {
 // returns a SingleInstance whose IsFirst is false; the program should then
 // exit. It returns an error if the first instance does not call Listen or
 // accept the arguments within SingleInstanceTimeout, for example because
-// it hangs or runs elevated while this instance does not (Windows does not
-// pass WM_COPYDATA to a process with a higher integrity level).
+// it hangs, and at once if the first instance runs elevated while this one
+// does not: Windows does not pass WM_COPYDATA to a process with a higher
+// integrity level.
 //
 // It must be called on the UI goroutine of the program, which it locks to
 // its OS thread: the mutex belongs to the thread, and Windows releases it
@@ -190,54 +194,69 @@ func NewSingleInstance(appID string) (*SingleInstance, error) {
 	}
 
 	runtime.LockOSThread()
+	si.threadID = win.GetCurrentThreadId()
+	fail := func(err error) (*SingleInstance, error) {
+		runtime.UnlockOSThread()
+		return nil, err
+	}
 
 	deadline := time.Now().Add(SingleInstanceTimeout)
+	var sendErr error
 	for {
-		h := win.CreateMutex(0, false, mutexName)
-		if h == 0 {
-			err := lastError("NewSingleInstance: CreateMutex")
-			runtime.UnlockOSThread()
-			return nil, err
-		}
+		// An elevated first instance creates the mutex with a security
+		// descriptor that does not let a normal process open it.
+		elevated := false
+		if h := win.CreateMutex(0, false, mutexName); h == 0 {
+			if win.GetLastError() != win.ERROR_ACCESS_DENIED {
+				return fail(lastError("NewSingleInstance: CreateMutex"))
+			}
+			elevated = true
+		} else {
+			// Owning the mutex makes the first instance;
+			// WAIT_ABANDONED means that the previous first instance
+			// ended without releasing it.
+			switch win.WaitForSingleObject(h, 0) {
+			case win.WAIT_OBJECT_0, win.WAIT_ABANDONED:
+				si.first = true
+				si.mutex = h
+				return si, nil
 
-		// Owning the mutex makes the first instance; WAIT_ABANDONED
-		// means that the previous first instance ended without
-		// releasing it.
-		switch win.WaitForSingleObject(h, 0) {
-		case win.WAIT_OBJECT_0, win.WAIT_ABANDONED:
-			si.first = true
-			si.mutex = h
-			return si, nil
+			case win.WAIT_TIMEOUT:
+				win.CloseHandle(h)
 
-		case win.WAIT_TIMEOUT:
-			win.CloseHandle(h)
-
-		default:
-			err := lastError("NewSingleInstance: WaitForSingleObject")
-			win.CloseHandle(h)
-			runtime.UnlockOSThread()
-			return nil, err
+			default:
+				err := lastError("NewSingleInstance: WaitForSingleObject")
+				win.CloseHandle(h)
+				return fail(err)
+			}
 		}
 
 		hwnd, err := si.findFirst()
 		if err != nil {
-			runtime.UnlockOSThread()
-			return nil, err
+			return fail(err)
 		}
 		if hwnd != 0 {
-			err := si.sendToFirst(hwnd, deadline)
-			runtime.UnlockOSThread()
-			if err != nil {
-				return nil, err
+			errno, err := si.sendToFirst(hwnd, deadline)
+			if err == nil {
+				runtime.UnlockOSThread()
+				return si, nil
 			}
-			return si, nil
+			if elevated || errno == win.ERROR_ACCESS_DENIED {
+				return fail(newError(fmt.Sprintf("NewSingleInstance: the first instance of %q runs with higher privileges (elevated), and Windows does not let this instance pass its arguments to it", appID)))
+			}
+			// The first instance may be ending (its window is gone or
+			// its message loop has stopped) or still busy; try again,
+			// maybe as the first.
+			sendErr = err
 		}
 
 		// The first instance is still starting (it has not called
 		// Listen yet) or just ending; try again, maybe as the first.
 		if time.Now().After(deadline) {
-			runtime.UnlockOSThread()
-			return nil, newError(fmt.Sprintf("NewSingleInstance: the first instance of %q does not listen", appID))
+			if sendErr != nil {
+				return fail(sendErr)
+			}
+			return fail(newError(fmt.Sprintf("NewSingleInstance: the first instance of %q does not listen", appID)))
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
@@ -270,12 +289,16 @@ func (si *SingleInstance) findFirst() (win.HWND, error) {
 }
 
 // sendToFirst sends the arguments and the working directory of this
-// process to the message window of the first instance.
-func (si *SingleInstance) sendToFirst(hwnd win.HWND, deadline time.Time) error {
+// process to the message window of the first instance. On failure it also
+// returns the error code of SendMessageTimeout, if any.
+func (si *SingleInstance) sendToFirst(hwnd win.HWND, deadline time.Time) (uint32, error) {
 	dir, _ := os.Getwd()
 	data, err := json.Marshal(singleInstanceMessage{Args: os.Args[1:], WorkingDir: dir})
 	if err != nil {
-		return wrapErrorNoPanic(fmt.Errorf("NewSingleInstance: %w", err))
+		return 0, wrapErrorNoPanic(fmt.Errorf("NewSingleInstance: %w", err))
+	}
+	if len(data) > singleInstanceMaxData {
+		return 0, newError("NewSingleInstance: the command line is too long")
 	}
 
 	// The second instance usually has the foreground right (the user just
@@ -287,28 +310,30 @@ func (si *SingleInstance) sendToFirst(hwnd win.HWND, deadline time.Time) error {
 		win.AllowSetForegroundWindow(pid)
 	}
 
-	// Both live on the heap and stay reachable until SendMessageTimeout
-	// returns; Windows copies the data into the receiving process.
+	// cds may stay on the stack; that is safe, because the stack of a
+	// goroutine does not move during a system call, and Windows copies
+	// the data into the receiving process before the sender waits.
 	cds := &win.COPYDATASTRUCT{
 		DwData: singleInstanceCopyDataID,
 		CbData: uint32(len(data)),
 		LpData: unsafe.Pointer(unsafe.SliceData(data)),
 	}
 	timeout := time.Until(deadline)
-	if timeout < 5*time.Second {
-		timeout = 5 * time.Second
+	if timeout < time.Second {
+		timeout = time.Second
 	}
 	var result uintptr
-	r := win.SendMessageTimeout(hwnd, win.WM_COPYDATA, 0, uintptr(unsafe.Pointer(cds)), win.SMTO_NORMAL, uint32(timeout/time.Millisecond), &result)
+	r := win.SendMessageTimeout(hwnd, win.WM_COPYDATA, 0, uintptr(unsafe.Pointer(cds)), win.SMTO_ABORTIFHUNG, uint32(timeout/time.Millisecond), &result)
+	errno := win.GetLastError()
 	runtime.KeepAlive(cds)
 	runtime.KeepAlive(data)
 	if r == 0 {
-		return lastError("NewSingleInstance: SendMessageTimeout")
+		return errno, newErrorNoPanic(fmt.Sprintf("NewSingleInstance: SendMessageTimeout: %v", syscall.Errno(errno)))
 	}
 	if result != 1 {
-		return newError("NewSingleInstance: the first instance did not accept the arguments")
+		return 0, newErrorNoPanic("NewSingleInstance: the first instance did not accept the arguments")
 	}
-	return nil
+	return 0, nil
 }
 
 // IsFirst returns whether this is the first instance of the program. If it
@@ -339,7 +364,10 @@ func (si *SingleInstance) OtherInstanceStarted() *SingleInstanceEvent {
 //
 // form, which may be nil, is restored if it is minimized and brought to the
 // foreground each time another instance starts; a hidden form stays
-// hidden (a handler may show it).
+// hidden (a handler may show it). When form is disposed, the message
+// window is destroyed too, so later instances no longer reach this one;
+// they become the first instance once Close releases the claim or the
+// program exits.
 //
 // Listen returns an error if this is not the first instance or Listen has
 // already been called.
@@ -373,8 +401,14 @@ func (si *SingleInstance) Listen(form Form) error {
 		return lastError("SingleInstance.Listen: CreateWindowEx")
 	}
 	si.hWnd = hwnd
-	si.threadID = win.GetCurrentThreadId()
 	si.form = form
+	if form != nil {
+		form.Disposing().Once(func() {
+			if si.hWnd == hwnd {
+				si.destroyWindow()
+			}
+		})
+	}
 	singleInstanceMutex.Lock()
 	singleInstanceByHWnd[hwnd] = si
 	singleInstanceMutex.Unlock()
@@ -391,17 +425,18 @@ func (si *SingleInstance) Listen(form Form) error {
 }
 
 // Close stops listening and releases the claim, so that the next start of
-// the program becomes the first instance. Call it on the UI goroutine that
-// called NewSingleInstance; Windows releases everything when the program
-// exits anyway. Close does nothing for an instance that is not the first.
+// the program becomes the first instance. It must be called on the UI
+// goroutine that called NewSingleInstance (and Listen), otherwise it returns
+// an error; Windows releases everything when the program exits anyway.
+// Close does nothing for an instance that is not the first.
 func (si *SingleInstance) Close() error {
 	if !si.first || si.mutex == 0 {
 		return nil
 	}
+	if win.GetCurrentThreadId() != si.threadID {
+		return newError("SingleInstance.Close: must be called on the thread that called NewSingleInstance")
+	}
 	if si.hWnd != 0 {
-		if win.GetCurrentThreadId() != si.threadID {
-			return newError("SingleInstance.Close: must be called on the thread that called Listen")
-		}
 		si.destroyWindow()
 	}
 	win.ReleaseMutex(si.mutex)
@@ -412,6 +447,9 @@ func (si *SingleInstance) Close() error {
 }
 
 func (si *SingleInstance) destroyWindow() {
+	if si.hWnd == 0 {
+		return
+	}
 	singleInstanceMutex.Lock()
 	delete(singleInstanceByHWnd, si.hWnd)
 	singleInstanceMutex.Unlock()
@@ -432,7 +470,12 @@ func singleInstanceWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 	switch msg {
 	case win.WM_COPYDATA:
 		cds := ptrFromUintptr[win.COPYDATASTRUCT](lParam)
-		if cds == nil || cds.DwData != singleInstanceCopyDataID || cds.LpData == nil {
+		if cds == nil || cds.DwData != singleInstanceCopyDataID || cds.LpData == nil ||
+			cds.CbData == 0 || cds.CbData > singleInstanceMaxData {
+			return 0
+		}
+		if si.form != nil && si.form.Handle() == 0 {
+			// The form is gone; do not accept arguments nobody handles.
 			return 0
 		}
 		// The data is valid only during this message; Unmarshal copies it.
@@ -448,7 +491,7 @@ func singleInstanceWndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		// Activate now, while the foreground right that the other
 		// instance passed on is still valid; publish after returning,
 		// so that the other instance does not wait for the handlers.
-		if si.form != nil && si.form.Handle() != 0 {
+		if si.form != nil {
 			si.form.AsFormBase().BringToForeground()
 		}
 		win.PostMessage(hwnd, singleInstancePublishMsg, 0, 0)

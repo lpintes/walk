@@ -855,8 +855,8 @@ Sandbox:
 - Manually with NVDA on amd64, from a command prompt in
   `%TEMP%\walk-wingui\amd64\tests\hotkeys`:
   - `hotkeys.exe manual`. NVDA should read the title and the status
-    "Ctrl+Alt+Shift+W is registered...". Switch to another program (for
-    example Notepad) and press Ctrl+Alt+Shift+W: the test window must
+    "Alt+Ctrl+Shift+W is registered..." (walk writes the modifiers in
+    that order). Switch to another program (for example Notepad) and press Ctrl+Alt+Shift+W: the test window must
     come to the foreground and NVDA must say "Alt+Ctrl+Shift+W pressed,
     1 times so far." (the live region). Repeat from a minimized test
     window: it must be restored. Hold the keys down: one press only (no
