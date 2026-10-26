@@ -900,7 +900,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 14, part 3: draft pull request (number pending), not yet tested
+- Step 14, part 3: draft pull request lpintes/walk#27, not yet tested
   on Windows (task 21 of `TESTING_ON_WINDOWS.md`, test program
   `tests/_wingui/clipboard` with a `manual` mode). More formats in
   `ClipboardService`; `Text`, `SetText`, `ContainsText`, `Clear` and
