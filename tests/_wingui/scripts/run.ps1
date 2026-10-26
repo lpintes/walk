@@ -126,6 +126,12 @@ if (Want "webview") {
 	Report "webview" $p (Stop-Test $p 90)
 }
 
+if (Want "webview2") {
+	# Prints a SKIP line and exits with 0 without a WebView2 runtime.
+	$p = Start-Test (Join-Path $root "webview2") "webview2"
+	Report "webview2" $p (Stop-Test $p 120)
+}
+
 if (Want "com") {
 	# go test prints "--- PASS: TestX" lines, which only -Full shows; a
 	# failure gives a FAIL line and exit code 1.

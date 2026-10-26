@@ -820,7 +820,87 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - Not done: `Announce` for validation errors (step 10 leftover), a
     declarative counterpart of `TaskDialog` (it is a plain struct
     already), progress bars and timers in task dialogs.
-- Steps 7, 9 and 11: not started; step 8 can continue (generic
+- Step 7: pull request lpintes/walk#25. Task 17 of
+  `TESTING_ON_WINDOWS.md` (`tests/_wingui/webview2`) passed on Windows 11
+  (2026-10-26) after the fix below: `run.ps1 -Only webview2` on 386 and
+  amd64 with every check PASS (INFO: a script exception gives the result
+  `null` and no error; after `SetFocus` the focus is inside the widget),
+  and the manual test with NVDA on amd64 (Tab and Shift+Tab into, through
+  and out of the page, browse mode, messages both ways), the keyboard
+  part also on 386. F6 in the page does nothing. Closing with
+  `WM_CLOSE` while the page loads and after it has loaded exits with
+  code 0 on both architectures.
+  - Fixed during the test: the browser kept its first size when the form
+    was resized. `WindowBase.WndProc` does not pass
+    `WM_WINDOWPOSCHANGED` to `DefWindowProc` (unless the widget has
+    `NeedsWmSize`), so the widget never got `WM_SIZE` or `WM_MOVE`;
+    `WebView2.WndProc` handles `WM_WINDOWPOSCHANGED` now, like the old
+    `WebView`. The test checks that the browser window fills the widget
+    before and after a resize. At 150 % WebView2 makes its window one
+    pixel larger when a size is not a multiple of 1.5 (it rounds to
+    device independent pixels); the parent clips it, and the test
+    allows one pixel.
+  - Widget `WebView2` (`webview2.go`): `NewWebView2`,
+    `NewWebView2WithOptions` (`WebView2Options`: `UserDataFolder`,
+    default `%LOCALAPPDATA%\<exe name>\WebView2`,
+    `BrowserExecutableFolder` for a fixed version runtime,
+    `AdditionalBrowserArguments`, `Language`), `URL`, `SetURL`,
+    `Navigate`, `NavigateToString`, `GoBack`, `GoForward`, `Reload`,
+    `Stop`, `CanGoBack`, `CanGoForward`, `Title`, `ExecuteScript(script,
+    callback)` (result as JSON), `PostWebMessage` (string) and
+    `PostWebMessageAsJSON`; events `Ready`, `CreationFailed` (with
+    `CreationError`), `NavigationStarting`, `NavigationCompleted`
+    (`WebView2NavigationCompletedEvent`: succeeded and web error
+    status), `URLChanged`, `TitleChanged`, `HistoryChanged` and
+    `WebMessageReceived` (the message as JSON). Creation is
+    asynchronous: navigations requested before `Ready` are remembered
+    (the last one wins) and carried out then; the other calls return
+    `ErrWebView2NotReady`. Properties `URL` and `Title` (read only).
+    Declarative `WebView2` with the options, `URL`, `HTML` and the
+    event handlers. The old `WebView` and its declarative counterpart
+    are marked `// Deprecated: use WebView2.`
+  - Keyboard: `WM_SETFOCUS` calls `MoveFocus` (next, previous or
+    programmatic, from the Tab and Shift state), so Tab moves into the
+    page; `MoveFocusRequested` at the end of the page moves the focus
+    to the next or previous tab stop with `GetNextDlgTabItem` and marks
+    it handled. `WM_WINDOWPOSCHANGED` sets the bounds and, when the
+    widget moves, calls `NotifyParentWindowPositionChanged`, which the
+    form's `BoundsChanged` calls too; `WM_SHOWWINDOW` sets the
+    visibility.
+  - Loader without `WebView2Loader.dll` (`webview2_loader.go`, after
+    OpenWebView2Loader and the Go port in `wailsapp/go-webview2`, ISC
+    license, credited in the file): for the stable, beta, dev and canary
+    channels, HKLM before HKCU, the 32-bit registry view
+    (`KEY_WOW64_32KEY`), the value `EBWebView` of
+    `SOFTWARE\Microsoft\EdgeUpdate\ClientState\{GUID}` or else `pv`
+    of `...\Clients\{GUID}` with the default install folder; then
+    `EBWebView\<x86|x64|arm64>\EmbeddedBrowserWebView.dll` and
+    `CreateWebViewEnvironmentWithOptionsInternal(1, runtimeType,
+    userDataFolder, options, handler)`. Fallback: `WebView2Loader.dll`
+    next to the exe (`CreateCoreWebView2EnvironmentWithOptions`).
+    Without a runtime `NewWebView2` returns an error wrapping
+    `ErrWebView2RuntimeNotFound`.
+  - COM objects with `internal/com` (`webview2_handlers.go`): the
+    environment options (`ICoreWebView2EnvironmentOptions`, strings
+    allocated with `SHStrDup`, target version 86.0.616.0), the
+    environment, controller and `ExecuteScript` completion handlers
+    and one object per widget with the seven event handlers.
+  - Declarations hand-written in `internal/win/webview2.go`: the
+    interfaces are not in the Win32 metadata. Interface IDs and vtable
+    order were taken from `WebView2.h` of SDK 1.0.1150.38 (the copy
+    vendored in `github.com/webview/webview_go`, fetched through the Go
+    module proxy because nuget.org was blocked); every vtable lists all
+    methods of its interface. `Put_Bounds` takes a `RECT` by value: four
+    stack words on 386, a pointer to a copy on amd64, two registers on
+    arm64 (`webview2_32.go`, `_amd64.go`, `_arm64.go`). Generated for
+    it: `KEY_WOW64_32KEY`, `REG_SZ`, `ERROR_FILE_NOT_FOUND`,
+    `WM_SHOWWINDOW`, `GetNextDlgTabItem` and `SHStrDup`
+    (`shlwapi.dll`).
+  - Not done: F6 and the `AcceleratorKeyPressed` event (keys the page
+    does not handle), settings (`ICoreWebView2Settings`), new
+    window requests, permissions, the cancel of `NavigationStarting`,
+    and an example.
+- Steps 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
@@ -1011,7 +1091,8 @@ and real dialogs all need new Win32/COM declarations.
     styler is never called; inside a `Composite` it works (as in
     `examples/listbox_ownerdrawing`).
   - `WebView`: the keyboard (Tab, F6) cannot move focus into the web
-    content; NVDA can still read the page.
+    content; NVDA can still read the page. `WebView2` (step 7) is meant
+    to fix this.
   - Seen with NVDA: when a window opens, only its title is announced, not
     the focused control; most fields in the `databinding` example dialog
     have no accessible name (labels are not associated); Enter on a

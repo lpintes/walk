@@ -662,7 +662,13 @@ const (
 
 // REG_SAM_FLAGS
 const (
-	KEY_READ REGSAM = 0x20019
+	KEY_READ        REGSAM = 0x20019
+	KEY_WOW64_32KEY REGSAM = 0x200
+)
+
+// REG_VALUE_TYPE
+const (
+	REG_SZ = 1
 )
 
 // RGN_COMBINE_MODE
@@ -1231,6 +1237,7 @@ const (
 // WIN32_ERROR
 const (
 	ERROR_CANCELLED         = 0x4c7
+	ERROR_FILE_NOT_FOUND    = 2
 	ERROR_INVALID_PARAMETER = 0x57
 	ERROR_SUCCESS           = 0
 )
@@ -1880,6 +1887,7 @@ const (
 	WM_SETICON                          = 0x80
 	WM_SETREDRAW                        = 0xb
 	WM_SETTEXT                          = 0xc
+	WM_SHOWWINDOW                       = 0x18
 	WM_SIZE                             = 5
 	WM_SYSCOLORCHANGE                   = 0x15
 	WM_SYSCOMMAND                       = 0x112

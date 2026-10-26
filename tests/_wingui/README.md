@@ -3,9 +3,9 @@
 Test programs and scripts that run walk on a real Windows desktop. They were
 written for the Windows tasks in `TESTING_ON_WINDOWS.md` (the smoke test of
 step 3, the `DragFinish`, `HDN_*` and `ODS_*` bugs, the COM objects of
-`WebView` in step 6, the live regions of step 10, the changes ported
-from lxn/walk pull requests, the UI Automation client of step 13 and the
-dialogs of step 4) and can be rerun as
+`WebView` in step 6, the `WebView2` widget of step 7, the live regions
+of step 10, the changes ported from lxn/walk pull requests, the UI
+Automation client of step 13 and the dialogs of step 4) and can be rerun as
 regression tests after changes to `internal/win`, `internal/com` or the
 affected widgets. `com` is not a directory here: `build.ps1` builds the
 unit tests of `internal/com` into `tests\com\com.exe`.
@@ -194,6 +194,20 @@ feature `Containers-DisposableClientVM` and reboot once):
   sets the event. `dialogs.exe manual` shows buttons that open a walk
   dialog, two task dialogs and a message box, for a test with a screen
   reader; results go to a polite live region and standard output.
+- `webview2`: the `WebView2` widget (step 7) with a temporary user data
+  folder. Checks that calls before `Ready` are queued (`SetURL`) or
+  return `ErrWebView2NotReady` (`ExecuteScript`), then a local HTML file:
+  `NavigationStarting`, `NavigationCompleted`, the title, the URL and
+  their events; a web message posted to the page and echoed back by its
+  script; `ExecuteScript` with a number, a string and an exception
+  (reported as INFO); `NavigateToString`, `CanGoBack`, `GoBack` and
+  `CanGoForward`; where the focus goes after `SetFocus` (INFO only,
+  because the test window may not get the foreground); and `Dispose`
+  followed by a second `WebView2`. Without a WebView2 runtime it prints
+  a SKIP line and exits with 0. `webview2.exe manual` shows a button, a
+  `WebView2` with a small form and another button, for checking Tab,
+  Shift+Tab and a screen reader; events go to standard output and web
+  messages from the page are announced with `walk.Announce`.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

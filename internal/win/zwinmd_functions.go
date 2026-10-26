@@ -22,6 +22,7 @@ var (
 	libole32            = windows.NewLazySystemDLL("ole32.dll")
 	liboleaut32         = windows.NewLazySystemDLL("oleaut32.dll")
 	libshell32          = windows.NewLazySystemDLL("shell32.dll")
+	libshlwapi          = windows.NewLazySystemDLL("shlwapi.dll")
 	libuiautomationcore = windows.NewLazySystemDLL("uiautomationcore.dll")
 	libuser32           = windows.NewLazySystemDLL("user32.dll")
 	libuxtheme          = windows.NewLazySystemDLL("uxtheme.dll")
@@ -113,6 +114,7 @@ var (
 	procGetMessageW                 = libuser32.NewProc("GetMessageW")
 	procGetModuleHandleW            = libkernel32.NewProc("GetModuleHandleW")
 	procGetMonitorInfoW             = libuser32.NewProc("GetMonitorInfoW")
+	procGetNextDlgTabItem           = libuser32.NewProc("GetNextDlgTabItem")
 	procGetObjectW                  = libgdi32.NewProc("GetObjectW")
 	procGetOpenFileNameW            = libcomdlg32.NewProc("GetOpenFileNameW")
 	procGetParent                   = libuser32.NewProc("GetParent")
@@ -185,6 +187,7 @@ var (
 	procSHGetSpecialFolderPathW     = libshell32.NewProc("SHGetSpecialFolderPathW")
 	procSHOpenFolderAndSelectItems  = libshell32.NewProc("SHOpenFolderAndSelectItems")
 	procSHParseDisplayName          = libshell32.NewProc("SHParseDisplayName")
+	procSHStrDupW                   = libshlwapi.NewProc("SHStrDupW")
 	procScreenToClient              = libuser32.NewProc("ScreenToClient")
 	procSelectObject                = libgdi32.NewProc("SelectObject")
 	procSendMessageW                = libuser32.NewProc("SendMessageW")
@@ -666,6 +669,11 @@ func GetMonitorInfo(hMonitor HMONITOR, lpmi *MONITORINFO) bool {
 	return r1 != 0
 }
 
+func GetNextDlgTabItem(hDlg HWND, hCtl HWND, bPrevious bool) HWND {
+	r1, _, _ := syscall.SyscallN(procGetNextDlgTabItem.Addr(), uintptr(hDlg), uintptr(hCtl), uintptr(BoolToBOOL(bPrevious)))
+	return HWND(r1)
+}
+
 func GetObject(h HGDIOBJ, c uintptr, pv unsafe.Pointer) int32 {
 	r1, _, _ := syscall.SyscallN(procGetObjectW.Addr(), uintptr(h), c, uintptr(pv))
 	return int32(r1)
@@ -1025,6 +1033,11 @@ func SHOpenFolderAndSelectItems(pidlFolder uintptr, cidl uint32, apidl *uintptr,
 
 func SHParseDisplayName(pszName *uint16, pbc unsafe.Pointer, ppidl *uintptr, sfgaoIn uint32, psfgaoOut *uint32) HRESULT {
 	r1, _, _ := syscall.SyscallN(procSHParseDisplayName.Addr(), uintptr(unsafe.Pointer(pszName)), uintptr(pbc), uintptr(unsafe.Pointer(ppidl)), uintptr(sfgaoIn), uintptr(unsafe.Pointer(psfgaoOut)))
+	return HRESULT(r1)
+}
+
+func SHStrDup(psz *uint16, ppwsz **uint16) HRESULT {
+	r1, _, _ := syscall.SyscallN(procSHStrDupW.Addr(), uintptr(unsafe.Pointer(psz)), uintptr(unsafe.Pointer(ppwsz)))
 	return HRESULT(r1)
 }
 

@@ -23,6 +23,7 @@ dll msimg32.dll libmsimg32
 dll ole32.dll libole32
 dll oleaut32.dll liboleaut32
 dll shell32.dll libshell32
+dll shlwapi.dll libshlwapi
 dll uiautomationcore.dll libuiautomationcore
 dll user32.dll libuser32
 dll uxtheme.dll libuxtheme
@@ -275,6 +276,7 @@ const EN_CHANGE
 const EN_LINK
 const EN_SELCHANGE
 const ERROR_CANCELLED
+const ERROR_FILE_NOT_FOUND
 const ERROR_INVALID_PARAMETER
 const ERROR_SUCCESS
 const ES_AUTOHSCROLL
@@ -415,6 +417,7 @@ const IMAGE_ICON
 const I_CHILDRENCALLBACK
 const I_IMAGENONE
 const KEY_READ REGSAM
+const KEY_WOW64_32KEY REGSAM
 const LBN_DBLCLK
 const LBN_SELCHANGE
 const LBS_EXTENDEDSEL
@@ -674,6 +677,7 @@ const PropertyConditionFlags_MatchSubstring
 const PropertyConditionFlags_None
 const ProviderOptions_ServerSideProvider
 const ProviderOptions_UseComThreading
+const REG_SZ
 const RGN_DIFF
 const RGN_OR
 const ROLE_SYSTEM_ALERT
@@ -1321,6 +1325,7 @@ const WM_SETFONT
 const WM_SETICON
 const WM_SETREDRAW
 const WM_SETTEXT
+const WM_SHOWWINDOW
 const WM_SIZE
 const WM_SYSCOLORCHANGE
 const WM_SYSCOMMAND
@@ -1442,6 +1447,7 @@ func GetLocaleInfo LCType:LCTYPE Locale:LCID
 func GetLogicalDriveStrings
 func GetMenuInfo
 func GetMessage rawbool
+func GetNextDlgTabItem
 func GetModuleHandle result=HINSTANCE
 func GetMonitorInfo
 func GetObject c:uintptr
@@ -1517,6 +1523,7 @@ func SHGetKnownFolderPath
 func SHGetSpecialFolderPath csidl:CSIDL
 func SHOpenFolderAndSelectItems pidlFolder:uintptr apidl:*uintptr
 func SHParseDisplayName pbc:unsafe.Pointer ppidl:*uintptr
+func SHStrDup
 func ScreenToClient
 func SelectObject
 func SendMessage
