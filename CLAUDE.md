@@ -820,7 +820,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - Not done: `Announce` for validation errors (step 10 leftover), a
     declarative counterpart of `TaskDialog` (it is a plain struct
     already), progress bars and timers in task dialogs.
-- Step 7: pull request lpintes/walk#25. Task 17 of
+- Step 7: pull request lpintes/walk#25, merged. Task 17 of
   `TESTING_ON_WINDOWS.md` (`tests/_wingui/webview2`) passed on Windows 11
   (2026-10-26) after the fix below: `run.ps1 -Only webview2` on 386 and
   amd64 with every check PASS (INFO: a script exception gives the result
