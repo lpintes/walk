@@ -66,6 +66,40 @@ KNOWN marks a check that fails because of an inherited bug listed under
 "Known issues" in `CLAUDE.md`; it does not fail the test. If such a bug is
 fixed, the check prints PASS, and the KNOWN handling should be removed.
 
+## Running in Windows Sandbox
+
+The windows of the tests take the focus of the desktop, which makes the
+machine unusable while they run. `sandbox\sandbox.ps1` runs them in Windows
+Sandbox instead (Windows 10 or 11 Pro or Enterprise; enable the optional
+feature `Containers-DisposableClientVM` and reboot once):
+
+```
+.\tests\_wingui\sandbox\sandbox.ps1
+.\tests\_wingui\sandbox\sandbox.ps1 -Arch amd64 -Only dialogs
+.\tests\_wingui\sandbox\sandbox.ps1 -Examples
+```
+
+- It builds with `build.ps1` on the host into
+  `%LOCALAPPDATA%\walk-sandbox\out` (`-NoBuild` reuses the last build),
+  starts the sandbox with PowerShell 7 of the host, the `tests\_wingui`
+  directory (read-only) and the build output mapped, and waits.
+  `sandbox\inside.ps1`, the logon command of the sandbox, runs `run.ps1`
+  (and `examples.ps1` with `-Examples`; `-NoRun` runs only that) for each
+  architecture, writes their output to
+  `%LOCALAPPDATA%\walk-sandbox\results` and shuts the sandbox down. The host
+  script then prints every line that is not PASS (`-Full` prints all) and
+  exits with 1 if a line is FAIL.
+- The `.out.txt` files that the output names under `C:\walk-wingui` are in
+  `%LOCALAPPDATA%\walk-sandbox\out` on the host.
+- The sandbox has no network and no shared clipboard. Its window appears on
+  the host desktop once, when it starts, and captures the keyboard while it
+  has the focus; the tests themselves run inside it. `-Minimize` minimizes
+  the window as soon as it appears. The shutdown inside the sandbox does not
+  close the window, so the host script closes it after the results are
+  written; `-Keep` leaves it running.
+- Only automated tests belong there: the manual modes need a screen reader
+  on the real desktop, and `olednd` (`-Drag`) is not run.
+
 ## Tests
 
 - `part3`: the functions generated in step 3 part 3. `GetObject` (bitmap
