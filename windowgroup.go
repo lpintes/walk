@@ -145,6 +145,7 @@ func (g *WindowGroup) accessibilityServices() *win.IAccPropServices {
 // accPropIds is a static list of accessibility properties user (may) set for a window
 // and we should clear when the window is disposed.
 var accPropIds = []win.MSAAPROPID{
+	win.IsDialog_Property_GUID,
 	win.LiveSetting_Property_GUID,
 	win.PROPID_ACC_DEFAULTACTION,
 	win.PROPID_ACC_DESCRIPTION,

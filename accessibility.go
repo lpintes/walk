@@ -175,6 +175,14 @@ func (a *Accessibility) SetRole(role AccRole) error {
 	return a.accSetPropertyInt(a.wb.hWnd, &win.PROPID_ACC_ROLE, 0, int32(role))
 }
 
+// SetIsDialog sets the UI Automation IsDialog property of the window using Dynamic
+// Annotation (the property exists since Windows 10 version 1809; older versions ignore it).
+// Screen readers that use UI Automation, such as Narrator, treat a window with IsDialog true as
+// a dialog. Walk dialogs set it together with the role AccRoleDialog when they are created.
+func (a *Accessibility) SetIsDialog(isDialog bool) error {
+	return a.accSetPropertyBool(a.wb.hWnd, &win.IsDialog_Property_GUID, 0, isDialog)
+}
+
 // SetRoleMap sets window role map using Dynamic Annotation. The role map must be set when the
 // window is created and is not to be modified later.
 func (a *Accessibility) SetRoleMap(roleMap string) error {
@@ -256,13 +264,29 @@ func (a *Accessibility) notifyLiveRegionChangedChild(childID int32) {
 
 // accSetPropertyInt sets integer window property for Dynamic Annotation.
 func (a *Accessibility) accSetPropertyInt(hwnd win.HWND, idProp *win.MSAAPROPID, event uint32, value int32) error {
+	var v win.VARIANT
+	v.SetLong(value)
+	return a.accSetPropertyVariant(hwnd, idProp, event, &v)
+}
+
+// accSetPropertyBool sets boolean window property for Dynamic Annotation.
+func (a *Accessibility) accSetPropertyBool(hwnd win.HWND, idProp *win.MSAAPROPID, event uint32, value bool) error {
+	var v win.VARIANT
+	if value {
+		v.SetBool(win.VARIANT_TRUE)
+	} else {
+		v.SetBool(win.VARIANT_FALSE)
+	}
+	return a.accSetPropertyVariant(hwnd, idProp, event, &v)
+}
+
+// accSetPropertyVariant sets window property for Dynamic Annotation.
+func (a *Accessibility) accSetPropertyVariant(hwnd win.HWND, idProp *win.MSAAPROPID, event uint32, v *win.VARIANT) error {
 	accPropServices := a.wb.group.accessibilityServices()
 	if accPropServices == nil {
 		return newError("Dynamic Annotation not available")
 	}
-	var v win.VARIANT
-	v.SetLong(value)
-	hr := accPropServices.SetHwndProp(hwnd, win.OBJID_CLIENT, win.CHILDID_SELF, idProp, &v)
+	hr := accPropServices.SetHwndProp(hwnd, win.OBJID_CLIENT, win.CHILDID_SELF, idProp, v)
 	if win.FAILED(hr) {
 		return errorFromHRESULT("IAccPropServices.SetHwndProp", hr)
 	}

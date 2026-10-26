@@ -234,6 +234,7 @@ var (
 	procUpdateWindow                = libuser32.NewProc("UpdateWindow")
 	procVariantClear                = liboleaut32.NewProc("VariantClear")
 	procWindowFromDC                = libuser32.NewProc("WindowFromDC")
+	procTaskDialogIndirect          = libcomctl32.NewProc("TaskDialogIndirect")
 )
 
 func AddFontMemResourceEx(pFileView uintptr, cjSize uint32, pvResrved unsafe.Pointer, pNumFonts *uint32) HANDLE {
@@ -1271,4 +1272,9 @@ func VariantClear(pvarg *VARIANT) HRESULT {
 func WindowFromDC(hDC HDC) HWND {
 	r1, _, _ := syscall.SyscallN(procWindowFromDC.Addr(), uintptr(hDC))
 	return HWND(r1)
+}
+
+func taskDialogIndirect(pTaskConfig unsafe.Pointer, pnButton *int32, pnRadioButton *int32, pfVerificationFlagChecked *BOOL) HRESULT {
+	r1, _, _ := syscall.SyscallN(procTaskDialogIndirect.Addr(), uintptr(pTaskConfig), uintptr(unsafe.Pointer(pnButton)), uintptr(unsafe.Pointer(pnRadioButton)), uintptr(unsafe.Pointer(pfVerificationFlagChecked)))
+	return HRESULT(r1)
 }

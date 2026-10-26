@@ -123,6 +123,7 @@ const (
 	PropertyIsControlElement     PropertyID = win.UIA_IsControlElementPropertyId     // bool
 	PropertyIsContentElement     PropertyID = win.UIA_IsContentElementPropertyId     // bool
 	PropertyIsRequiredForForm    PropertyID = win.UIA_IsRequiredForFormPropertyId    // bool
+	PropertyIsDialog             PropertyID = win.UIA_IsDialogPropertyId             // bool
 )
 
 // Properties without a getter method on Element, for PropertyValue,

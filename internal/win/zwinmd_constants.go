@@ -553,6 +553,7 @@ const (
 // OBJECT_IDENTIFIER
 const (
 	OBJID_CLIENT int32 = -4
+	OBJID_WINDOW int32 = 0
 )
 
 // ODA_FLAGS
@@ -849,6 +850,43 @@ const (
 	TIS_SELECTED = 3
 )
 
+// TASKDIALOG_COMMON_BUTTON_FLAGS
+const (
+	TDCBF_CANCEL_BUTTON = 8
+	TDCBF_CLOSE_BUTTON  = 0x20
+	TDCBF_NO_BUTTON     = 4
+	TDCBF_OK_BUTTON     = 1
+	TDCBF_RETRY_BUTTON  = 0x10
+	TDCBF_YES_BUTTON    = 2
+)
+
+// TASKDIALOG_FLAGS
+const (
+	TDF_ALLOW_DIALOG_CANCELLATION   = 8
+	TDF_CAN_BE_MINIMIZED            = 0x8000
+	TDF_ENABLE_HYPERLINKS           = 1
+	TDF_EXPANDED_BY_DEFAULT         = 0x80
+	TDF_EXPAND_FOOTER_AREA          = 0x40
+	TDF_NO_DEFAULT_RADIO_BUTTON     = 0x4000
+	TDF_POSITION_RELATIVE_TO_WINDOW = 0x1000
+	TDF_SIZE_TO_CONTENT             = 0x1000000
+	TDF_USE_COMMAND_LINKS           = 0x10
+	TDF_USE_COMMAND_LINKS_NO_ICON   = 0x20
+	TDF_VERIFICATION_FLAG_CHECKED   = 0x100
+)
+
+// TASKDIALOG_MESSAGES
+const (
+	TDM_CLICK_BUTTON = 0x466
+)
+
+// TASKDIALOG_NOTIFICATIONS
+const (
+	TDN_CREATED           = 0
+	TDN_DESTROYED         = 5
+	TDN_HYPERLINK_CLICKED = 3
+)
+
 // TBBUTTONINFOW_MASK
 const (
 	TBIF_IMAGE = 1
@@ -1030,6 +1068,7 @@ const (
 	UIA_HelpTextPropertyId             = 0x753d
 	UIA_IsContentElementPropertyId     = 0x7541
 	UIA_IsControlElementPropertyId     = 0x7540
+	UIA_IsDialogPropertyId             = 0x75de
 	UIA_IsEnabledPropertyId            = 0x753a
 	UIA_IsKeyboardFocusablePropertyId  = 0x7539
 	UIA_IsOffscreenPropertyId          = 0x7546
@@ -1704,6 +1743,8 @@ const (
 	EVENT_OBJECT_LIVEREGIONCHANGED      = 0x8019
 	EVENT_OBJECT_NAMECHANGE             = 0x800c
 	EVENT_OBJECT_STATECHANGE            = 0x800a
+	EVENT_SYSTEM_DIALOGEND              = 0x11
+	EVENT_SYSTEM_DIALOGSTART            = 0x10
 	HTCLIENT                            = 1
 	HWND_BOTTOM                    HWND = 1
 	HWND_TOP                       HWND = 0

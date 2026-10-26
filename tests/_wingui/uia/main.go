@@ -264,7 +264,13 @@ func checkWindow(window *uia.Element, hwnd uintptr) {
 	class, err := window.ClassName()
 	check("window ClassName", err == nil && class == `\o/ Walk_MainWindow_Class \o/`, "%q, %v", class, err)
 	pid, err := window.ProcessID()
-	check("window ProcessID", err == nil && pid == os.Getpid(), "%d, %v, want %d", pid, err, os.Getpid())
+	if err == nil && pid == 0 && os.Getenv("USERNAME") == "WDAGUtilityAccount" {
+		// In Windows Sandbox UI Automation reports process ID 0 for every
+		// window, also for those of Explorer.
+		fmt.Println("SKIP window ProcessID: 0 in Windows Sandbox")
+	} else {
+		check("window ProcessID", err == nil && pid == os.Getpid(), "%d, %v, want %d", pid, err, os.Getpid())
+	}
 	h, err := window.NativeWindowHandle()
 	check("window NativeWindowHandle", err == nil && h == hwnd, "%d, %v, want %d", h, err, hwnd)
 	fw, err := window.FrameworkID()
