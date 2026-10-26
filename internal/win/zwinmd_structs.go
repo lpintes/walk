@@ -205,6 +205,14 @@ type DISPPARAMS struct {
 	CNamedArgs        int32
 }
 
+// Windows.Win32.System.DataExchange
+
+type COPYDATASTRUCT struct {
+	DwData uintptr
+	CbData uint32
+	LpData unsafe.Pointer
+}
+
 // Windows.Win32.System.Ole
 
 type OLEINPLACEFRAMEINFO struct {

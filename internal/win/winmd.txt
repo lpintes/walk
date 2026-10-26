@@ -277,6 +277,7 @@ const EN_LINK
 const EN_SELCHANGE
 const ERROR_CANCELLED
 const ERROR_FILE_NOT_FOUND
+const ERROR_HOTKEY_ALREADY_REGISTERED
 const ERROR_INVALID_PARAMETER
 const ERROR_SUCCESS
 const ES_AUTOHSCROLL
@@ -575,6 +576,11 @@ const MK_LBUTTON
 const MK_MBUTTON
 const MK_RBUTTON
 const MNS_CHECKORBMP
+const MOD_ALT
+const MOD_CONTROL
+const MOD_NOREPEAT
+const MOD_SHIFT
+const MOD_WIN
 const MONITOR_DEFAULTTOPRIMARY
 const MSGFLT_ALLOW
 const NIF_ICON
@@ -783,6 +789,7 @@ const SIF_POS
 const SIF_RANGE
 const SIF_TRACKPOS
 const SIGDN_FILESYSPATH
+const SMTO_NORMAL
 const SM_CXSMICON
 const SM_CXVSCROLL
 const SM_CYCAPTION
@@ -841,6 +848,7 @@ const SWP_NOSIZE
 const SWP_NOZORDER
 const SWP_SHOWWINDOW
 const SW_HIDE
+const SW_RESTORE
 const SW_SHOW
 const SW_SHOWNA
 const SW_SHOWNORMAL
@@ -1263,6 +1271,9 @@ const VT_R4 VARTYPE
 const VT_R8 VARTYPE
 const VT_UI1 VARTYPE
 const VT_UI2 VARTYPE
+const WAIT_ABANDONED
+const WAIT_OBJECT_0
+const WAIT_TIMEOUT
 const WA_ACTIVE
 const WA_CLICKACTIVE
 const WA_INACTIVE
@@ -1279,6 +1290,7 @@ const WM_CLOSE
 const WM_COMMAND
 const WM_CONTEXTMENU
 const WM_COPY
+const WM_COPYDATA
 const WM_CTLCOLOREDIT
 const WM_CTLCOLORSTATIC
 const WM_CUT
@@ -1293,6 +1305,7 @@ const WM_GETDLGCODE
 const WM_GETMINMAXINFO
 const WM_GETTEXT
 const WM_GETTEXTLENGTH
+const WM_HOTKEY
 const WM_HSCROLL
 const WM_INITMENUPOPUP
 const WM_KEYDOWN
@@ -1363,6 +1376,7 @@ const WindowVisualState_Normal
 # Functions
 
 func AddFontMemResourceEx pFileView:uintptr
+func AllowSetForegroundWindow
 func AlphaBlend
 func BeginDeferWindowPos
 func BeginPaint
@@ -1373,6 +1387,7 @@ func CheckMenuRadioItem
 func ClientToScreen
 func CloseClipboard
 func CloseEnhMetaFile
+func CloseHandle
 func CloseThemeData
 func CoCreateInstance rclsid:REFCLSID riid:REFIID
 func CoGetClassObject pvReserved:*COSERVERINFO rclsid:REFCLSID riid:REFIID
@@ -1391,6 +1406,7 @@ func CreateEnhMetaFile
 func CreateFontIndirect
 func CreateIconIndirect
 func CreateMenu
+func CreateMutex lpMutexAttributes:uintptr
 func CreatePatternBrush
 func CreatePopupMenu
 func CreateRectRgn
@@ -1421,6 +1437,7 @@ func ExtCreatePen
 func FillRgn
 func FindResource
 func FindWindow
+func FindWindowEx
 func FlashWindowEx
 func GdiFlush
 func GdipCreateBitmapFromFile result=GpStatus
@@ -1466,6 +1483,7 @@ func GetWindowLong
 func GetWindowLongPtr fallback=GetWindowLong result=uintptr
 func GetWindowPlacement
 func GetWindowRect
+func GetWindowThreadProcessId
 func GlobalAlloc
 func GlobalFree
 func GlobalUnlock
@@ -1484,6 +1502,7 @@ func IsAppThemed
 func IsChild
 func IsClipboardFormatAvailable
 func IsDialogMessage
+func IsIconic
 func IsWindowEnabled
 func IsWindowVisible
 func KillTimer
@@ -1510,9 +1529,11 @@ func RegCloseKey result=int32
 func RegOpenKeyEx result=int32 samDesired:REGSAM
 func RegQueryValueEx result=int32
 func RegisterClassEx result=ATOM
+func RegisterHotKey
 func RegisterWindowMessage
 func ReleaseCapture
 func ReleaseDC result=bool
+func ReleaseMutex
 func RemoveFontMemResourceEx
 func RemoveMenu
 func RoundRect
@@ -1527,6 +1548,7 @@ func SHStrDup
 func ScreenToClient
 func SelectObject
 func SendMessage
+func SendMessageTimeout
 func SetActiveWindow
 func SetBkColor
 func SetBkMode
@@ -1552,6 +1574,7 @@ func SetWindowLong
 func SetWindowLongPtr fallback=SetWindowLong dwNewLong:uintptr nIndex:int result=uintptr
 func SetWindowPlacement
 func SetWindowPos
+func SetWindowText
 func SetWindowTheme
 func ShellExecuteEx
 func Shell_NotifyIcon
@@ -1561,6 +1584,8 @@ func SizeofResource
 func StretchBlt
 func SysFreeString
 func SystemParametersInfo
+func UnregisterHotKey
+func WaitForSingleObject
 func taskDialogIndirect entry=TaskDialogIndirect pTaskConfig:unsafe.Pointer
 func TrackMouseEvent
 func TrackPopupMenuEx rawbool
@@ -1581,6 +1606,7 @@ struct BLENDFUNCTION
 struct CHARRANGE
 struct CIEXYZ
 struct CIEXYZTRIPLE
+struct COPYDATASTRUCT
 struct DIBSECTION
 struct DISPPARAMS cArgs:int32 cNamedArgs:int32 rgdispidNamedArgs:*DISPID rgvarg:*VARIANTARG
 struct DOCHOSTUIINFO
