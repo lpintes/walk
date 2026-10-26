@@ -299,9 +299,9 @@ func ShellOpen(owner Form, target string) error {
 		}
 		errno := syscall.Errno(win.GetLastError())
 		if sei.HInstApp == win.SE_ERR_NOASSOC {
-			return newError(fmt.Sprintf("ShellExecuteEx: no program is associated with %q", target))
+			return processError(newErrWithCode(fmt.Sprintf("ShellExecuteEx: no program is associated with %q", target), errno))
 		}
-		return newError(fmt.Sprintf("ShellExecuteEx failed for %q: %v (error %d)", target, errno, uint32(errno)))
+		return processError(newErrWithCode(fmt.Sprintf("ShellExecuteEx failed for %q: %v (error %d)", target, errno, uint32(errno)), errno))
 	})
 }
 
