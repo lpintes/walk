@@ -1,7 +1,8 @@
 // Command webview2 checks walk.WebView2 (step 7) on Windows: the loader
 // without WebView2Loader.dll, the asynchronous creation, navigation to a
 // local file and to a string, the title and URL events, a web message
-// round trip, ExecuteScript, the history, Dispose followed by a new
+// round trip, ExecuteScript, the history, the browser window filling the
+// widget before and after a resize, Dispose followed by a new
 // WebView2, and Dispose called from inside a NavigationCompleted handler.
 //
 // It prints PASS, FAIL and SKIP lines and exits with 1 if a check failed
@@ -264,6 +265,36 @@ func main() {
 					focus := win.GetFocus()
 					fmt.Printf("INFO focus after SetFocus: %#x, widget %#x, inside the widget %v\n",
 						focus, wv.Handle(), focus != 0 && win.IsChild(wv.Handle(), focus))
+					next()
+				})
+			})
+		},
+
+		// Bounds: the browser window fills the widget, also after the form
+		// is resized.
+		func(next func()) {
+			checkBounds := func(name string) {
+				var client, browser win.RECT
+				win.GetClientRect(wv.Handle(), &client)
+				var origin win.POINT
+				win.ClientToScreen(wv.Handle(), &origin)
+				child := win.GetWindow(wv.Handle(), win.GW_CHILD)
+				win.GetWindowRect(child, &browser)
+				// WebView2 converts the bounds to device independent pixels
+				// and back, so at 150 % they can be one pixel larger.
+				near := func(a, b int32) bool { return a-b <= 1 && b-a <= 1 }
+				ok := child != 0 &&
+					near(browser.Left, origin.X) && near(browser.Top, origin.Y) &&
+					near(browser.Right-browser.Left, client.Right) && near(browser.Bottom-browser.Top, client.Bottom)
+				check(name, ok, "widget client %dx%d at %d,%d, browser window %#x %dx%d at %d,%d",
+					client.Right, client.Bottom, origin.X, origin.Y, child,
+					browser.Right-browser.Left, browser.Bottom-browser.Top, browser.Left, browser.Top)
+			}
+			checkBounds("bounds")
+			mw.SetSizePixels(walk.Size{Width: 900, Height: 650})
+			time.AfterFunc(500*time.Millisecond, func() {
+				wv.Synchronize(func() {
+					checkBounds("bounds after resize")
 					next()
 				})
 			})

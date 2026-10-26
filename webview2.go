@@ -710,8 +710,18 @@ func (wv *WebView2) onDocumentTitleChanged() {
 
 func (wv *WebView2) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
-	case win.WM_SIZE:
-		wv.updateBounds()
+	case win.WM_WINDOWPOSCHANGED:
+		// WindowBase.WndProc does not pass this message to DefWindowProc, so
+		// the widget gets no WM_SIZE or WM_MOVE.
+		wp := ptrFromUintptr[win.WINDOWPOS](lParam)
+		if wp.Flags&win.SWP_NOSIZE == 0 {
+			wv.updateBounds()
+		}
+		// Popups of the page, such as the list of a select element, are
+		// positioned from the parent window.
+		if wp.Flags&win.SWP_NOMOVE == 0 && wv.controller != nil {
+			wv.controller.NotifyParentWindowPositionChanged()
+		}
 
 	case win.WM_SHOWWINDOW:
 		if wv.controller != nil {
@@ -729,13 +739,6 @@ func (wv *WebView2) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 				}
 			}
 			wv.controller.MoveFocus(reason)
-		}
-
-	case win.WM_MOVE:
-		// Popups of the page, such as the list of a select element, are
-		// positioned from the parent window.
-		if wv.controller != nil {
-			wv.controller.NotifyParentWindowPositionChanged()
 		}
 	}
 

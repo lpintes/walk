@@ -820,8 +820,26 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - Not done: `Announce` for validation errors (step 10 leftover), a
     declarative counterpart of `TaskDialog` (it is a plain struct
     already), progress bars and timers in task dialogs.
-- Step 7: draft pull request lpintes/walk#25, not yet tested on Windows (task
-  17 of `TESTING_ON_WINDOWS.md`, `tests/_wingui/webview2`).
+- Step 7: pull request lpintes/walk#25. Task 17 of
+  `TESTING_ON_WINDOWS.md` (`tests/_wingui/webview2`) passed on Windows 11
+  (2026-10-26) after the fix below: `run.ps1 -Only webview2` on 386 and
+  amd64 with every check PASS (INFO: a script exception gives the result
+  `null` and no error; after `SetFocus` the focus is inside the widget),
+  and the manual test with NVDA on amd64 (Tab and Shift+Tab into, through
+  and out of the page, browse mode, messages both ways), the keyboard
+  part also on 386. F6 in the page does nothing. Closing with
+  `WM_CLOSE` while the page loads and after it has loaded exits with
+  code 0 on both architectures.
+  - Fixed during the test: the browser kept its first size when the form
+    was resized. `WindowBase.WndProc` does not pass
+    `WM_WINDOWPOSCHANGED` to `DefWindowProc` (unless the widget has
+    `NeedsWmSize`), so the widget never got `WM_SIZE` or `WM_MOVE`;
+    `WebView2.WndProc` handles `WM_WINDOWPOSCHANGED` now, like the old
+    `WebView`. The test checks that the browser window fills the widget
+    before and after a resize. At 150 % WebView2 makes its window one
+    pixel larger when a size is not a multiple of 1.5 (it rounds to
+    device independent pixels); the parent clips it, and the test
+    allows one pixel.
   - Widget `WebView2` (`webview2.go`): `NewWebView2`,
     `NewWebView2WithOptions` (`WebView2Options`: `UserDataFolder`,
     default `%LOCALAPPDATA%\<exe name>\WebView2`,
@@ -845,8 +863,10 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     programmatic, from the Tab and Shift state), so Tab moves into the
     page; `MoveFocusRequested` at the end of the page moves the focus
     to the next or previous tab stop with `GetNextDlgTabItem` and marks
-    it handled. `WM_SIZE` sets the bounds, `WM_SHOWWINDOW` the
-    visibility, `WM_MOVE` calls `NotifyParentWindowPositionChanged`.
+    it handled. `WM_WINDOWPOSCHANGED` sets the bounds and, when the
+    widget moves, calls `NotifyParentWindowPositionChanged`, which the
+    form's `BoundsChanged` calls too; `WM_SHOWWINDOW` sets the
+    visibility.
   - Loader without `WebView2Loader.dll` (`webview2_loader.go`, after
     OpenWebView2Loader and the Go port in `wailsapp/go-webview2`, ISC
     license, credited in the file): for the stable, beta, dev and canary
@@ -874,11 +894,10 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     stack words on 386, a pointer to a copy on amd64, two registers on
     arm64 (`webview2_32.go`, `_amd64.go`, `_arm64.go`). Generated for
     it: `KEY_WOW64_32KEY`, `REG_SZ`, `ERROR_FILE_NOT_FOUND`,
-    `WM_MOVE`, `WM_SHOWWINDOW`, `GetNextDlgTabItem` and `SHStrDup`
+    `WM_SHOWWINDOW`, `GetNextDlgTabItem` and `SHStrDup`
     (`shlwapi.dll`).
   - Not done: F6 and the `AcceleratorKeyPressed` event (keys the page
-    does not handle), `NotifyParentWindowPositionChanged` when only the
-    top-level window moves, settings (`ICoreWebView2Settings`), new
+    does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
 - Steps 9 and 11: not started; step 8 can continue (generic

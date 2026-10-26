@@ -1870,7 +1870,6 @@ const (
 	WM_MOUSEACTIVATE                    = 0x21
 	WM_MOUSEMOVE                        = 0x200
 	WM_MOUSEWHEEL                       = 0x20a
-	WM_MOVE                             = 3
 	WM_NCCALCSIZE                       = 0x83
 	WM_NCHITTEST                        = 0x84
 	WM_NOTIFY                           = 0x4e
