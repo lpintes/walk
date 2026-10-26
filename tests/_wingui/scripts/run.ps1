@@ -132,6 +132,11 @@ if (Want "webview2") {
 	Report "webview2" $p (Stop-Test $p 120)
 }
 
+if (Want "mdi") {
+	$p = Start-Test (Join-Path $root "mdi") "mdi"
+	Report "mdi" $p (Stop-Test $p 90)
+}
+
 if (Want "com") {
 	# go test prints "--- PASS: TestX" lines, which only -Full shows; a
 	# failure gives a FAIL line and exit code 1.

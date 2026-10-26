@@ -43,22 +43,33 @@ func NewMainWindowWithName(name string) (*MainWindow, error) {
 
 func NewMainWindowWithCfg(cfg *MainWindowCfg) (*MainWindow, error) {
 	mw := new(MainWindow)
+
+	if err := initMainWindow(mw, mw, cfg); err != nil {
+		return nil, err
+	}
+
+	return mw, nil
+}
+
+// initMainWindow creates the window of mw. window is mw or the window
+// that embeds it, such as an *MdiMainWindow; it gets the messages.
+func initMainWindow(mw *MainWindow, window Form, cfg *MainWindowCfg) error {
 	mw.SetName(cfg.Name)
 
 	if err := initWindowWithCfg(&windowCfg{
-		Window:    mw,
+		Window:    window,
 		ClassName: mainWindowWindowClass,
 		Style:     win.WS_OVERLAPPEDWINDOW,
 		ExStyle:   win.WS_EX_CONTROLPARENT,
 		Bounds:    cfg.Bounds,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
 	succeeded := false
 	defer func() {
 		if !succeeded {
-			mw.Dispose()
+			window.Dispose()
 		}
 	}()
 
@@ -67,20 +78,20 @@ func NewMainWindowWithCfg(cfg *MainWindowCfg) (*MainWindow, error) {
 	var err error
 
 	if mw.menu, err = newMenuBar(mw); err != nil {
-		return nil, err
+		return err
 	}
 	if !win.SetMenu(mw.hWnd, mw.menu.hMenu) {
-		return nil, lastError("SetMenu")
+		return lastError("SetMenu")
 	}
 
 	tb, err := NewToolBar(mw)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	mw.SetToolBar(tb)
 
 	if mw.statusBar, err = NewStatusBar(mw); err != nil {
-		return nil, err
+		return err
 	}
 	mw.statusBar.parent = nil
 	mw.Children().Remove(mw.statusBar)
@@ -92,7 +103,7 @@ func NewMainWindowWithCfg(cfg *MainWindowCfg) (*MainWindow, error) {
 
 	succeeded = true
 
-	return mw, nil
+	return nil
 }
 
 func (mw *MainWindow) Menu() *Menu {

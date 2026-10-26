@@ -86,13 +86,15 @@ type FormBase struct {
 	progressIndicator           *ProgressIndicator
 	icon                        Image
 	prevFocusHWnd               win.HWND
-	proposedSize                Size // in native pixels
+	mdiClient                   win.HWND // the MDICLIENT window of an MDI frame
+	proposedSize                Size     // in native pixels
 	closeReason                 CloseReason
 	inSizingLoop                bool
 	startingLayoutViaSizingLoop bool
 	isInRestoreState            bool
 	started                     bool
 	layoutScheduled             bool
+	mdiChild                    bool // the form is an MdiChildWindow
 }
 
 func (fb *FormBase) init(form Form) error {
@@ -384,6 +386,51 @@ func (fb *FormBase) Run() int {
 	fb.SetSuspended(false)
 
 	return fb.mainLoop()
+}
+
+// translateMDISysAccel lets an MDI frame translate the keyboard shortcuts
+// of the window menu of its children (Ctrl+F4 closes the active child,
+// Ctrl+F6 and Ctrl+Tab activate the next one, with Shift the previous one)
+// into WM_SYSCOMMAND messages. It reports whether the message was
+// translated and must not be processed further.
+//
+// Alt+Hyphen opens the system menu of the active child. DefMDIChildProc
+// does that for WM_SYSCHAR '-' sent to the child, but the message goes to
+// the focused control inside it, so it is passed to the child here.
+func (fb *FormBase) translateMDISysAccel(msg *win.MSG) bool {
+	if fb.mdiClient == 0 {
+		return false
+	}
+
+	switch msg.Message {
+	case win.WM_KEYDOWN, win.WM_SYSKEYDOWN:
+		return win.TranslateMDISysAccel(fb.mdiClient, msg)
+
+	case win.WM_SYSCHAR:
+		if msg.WParam != '-' {
+			break
+		}
+		if active := win.HWND(win.SendMessage(fb.mdiClient, win.WM_MDIGETACTIVE, 0, 0)); active != 0 && msg.HWnd != active && win.IsChild(active, msg.HWnd) {
+			win.SendMessage(active, msg.Message, msg.WParam, msg.LParam)
+			return true
+		}
+	}
+
+	return false
+}
+
+// dialogMessageHWnd returns the window the message loop passes to
+// IsDialogMessage: the form itself, or for an MDI frame the active MDI
+// child when the message is for it or one of its descendants, so that Tab
+// moves the focus among the controls of the active child.
+func (fb *FormBase) dialogMessageHWnd(msg *win.MSG) win.HWND {
+	if fb.mdiClient != 0 {
+		if active := win.HWND(win.SendMessage(fb.mdiClient, win.WM_MDIGETACTIVE, 0, 0)); active != 0 && (msg.HWnd == active || win.IsChild(active, msg.HWnd)) {
+			return active
+		}
+	}
+
+	return fb.hWnd
 }
 
 func (fb *FormBase) handleKeyDown(msg *win.MSG) bool {

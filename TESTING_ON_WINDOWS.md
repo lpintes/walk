@@ -821,6 +821,90 @@ How to test, on 386 and amd64 (after `build.ps1`):
   tree of `WinTest.cs`, the bounds of the `Chrome_WidgetWin` child must
   match the client area of the widget.
 
+## Task 18: step 11, MDI windows
+
+(Tasks after 17 may belong to other branches.)
+
+Step 11 adds a multiple-document interface: `walk.MdiMainWindow`, a
+`MainWindow` whose client area holds the system `MDICLIENT` window and
+whose unhandled messages go to `DefFrameProc`, and `walk.MdiChildWindow`,
+a form with a layout and widgets created with `WM_MDICREATE` whose
+unhandled messages go to `DefMDIChildProc`, with declarative
+counterparts and the example `examples/mdi`. The message loop calls
+`TranslateMDISysAccel` before `IsDialogMessage` and passes the active
+child to `IsDialogMessage`, so Tab stays inside it. Nothing of it has run
+yet: it was written in a Linux container. Points to watch:
+
+- The children are created hidden (the client has
+  `MDIS_ALLCHILDSTYLES`) and activated with `WM_MDIACTIVATE` when they are
+  shown. If a child appears without becoming active, or the window menu
+  does not list it, this is the first suspect.
+- When a child is activated, its `WM_SETFOCUS` passes the focus on to the
+  control that had it last (saved on `WM_MDIACTIVATE`), or else to the
+  first control. When the frame is activated, the focus goes to the active
+  child unless it was outside the MDI client.
+- `WM_COMMAND` with an ID that is not a walk action (window menu items,
+  the system menu of a maximized child in the menu bar) goes to
+  `DefFrameProc`.
+- Alt+Hyphen: `WM_SYSCHAR` '-' for a control inside the active child is
+  sent to the child, where `DefMDIChildProc` opens its system menu.
+- walk's menu bar code inserts and removes items by position; while a
+  child is maximized it skips the system menu item of the child at
+  position 0.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only mdi`. Report every FAIL line and
+  the INFO lines: the window menu items, the menu bar before and while a
+  child is maximized, the bounds after tiling and cascading, the ancestors
+  of the focused element and the UI Automation view of a child and of the
+  MDI client (control type, localized control type, MSAA role), which
+  show how a screen reader sees them. The focus checks need the frame in
+  the foreground; if "frame in the foreground" fails, run the test again
+  without touching the keyboard or in Windows Sandbox.
+- `tests/_wingui/scripts/run.ps1` and `examples.ps1` as a regression test
+  (the message loop and `MainWindow` construction changed for every
+  program); `examples.ps1` includes `mdi`.
+- Manually with NVDA on amd64: `tests\mdi\mdi.exe manual` (three
+  documents, the active one is "Document 3"; events go to standard output
+  and the status bar):
+  - When the frame opens, NVDA should say the frame title, the document
+    title and the focused field ("Name, edit").
+  - Ctrl+F6 and Ctrl+Shift+F6 switch documents: NVDA should say the title
+    of the newly active document and its focused field. Type something in
+    the Name field of one document, switch away and back: the focus must
+    be on that field again. Report whether NVDA says the document title
+    every time and whether it says it as a window or as something else.
+  - Tab and Shift+Tab cycle through the controls of the active document
+    only.
+  - Alt opens the menu bar; the Window menu lists Cascade, Tile
+    Horizontally, Tile Vertically, Arrange Icons, Close All and then the
+    documents with a check mark at the active one. Choosing a document
+    activates it.
+  - Alt+Hyphen opens the system menu of the active document (Restore,
+    Move, Size, Minimize, Maximize, Close, Next); Escape closes it. Also
+    try it with the focus in the Notes field.
+  - Maximize the active document (system menu, Maximize): the frame
+    title becomes "walk mdi manual test - [Document N]"; Ctrl+F6 keeps
+    documents maximized; the menu bar shows the system menu of the
+    document first (Alt, then Left from File). Restore it.
+  - Type notes into a document and press Ctrl+F4: a message box asks
+    whether to close it; No keeps it open (the status bar says the
+    closing was canceled), Yes closes it and the next document becomes
+    active. Type a name into the Name field and press the button
+    "Rename to the name": the name becomes the title of the document: NVDA may announce the new name;
+    the Window menu shows it.
+  - Ctrl+N creates a new document, which becomes active with the focus
+    in its Name field.
+  - Close the frame with Alt+F4 while a document has notes: the message
+    box appears; No keeps the frame open, Yes closes the program with exit
+    code 0.
+  - Optional: the same with Narrator and JAWS.
+- Also check at 150 % scaling, or by moving the frame to a monitor with
+  another scale, that the documents get the new font size (their layout
+  is updated by the frame, as only top-level windows get
+  `WM_DPICHANGED`).
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

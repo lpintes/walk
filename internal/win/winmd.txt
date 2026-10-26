@@ -557,6 +557,10 @@ const MB_TOPMOST
 const MB_USERICON
 const MB_YESNO
 const MB_YESNOCANCEL
+const MDIS_ALLCHILDSTYLES
+const MDITILE_HORIZONTAL
+const MDITILE_SKIPDISABLED
+const MDITILE_VERTICAL
 const MFS_CHECKED
 const MFS_DISABLED
 const MFT_RADIOCHECK
@@ -769,6 +773,7 @@ const SCF_ALL
 const SCF_DEFAULT
 const SCF_SELECTION
 const SC_CLOSE
+const SC_MINIMIZE
 const SEE_MASK_FLAG_NO_UI
 const SEE_MASK_NOASYNC
 const SE_ERR_NOASSOC
@@ -841,6 +846,7 @@ const SWP_NOSIZE
 const SWP_NOZORDER
 const SWP_SHOWWINDOW
 const SW_HIDE
+const SW_MINIMIZE
 const SW_SHOW
 const SW_SHOWNA
 const SW_SHOWNORMAL
@@ -1273,6 +1279,7 @@ const WM_ACTIVATE
 const WM_APP
 const WM_CHANGEUISTATE
 const WM_CHAR
+const WM_CHILDACTIVATE
 const WM_CLEAR
 const WM_CLIPBOARDUPDATE
 const WM_CLOSE
@@ -1303,6 +1310,18 @@ const WM_LBUTTONDOWN
 const WM_LBUTTONUP
 const WM_MBUTTONDOWN
 const WM_MBUTTONUP
+const WM_MDIACTIVATE
+const WM_MDICASCADE
+const WM_MDICREATE
+const WM_MDIDESTROY
+const WM_MDIGETACTIVE
+const WM_MDIICONARRANGE
+const WM_MDIMAXIMIZE
+const WM_MDINEXT
+const WM_MDIREFRESHMENU
+const WM_MDIRESTORE
+const WM_MDISETMENU
+const WM_MDITILE
 const WM_MEASUREITEM
 const WM_MOUSEACTIVATE
 const WM_MOUSELEAVE
@@ -1327,8 +1346,10 @@ const WM_SETREDRAW
 const WM_SETTEXT
 const WM_SHOWWINDOW
 const WM_SIZE
+const WM_SYSCHAR
 const WM_SYSCOLORCHANGE
 const WM_SYSCOMMAND
+const WM_SYSKEYDOWN
 const WM_THEMECHANGED
 const WM_TIMER
 const WM_UNDO
@@ -1395,6 +1416,8 @@ func CreatePatternBrush
 func CreatePopupMenu
 func CreateRectRgn
 func CreateWindowEx
+func DefFrameProc
+func DefMDIChildProc
 func DefWindowProc
 func DeferWindowPos
 func DeleteDC
@@ -1484,8 +1507,10 @@ func IsAppThemed
 func IsChild
 func IsClipboardFormatAvailable
 func IsDialogMessage
+func IsIconic
 func IsWindowEnabled
 func IsWindowVisible
+func IsZoomed
 func KillTimer
 func LineTo
 func LoadCursor
@@ -1561,6 +1586,7 @@ func SizeofResource
 func StretchBlt
 func SysFreeString
 func SystemParametersInfo
+func TranslateMDISysAccel
 func taskDialogIndirect entry=TaskDialogIndirect pTaskConfig:unsafe.Pointer
 func TrackMouseEvent
 func TrackPopupMenuEx rawbool
@@ -1581,6 +1607,7 @@ struct BLENDFUNCTION
 struct CHARRANGE
 struct CIEXYZ
 struct CIEXYZTRIPLE
+struct CLIENTCREATESTRUCT
 struct DIBSECTION
 struct DISPPARAMS cArgs:int32 cNamedArgs:int32 rgdispidNamedArgs:*DISPID rgvarg:*VARIANTARG
 struct DOCHOSTUIINFO
@@ -1603,6 +1630,7 @@ struct LITEM szUrl:[2083]uint16
 struct LOGBRUSH
 struct LOGFONT
 struct LVHITTESTINFO
+struct MDICREATESTRUCT
 struct MEASUREITEMSTRUCT itemID:int32
 struct MENUINFO
 struct MENUITEMINFO

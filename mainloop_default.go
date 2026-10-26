@@ -32,7 +32,11 @@ func (fb *FormBase) mainLoop() int {
 			}
 		}
 
-		if !win.IsDialogMessage(fb.hWnd, msg) {
+		if fb.translateMDISysAccel(msg) {
+			continue
+		}
+
+		if !win.IsDialogMessage(fb.dialogMessageHWnd(msg), msg) {
 			win.TranslateMessage(msg)
 			win.DispatchMessage(msg)
 		}

@@ -208,6 +208,27 @@ feature `Containers-DisposableClientVM` and reboot once):
   `WebView2` with a small form and another button, for checking Tab,
   Shift+Tab and a screen reader; events go to standard output and web
   messages from the page are announced with `walk.Announce`.
+- `mdi`: the MDI windows of step 11, a frame (`MdiMainWindow`) with
+  three children (`MdiChildWindow`) with two edit fields and a button
+  each. Checks the window classes and parents (walk's child class inside
+  `MDIClient` inside the frame, `WS_EX_MDICHILD`), activation
+  (`WM_MDIGETACTIVE`, `ActiveMdiChildChanged`, `Activating`,
+  `Deactivating`), the layout and the bounds of a child, the window menu
+  (lists the children; `WM_COMMAND` with an item's ID activates it),
+  Ctrl+F6, Ctrl+Shift+F6 and Ctrl+F4 posted to the test's own windows with
+  Ctrl and Shift set by `SetKeyboardState` for the UI thread only (so
+  they go through `TranslateMDISysAccel` in the message loop), `Closing`
+  that cancels, the focus (first field of a newly activated child, the
+  last focused field when a child is activated again, Tab inside the
+  active child, `EVENT_OBJECT_FOCUS`, the focused element inside the child
+  through UI Automation; FAIL if the frame does not get the foreground
+  within three seconds), `SetTitle` (`EVENT_OBJECT_NAMECHANGE`, the window
+  menu, the UI Automation name), maximizing (the system menu of the child
+  in the menu bar, the frame title, hiding and showing a menu meanwhile,
+  Alt+Hyphen opening the system menu), cascade, tile, minimize, arrange
+  icons, `CloseAllMdiChildren` and closing the frame. `mdi.exe manual`
+  shows a frame with three documents for a test with a screen reader;
+  events go to standard output and the status bar.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

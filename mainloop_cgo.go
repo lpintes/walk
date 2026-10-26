@@ -16,6 +16,8 @@ import (
 //
 // extern void shimRunSynchronized(uintptr_t fb);
 // extern unsigned char shimHandleKeyDown(uintptr_t fb, uintptr_t m);
+// extern unsigned char shimTranslateMDISysAccel(uintptr_t fb, uintptr_t m);
+// extern uintptr_t shimDialogMessageHWnd(uintptr_t fb, uintptr_t m);
 //
 // static int mainloop(uintptr_t handle_ptr, uintptr_t fb_ptr)
 // {
@@ -31,7 +33,9 @@ import (
 //             return -1;
 //         if (m.message == WM_KEYDOWN && shimHandleKeyDown(fb_ptr, (uintptr_t)&m))
 //             continue;
-//         if (!IsDialogMessage(*hwnd, &m)) {
+//         if (shimTranslateMDISysAccel(fb_ptr, (uintptr_t)&m))
+//             continue;
+//         if (!IsDialogMessage((HWND)shimDialogMessageHWnd(fb_ptr, (uintptr_t)&m), &m)) {
 //             TranslateMessage(&m);
 //             DispatchMessage(&m);
 //         }
@@ -44,6 +48,16 @@ import "C"
 //export shimHandleKeyDown
 func shimHandleKeyDown(fb uintptr, msg uintptr) bool {
 	return (*FormBase)(unsafe.Pointer(fb)).handleKeyDown((*win.MSG)(unsafe.Pointer(msg)))
+}
+
+//export shimTranslateMDISysAccel
+func shimTranslateMDISysAccel(fb uintptr, msg uintptr) bool {
+	return (*FormBase)(unsafe.Pointer(fb)).translateMDISysAccel((*win.MSG)(unsafe.Pointer(msg)))
+}
+
+//export shimDialogMessageHWnd
+func shimDialogMessageHWnd(fb uintptr, msg uintptr) uintptr {
+	return uintptr((*FormBase)(unsafe.Pointer(fb)).dialogMessageHWnd((*win.MSG)(unsafe.Pointer(msg))))
 }
 
 //export shimRunSynchronized
