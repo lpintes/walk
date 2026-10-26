@@ -208,6 +208,22 @@ feature `Containers-DisposableClientVM` and reboot once):
   `WebView2` with a small form and another button, for checking Tab,
   Shift+Tab and a screen reader; events go to standard output and web
   messages from the page are announced with `walk.Announce`.
+- `system`: the power, session and settings events of step 14 part 2
+  (`walk.System`, `KeepAwake`, `SetShutdownBlockReason`). Checks the
+  hidden top-level window of the service (class, thread, not visible,
+  found by `EnumWindows`), the queries (high contrast, screen reader,
+  dark mode against the registry, text size, battery, power source,
+  energy saver, display state, which Windows reports right after the
+  registration), and the events by sending `WM_POWERBROADCAST`,
+  `WM_QUERYENDSESSION`, `WM_ENDSESSION`, `WM_WTSSESSION_CHANGE`,
+  `WM_SETTINGCHANGE`, `WM_THEMECHANGED` and `WM_SYSCOLORCHANGE` to that
+  window (a power setting publishes only when its value changes; the
+  derived settings events stay quiet because nothing really changes),
+  then `KeepAwake`, the shutdown block reason of the main window and
+  `Dispose`. It changes no setting. `system.exe manual` shows an event
+  log for a test by hand (Windows+L, unplugging the power, high
+  contrast); events go to a polite live region, the log and standard
+  output.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

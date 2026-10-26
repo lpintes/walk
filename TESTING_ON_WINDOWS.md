@@ -821,6 +821,79 @@ How to test, on 386 and amd64 (after `build.ps1`):
   tree of `WinTest.cs`, the bounds of the `Chrome_WidgetWin` child must
   match the client area of the widget.
 
+## Task 20: step 14 part 2, power, session and settings events
+
+(Tasks 18 and 19 belong to other branches.)
+
+Step 14 part 2 adds `walk.System()`, a service per UI thread with a hidden
+top-level window (class `\o/ Walk_System_Class \o/`) that receives the
+power, session and settings messages Windows broadcasts: suspend and
+resume, the power source, energy saver and display state
+(`RegisterPowerSettingNotification`), the end of the session
+(`WM_QUERYENDSESSION`, `WM_ENDSESSION`), lock and unlock and other session
+changes (`WTSRegisterSessionNotification`), and `WM_SETTINGCHANGE`,
+`WM_THEMECHANGED` and `WM_SYSCOLORCHANGE` with the derived events
+`HighContrastChanged`, `DarkModeChanged` and `ScreenReaderChanged`. It
+also reads high contrast, the screen reader flag, the dark mode, the text
+size, the animation setting, the battery and whether the session is
+remote. `walk.KeepAwake` keeps the computer (and optionally the display)
+awake with a power request, and `FormBase.SetShutdownBlockReason` sets
+the reason Windows shows when the program blocks the shutdown. Nothing of
+it has run yet. Points to watch:
+
+- `REASON_CONTEXT` is hand-written (anonymous union; 24 bytes on 386, 32
+  on 64-bit). If `KeepAwake` fails with an invalid parameter error, its
+  layout is the first suspect.
+- The automated test sends the messages itself, so it cannot show that
+  Windows really delivers them to a hidden window; only the first power
+  setting notification (the display state, which Windows sends right
+  after the registration) is a real system message. The manual test
+  covers the rest.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only system`. Report every FAIL line
+  and the INFO lines (the values of the settings, the battery and the
+  power source). The test must not change any setting; if something on
+  the screen changes while it runs, report it.
+- `system.exe manual` (in `%TEMP%\walk-wingui\<arch>\tests\system`)
+  with NVDA on amd64. Every event is announced in a polite live region,
+  added to the read-only field "Event log" and printed to standard
+  output. The button "Read status" announces all values.
+  - Lock the computer with Windows+L and unlock it. After the unlock,
+    NVDA should say "Unlocked: ..."; the log must also contain "Locked".
+    Report whether the announcement after the unlock comes at all
+    (the window may not have the focus then).
+  - On a laptop: unplug the power and plug it in again. "Power source
+    changed" must come each time with power source 2 (battery) and 1
+    (AC), and "Power status changed" around it. Turn energy saver (or
+    battery saver) on and off in the quick settings: "Energy saver
+    changed".
+  - Turn high contrast on and off with Left Alt+Left Shift+Print Screen
+    (confirm the question with Yes). "High contrast changed" must come
+    once per change and "Read status" must say the scheme. Several
+    settings changes appear in standard output; report them.
+  - Switch the app mode between light and dark in Settings,
+    Personalization, Colors: "Dark mode changed" once per change.
+  - Stop NVDA (NVDA+Q) and start it again: after the start, the log
+    must contain "Screen reader changed" twice (read it with the arrow
+    keys in the log field). Report it if it does not.
+  - Turn the display off (or wait for the display timeout) and back on:
+    "Display state changed". Optional: put the computer to sleep and wake
+    it: "Suspending", "Resumed" and "Resumed by user" in the log.
+  - "Keep awake on or off" (Space): with it on, `powercfg /requests` in
+    an administrator command prompt must list the program under SYSTEM
+    and DISPLAY with the reason "walk system manual test"; after turning
+    it off, no longer.
+  - Check "Block sign-out and shutdown", then choose Restart from the
+    Start menu: Windows must show the blocking screen with "walk system
+    manual test blocks the shutdown"; report whether NVDA reads it.
+    Choose Cancel there; the log must contain "Session ending ...
+    canceled true" and "Session ended false". Uncheck the box afterwards.
+    Optional, only if no work is open: with the box unchecked, sign out
+    and check that the program did not block it.
+- Optional: the same with Narrator or JAWS, if available.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on
