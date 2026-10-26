@@ -726,6 +726,12 @@ func (fb *FormBase) startLayout() bool {
 
 func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case win.WM_QUERYENDSESSION:
+		// See SystemService.SessionEnding and SetShutdownBlockReason.
+		if result, handled := formQueryEndSession(fb, lParam); handled {
+			return result
+		}
+
 	case win.WM_ACTIVATE:
 		switch win.LOWORD(uint32(wParam)) {
 		case win.WA_ACTIVE, win.WA_CLICKACTIVE:

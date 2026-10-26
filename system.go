@@ -7,6 +7,7 @@
 package walk
 
 import (
+	"fmt"
 	"runtime"
 	"sync"
 	"syscall"
@@ -32,26 +33,37 @@ var (
 //
 // Windows sends power, session and settings changes to top-level windows,
 // so the service owns a hidden top-level window (not a message-only
-// window, which gets no broadcasts) created by the first call on each
-// thread. Call System on the UI goroutine, the one that creates the forms
-// and runs their message loop; it locks that goroutine to its OS thread,
-// as walk does for the first window. The events are published on that
-// thread while it processes messages, so their handlers may use the
-// windows of the thread directly. Attach handlers and call the methods
-// that read cached values (PowerSource, EnergySaver and DisplayState) on
-// the same thread.
+// window, which gets no broadcasts). A top-level window must have its
+// messages processed, or programs that broadcast messages and the
+// shutdown of Windows wait for it, so System returns an error on a thread
+// that has no walk window: call it on the UI goroutine after the first
+// form was created. The events are published on that thread while it
+// processes messages, so their handlers may use the windows of the thread
+// directly. Attach handlers and call the methods of the service on the
+// same thread.
 //
-// The window lives until Dispose is called or the thread ends.
-func System() *SystemService {
+// The window lives until Dispose is called. Call Dispose if the thread
+// stops processing messages while the process goes on; the window would
+// otherwise only go away with the thread, without its notifications
+// being unregistered.
+//
+// The functions that only read settings, such as HighContrast, Battery
+// and KeepAwake, need no service and work on any goroutine.
+func System() (*SystemService, error) {
 	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	tid := win.GetCurrentThreadId()
+
+	if wgm.Group(tid) == nil {
+		return nil, newError("System: the thread has no walk window")
+	}
 
 	systemMutex.Lock()
 	// A window destroyed without Dispose, for example because an earlier
 	// thread with the same ID ended, is replaced.
-	if s := systemServices[tid]; s != nil && win.IsWindow(s.hwnd) {
+	if s := systemServices[tid]; s != nil && win.IsWindow(s.hwnd) && win.GetWindowThreadProcessId(s.hwnd, nil) == tid {
 		systemMutex.Unlock()
-		return s
+		return s, nil
 	}
 	if systemWndProcPtr == 0 {
 		systemWndProcPtr = syscall.NewCallback(systemWndProc)
@@ -63,9 +75,16 @@ func System() *SystemService {
 	systemServices[tid] = s
 	systemMutex.Unlock()
 
-	s.create()
+	if err := s.create(); err != nil {
+		systemMutex.Lock()
+		if systemServices[tid] == s {
+			delete(systemServices, tid)
+		}
+		systemMutex.Unlock()
+		return nil, err
+	}
 
-	return s
+	return s, nil
 }
 
 // SystemService publishes power, session and system settings events and
@@ -88,6 +107,13 @@ type SystemService struct {
 	darkMode     bool
 	screenReader bool
 
+	// The answer of the SessionEnding handlers to the current
+	// WM_QUERYENDSESSION, shared by the hidden window and the forms with a
+	// shutdown block reason (see queryEndSession).
+	endQueried       bool
+	endQueryCanceled bool
+	endQueryTime     time.Time
+
 	suspendingPublisher         EventPublisher
 	resumedPublisher            EventPublisher
 	resumedByUserPublisher      EventPublisher
@@ -106,7 +132,7 @@ type SystemService struct {
 	screenReaderChangedPub      EventPublisher
 }
 
-func (s *SystemService) create() {
+func (s *SystemService) create() error {
 	hwnd := win.CreateWindowEx(
 		win.WS_EX_TOOLWINDOW,
 		win.StringToUTF16Ptr(systemWindowClass),
@@ -121,14 +147,13 @@ func (s *SystemService) create() {
 		0,
 		nil)
 	if hwnd == 0 {
-		lastError("CreateWindowEx")
-		return
+		return lastError("CreateWindowEx")
 	}
 	s.hwnd = hwnd
 
-	s.highContrast, _, _ = s.HighContrast()
-	s.darkMode = s.AppsUseDarkTheme()
-	s.screenReader = s.ScreenReaderRunning()
+	s.highContrast, _, _ = HighContrast()
+	s.darkMode = AppsUseDarkTheme()
+	s.screenReader = ScreenReaderRunning()
 
 	// Windows sends the current value of each setting right after its
 	// registration; see powerSettingChanged.
@@ -137,6 +162,7 @@ func (s *SystemService) create() {
 		&win.GUID_POWER_SAVING_STATUS,
 		&win.GUID_ENERGY_SAVER_STATUS,
 		&win.GUID_CONSOLE_DISPLAY_STATE,
+		&win.GUID_SESSION_DISPLAY_STATUS,
 	} {
 		// GUID_ENERGY_SAVER_STATUS needs Windows 11; registering it on
 		// older versions fails or never sends anything.
@@ -148,6 +174,8 @@ func (s *SystemService) create() {
 	// This can fail right after logon, before the Remote Desktop Services
 	// service runs; the session events are then not published.
 	s.wtsOK = win.WTSRegisterSessionNotification(hwnd, win.NOTIFY_FOR_THIS_SESSION)
+
+	return nil
 }
 
 // Dispose destroys the hidden window of the service and unregisters its
@@ -178,7 +206,24 @@ func (s *SystemService) destroyed() {
 	systemMutex.Unlock()
 }
 
-func systemWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
+func systemWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) (result uintptr) {
+	// As in defaultWndProc: a panic of a handler goes to App().Panicking.
+	defer func() {
+		if len(App().panickingPublisher.event.handlers) > 0 {
+			var err error
+			if x := recover(); x != nil {
+				if e, ok := x.(error); ok {
+					err = wrapErrorNoPanic(e)
+				} else {
+					err = newErrorNoPanic(fmt.Sprint(x))
+				}
+			}
+			if err != nil {
+				App().panickingPublisher.Publish(err)
+			}
+		}
+	}()
+
 	systemMutex.Lock()
 	s := systemServices[win.GetCurrentThreadId()]
 	systemMutex.Unlock()
@@ -206,14 +251,16 @@ func systemWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 		return 1
 
 	case win.WM_QUERYENDSESSION:
-		var canceled bool
-		s.sessionEndingPublisher.Publish(&canceled, EndSessionReason(lp))
-		if canceled {
+		// When a visible form with a shutdown block reason refuses (see
+		// formQueryEndSession), Windows shows that form with its reason;
+		// the untitled hidden window refuses only without such a form.
+		if s.queryEndSession(EndSessionReason(lp)) && !s.hasBlockingForm() {
 			return 0
 		}
 		return 1
 
 	case win.WM_ENDSESSION:
+		s.endQueried = false
 		s.sessionEndedPublisher.Publish(wp != 0, EndSessionReason(lp))
 		return 0
 
@@ -296,7 +343,7 @@ func (s *SystemService) powerSettingChanged(pbs *win.POWERBROADCAST_SETTING) {
 			s.energySaverChangedPublisher.Publish()
 		}
 
-	case win.GUID_CONSOLE_DISPLAY_STATE:
+	case win.GUID_CONSOLE_DISPLAY_STATE, win.GUID_SESSION_DISPLAY_STATUS:
 		var state DisplayState
 		switch value {
 		case 0:
@@ -314,18 +361,68 @@ func (s *SystemService) powerSettingChanged(pbs *win.POWERBROADCAST_SETTING) {
 	}
 }
 
+// queryEndSession publishes SessionEnding once for a WM_QUERYENDSESSION,
+// which every top-level window of the thread gets, and returns whether a
+// handler canceled. The answer is reused until WM_ENDSESSION, or for at
+// most ten seconds if that does not come.
+func (s *SystemService) queryEndSession(reason EndSessionReason) bool {
+	if s.endQueried && time.Since(s.endQueryTime) < 10*time.Second {
+		return s.endQueryCanceled
+	}
+	var canceled bool
+	s.sessionEndingPublisher.Publish(&canceled, reason)
+	s.endQueried, s.endQueryCanceled, s.endQueryTime = true, canceled, time.Now()
+	return canceled
+}
+
+// hasBlockingForm returns whether a visible form of the thread has a
+// shutdown block reason.
+func (s *SystemService) hasBlockingForm() bool {
+	for hwnd, wb := range hwnd2WindowBase {
+		if _, ok := wb.window.(Form); !ok {
+			continue
+		}
+		if win.GetWindowThreadProcessId(hwnd, nil) == s.threadID && win.IsWindowVisible(hwnd) && hasShutdownBlockReason(hwnd) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasShutdownBlockReason(hwnd win.HWND) bool {
+	var n uint32
+	return win.ShutdownBlockReasonQuery(hwnd, nil, &n) && n > 0
+}
+
+// formQueryEndSession handles WM_QUERYENDSESSION for a form. A form with
+// a shutdown block reason refuses when a SessionEnding handler of the
+// service of its thread cancels, so that Windows shows the form with its
+// reason. handled is false when the form should give the default answer.
+func formQueryEndSession(fb *FormBase, lParam uintptr) (result uintptr, handled bool) {
+	systemMutex.Lock()
+	s := systemServices[win.GetCurrentThreadId()]
+	systemMutex.Unlock()
+	if s == nil || s.hwnd == 0 || !hasShutdownBlockReason(fb.hWnd) {
+		return 0, false
+	}
+	if s.queryEndSession(EndSessionReason(lParam)) {
+		return 0, true
+	}
+	return 1, true
+}
+
 func (s *SystemService) settingsChanged(change SettingsChange) {
 	s.settingsChangedPublisher.Publish(change)
 
-	if hc, _, err := s.HighContrast(); err == nil && hc != s.highContrast {
+	if hc, _, err := HighContrast(); err == nil && hc != s.highContrast {
 		s.highContrast = hc
 		s.highContrastChangedPub.Publish()
 	}
-	if dark := s.AppsUseDarkTheme(); dark != s.darkMode {
+	if dark := AppsUseDarkTheme(); dark != s.darkMode {
 		s.darkMode = dark
 		s.darkModeChangedPublisher.Publish()
 	}
-	if sr := s.ScreenReaderRunning(); sr != s.screenReader {
+	if sr := ScreenReaderRunning(); sr != s.screenReader {
 		s.screenReader = sr
 		s.screenReaderChangedPub.Publish()
 	}
@@ -358,7 +455,7 @@ func (s *SystemService) ResumedByUser() *Event {
 
 // PowerStatusChanged is published when the power status changes, for
 // example the battery level or the power source (PBT_APMPOWERSTATUSCHANGE).
-// Read the new values with Battery and PowerSource.
+// Read the new values with Battery and SystemService.PowerSource.
 func (s *SystemService) PowerStatusChanged() *Event {
 	return s.powerStatusChangedPublisher.Event()
 }
@@ -378,8 +475,9 @@ func (s *SystemService) EnergySaverChanged() *Event {
 }
 
 // DisplayStateChanged is published when the display is turned off, dimmed
-// or turned on (GUID_CONSOLE_DISPLAY_STATE). Read the new state with
-// DisplayState.
+// or turned on (GUID_CONSOLE_DISPLAY_STATE, and GUID_SESSION_DISPLAY_STATUS
+// for the display of the session, which also works in Remote Desktop).
+// Read the new state with DisplayState.
 func (s *SystemService) DisplayStateChanged() *Event {
 	return s.displayStateChangedPub.Event()
 }
@@ -460,7 +558,8 @@ func (s *SystemService) EnergySaver() EnergySaverStatus {
 
 // DisplayState returns the state of the display as last reported to the
 // service. It is DisplayStateUnknown until Windows sends the first report,
-// shortly after System created the service.
+// shortly after System created the service; in a Remote Desktop session
+// or in Windows Sandbox there may be none.
 func (s *SystemService) DisplayState() DisplayState {
 	return s.displayState
 }
@@ -481,7 +580,7 @@ type BatteryStatus struct {
 
 // Battery returns the status of the battery (GetSystemPowerStatus). It
 // may be called from any goroutine.
-func (s *SystemService) Battery() (BatteryStatus, error) {
+func Battery() (BatteryStatus, error) {
 	var sps win.SYSTEM_POWER_STATUS
 	if !win.GetSystemPowerStatus(&sps) {
 		return BatteryStatus{Percent: -1, Remaining: -1}, lastError("GetSystemPowerStatus")
@@ -513,6 +612,9 @@ func (s *SystemService) Battery() (BatteryStatus, error) {
 // several pieces of work do not cancel each other, the state does not
 // belong to an OS thread (goroutines move between threads), and the
 // reason is visible. It may be called from any goroutine.
+//
+// A release function that is never called keeps the request until the
+// process exits.
 func KeepAwake(reason string, display bool) (release func(), err error) {
 	r, err := syscall.UTF16PtrFromString(reason)
 	if err != nil {
@@ -576,10 +678,15 @@ const (
 )
 
 // SessionEnding is published when the user logs off or Windows shuts
-// down or restarts (WM_QUERYENDSESSION). A handler that sets *canceled
-// to true asks Windows to wait; Windows then shows the applications that
-// block it with their reasons (see FormBase.SetShutdownBlockReason) and
-// the user may end the session anyway. Do not show dialogs here.
+// down or restarts (WM_QUERYENDSESSION), once although every top-level
+// window of the thread gets the message. A handler that sets *canceled to
+// true asks Windows to wait; Windows then shows the applications that
+// block it with their reasons and the user may end the session anyway.
+// Cancel only together with FormBase.SetShutdownBlockReason on a visible
+// form: that form then refuses the end of the session and Windows shows
+// it with the reason. Without such a form the hidden window of the
+// service refuses, and Windows shows the program without a reason or may
+// close it. Do not show dialogs here.
 func (s *SystemService) SessionEnding() *SessionEndingEvent {
 	return s.sessionEndingPublisher.Event()
 }
@@ -600,7 +707,9 @@ func (s *SystemService) SessionEnded() *SessionEndedEvent {
 // be called on the thread of the form.
 func (fb *FormBase) SetShutdownBlockReason(reason string) error {
 	if reason == "" {
-		win.ShutdownBlockReasonDestroy(fb.hWnd)
+		if hasShutdownBlockReason(fb.hWnd) {
+			win.ShutdownBlockReasonDestroy(fb.hWnd)
+		}
 		return nil
 	}
 	r, err := syscall.UTF16PtrFromString(reason)
@@ -668,7 +777,7 @@ func (s *SystemService) SessionUnlocked() *Event {
 
 // IsRemoteSession returns whether the program runs in a Remote Desktop
 // session (SM_REMOTESESSION). It may be called from any goroutine.
-func (s *SystemService) IsRemoteSession() bool {
+func IsRemoteSession() bool {
 	return win.GetSystemMetrics(win.SM_REMOTESESSION) != 0
 }
 
@@ -729,7 +838,7 @@ func (s *SystemService) ScreenReaderChanged() *Event {
 // HighContrast returns whether high contrast is on and the name of the
 // high contrast scheme (SPI_GETHIGHCONTRAST). It may be called from any
 // goroutine.
-func (s *SystemService) HighContrast() (on bool, scheme string, err error) {
+func HighContrast() (on bool, scheme string, err error) {
 	var hc win.HIGHCONTRAST
 	hc.CbSize = uint32(unsafe.Sizeof(hc))
 	if !win.SystemParametersInfo(win.SPI_GETHIGHCONTRAST, hc.CbSize, unsafe.Pointer(&hc), 0) {
@@ -745,7 +854,7 @@ func (s *SystemService) HighContrast() (on bool, scheme string, err error) {
 // ScreenReaderRunning returns whether a screen reader has told Windows
 // that it runs (SPI_GETSCREENREADER). NVDA, JAWS and Narrator set this
 // flag. It may be called from any goroutine.
-func (s *SystemService) ScreenReaderRunning() bool {
+func ScreenReaderRunning() bool {
 	var on win.BOOL
 	if !win.SystemParametersInfo(win.SPI_GETSCREENREADER, 0, unsafe.Pointer(&on), 0) {
 		return false
@@ -756,7 +865,7 @@ func (s *SystemService) ScreenReaderRunning() bool {
 // ClientAreaAnimation returns whether the user wants animations in
 // windows ("Animation effects" in Settings, SPI_GETCLIENTAREAANIMATION).
 // It is true if Windows cannot tell. It may be called from any goroutine.
-func (s *SystemService) ClientAreaAnimation() bool {
+func ClientAreaAnimation() bool {
 	var on win.BOOL
 	if !win.SystemParametersInfo(win.SPI_GETCLIENTAREAANIMATION, 0, unsafe.Pointer(&on), 0) {
 		return true
@@ -770,7 +879,7 @@ func (s *SystemService) ClientAreaAnimation() bool {
 // which Windows 10 1809 and later use; Microsoft documents no function for
 // it. Without the value it returns false. While high contrast is on, its
 // colors apply instead. It may be called from any goroutine.
-func (s *SystemService) AppsUseDarkTheme() bool {
+func AppsUseDarkTheme() bool {
 	v, err := RegistryKeyUint32(CurrentUserKey(), `Software\Microsoft\Windows\CurrentVersion\Themes\Personalize`, "AppsUseLightTheme")
 	return err == nil && v == 0
 }
@@ -781,7 +890,7 @@ func (s *SystemService) AppsUseDarkTheme() bool {
 // HKEY_CURRENT_USER\Software\Microsoft\Accessibility. Without the value
 // it returns 100. It is separate from the display scaling (DPI). It may
 // be called from any goroutine.
-func (s *SystemService) TextScaleFactor() int {
+func TextScaleFactor() int {
 	v, err := RegistryKeyUint32(CurrentUserKey(), `Software\Microsoft\Accessibility`, "TextScaleFactor")
 	if err != nil || v < 100 || v > 225 {
 		return 100

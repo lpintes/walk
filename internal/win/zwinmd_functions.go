@@ -133,6 +133,7 @@ var (
 	procGetWindowLongW                     = libuser32.NewProc("GetWindowLongW")
 	procGetWindowPlacement                 = libuser32.NewProc("GetWindowPlacement")
 	procGetWindowRect                      = libuser32.NewProc("GetWindowRect")
+	procGetWindowThreadProcessId           = libuser32.NewProc("GetWindowThreadProcessId")
 	procGlobalAlloc                        = libkernel32.NewProc("GlobalAlloc")
 	procGlobalFree                         = libkernel32.NewProc("GlobalFree")
 	procGlobalUnlock                       = libkernel32.NewProc("GlobalUnlock")
@@ -776,6 +777,11 @@ func GetWindowPlacement(hWnd HWND, lpwndpl *WINDOWPLACEMENT) bool {
 func GetWindowRect(hWnd HWND, lpRect *RECT) bool {
 	r1, _, _ := syscall.SyscallN(procGetWindowRect.Addr(), uintptr(hWnd), uintptr(unsafe.Pointer(lpRect)))
 	return r1 != 0
+}
+
+func GetWindowThreadProcessId(hWnd HWND, lpdwProcessId *uint32) uint32 {
+	r1, _, _ := syscall.SyscallN(procGetWindowThreadProcessId.Addr(), uintptr(hWnd), uintptr(unsafe.Pointer(lpdwProcessId)))
+	return uint32(r1)
 }
 
 func GlobalAlloc(uFlags uint32, dwBytes uintptr) HGLOBAL {

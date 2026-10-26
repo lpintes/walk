@@ -3,7 +3,9 @@
 // FormBase.SetShutdownBlockReason). It never changes a setting of the user
 // and sends messages only to its own windows.
 //
-//   - The service: System returns the same object on the same thread; its
+//   - The service: System returns an error on a goroutine whose thread
+//     has no walk window. After the main window is created it returns the
+//     same object on the same thread; its
 //     hidden window has the class \o/ Walk_System_Class \o/, belongs to
 //     the thread, is not visible and is a real top-level window (EnumWindows
 //     finds it, its parent is the desktop), so it gets broadcasts.
@@ -13,15 +15,18 @@
 //     (printed as INFO). After the messages are pumped for a moment,
 //     DisplayState must be known: Windows sends the current value right
 //     after RegisterPowerSettingNotification, so this checks the
-//     registration with a real system message.
+//     registration with a real system message (only INFO in a Remote
+//     Desktop session or Windows Sandbox, where it may not come).
 //   - Events, by sending the messages Windows would send to the hidden
 //     window: WM_POWERBROADCAST (suspend, both resumes, power status, and
 //     PBT_POWERSETTINGCHANGE for the power source, energy saver and display
 //     state: first the current value, which publishes nothing, then another
 //     value and the current one again, which publish once each; a setting
 //     with no data publishes nothing), WM_QUERYENDSESSION (with and without
-//     a canceling handler, checking the return value and the reason),
-//     WM_ENDSESSION with wParam FALSE, WM_WTSSESSION_CHANGE (lock, unlock,
+//     a canceling handler, checking the return value and the reason; with
+//     a shutdown block reason on the visible main window, the form must
+//     refuse and the hidden window agree, with one SessionEnding for
+//     both), WM_ENDSESSION with wParam FALSE, WM_WTSSESSION_CHANGE (lock, unlock,
 //     remote connect), WM_SETTINGCHANGE with an area string and with an SPI
 //     code, WM_THEMECHANGED and WM_SYSCOLORCHANGE. The derived events
 //     HighContrastChanged, DarkModeChanged and ScreenReaderChanged must not
@@ -230,15 +235,15 @@ func sendPowerSetting(hwnd win.HWND, guid syscall.GUID, value, length uint32) ui
 }
 
 func testQueries(s *walk.SystemService) {
-	hc, scheme, err := s.HighContrast()
+	hc, scheme, err := walk.HighContrast()
 	fmt.Printf("INFO HighContrast on=%v scheme=%q err=%v\n", hc, scheme, err)
 	check("HighContrast", err == nil, "%v", err)
 
-	fmt.Printf("INFO ScreenReaderRunning=%v\n", s.ScreenReaderRunning())
-	fmt.Printf("INFO ClientAreaAnimation=%v\n", s.ClientAreaAnimation())
-	fmt.Printf("INFO IsRemoteSession=%v\n", s.IsRemoteSession())
+	fmt.Printf("INFO ScreenReaderRunning=%v\n", walk.ScreenReaderRunning())
+	fmt.Printf("INFO ClientAreaAnimation=%v\n", walk.ClientAreaAnimation())
+	fmt.Printf("INFO IsRemoteSession=%v\n", walk.IsRemoteSession())
 
-	dark := s.AppsUseDarkTheme()
+	dark := walk.AppsUseDarkTheme()
 	want := false
 	if k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Themes\Personalize`, registry.QUERY_VALUE); err == nil {
 		if v, _, err := k.GetIntegerValue("AppsUseLightTheme"); err == nil {
@@ -249,11 +254,11 @@ func testQueries(s *walk.SystemService) {
 	fmt.Printf("INFO AppsUseDarkTheme=%v\n", dark)
 	check("AppsUseDarkTheme matches the registry", dark == want, "got %v, registry says %v", dark, want)
 
-	tsf := s.TextScaleFactor()
+	tsf := walk.TextScaleFactor()
 	fmt.Printf("INFO TextScaleFactor=%d\n", tsf)
 	check("TextScaleFactor range", tsf >= 100 && tsf <= 225, "%d", tsf)
 
-	bs, err := s.Battery()
+	bs, err := walk.Battery()
 	fmt.Printf("INFO Battery %+v err=%v\n", bs, err)
 	check("Battery", err == nil && bs.Percent >= -1 && bs.Percent <= 100, "%+v %v", bs, err)
 
@@ -270,7 +275,7 @@ func sourceValue(p walk.PowerSource) uint32 {
 	return 0
 }
 
-func testEvents(s *walk.SystemService, hwnd win.HWND) {
+func testEvents(s *walk.SystemService, hwnd win.HWND, mw *walk.MainWindow) {
 	c := newCounter()
 	var cancel bool
 	attach(s, c, &cancel)
@@ -348,14 +353,36 @@ func testEvents(s *walk.SystemService, hwnd win.HWND) {
 	sendPowerSetting(hwnd, win.GUID_ACDC_POWER_SOURCE, v1, 0)
 	check("power setting without data publishes nothing", len(c.n) == 0 && s.PowerSource() == p0, "events %v", c)
 
-	// Shutdown.
+	// Shutdown. Each round of queries ends with WM_ENDSESSION, as from
+	// Windows; wParam FALSE means that the session does not end.
 	send("SessionEnding not canceled", win.WM_QUERYENDSESSION, 0, win.ENDSESSION_LOGOFF, 1, "SessionEnding")
 	check("SessionEnding reason", c.last["SessionEnding"] == "0x80000000", "%q", c.last["SessionEnding"])
-	cancel = true
-	send("SessionEnding canceled", win.WM_QUERYENDSESSION, 0, win.ENDSESSION_CLOSEAPP, 0, "SessionEnding")
-	cancel = false
 	send("SessionEnded", win.WM_ENDSESSION, 0, win.ENDSESSION_CLOSEAPP, 0, "SessionEnded")
 	check("SessionEnded arguments", c.last["SessionEnded"] == "false 0x1", "%q", c.last["SessionEnded"])
+	cancel = true
+	send("SessionEnding canceled without a blocking form", win.WM_QUERYENDSESSION, 0, win.ENDSESSION_CLOSEAPP, 0, "SessionEnding")
+	send("SessionEnded after the cancel", win.WM_ENDSESSION, 0, 0, 0, "SessionEnded")
+
+	// With a shutdown block reason on the visible main window, the form
+	// refuses and the hidden window agrees, so that Windows shows the form
+	// with its reason; the handlers run once for both windows.
+	if err := mw.SetShutdownBlockReason("walk system test: saving"); err != nil {
+		check("SetShutdownBlockReason for the query", false, "%v", err)
+	}
+	c.reset()
+	rHidden := win.SendMessage(hwnd, win.WM_QUERYENDSESSION, 0, 0)
+	rForm := win.SendMessage(mw.Handle(), win.WM_QUERYENDSESSION, 0, 0)
+	check("SessionEnding canceled with a blocking form", rHidden == 1 && rForm == 0 && c.only("SessionEnding"),
+		"hidden window %d (want 1), form %d (want 0), events %v", rHidden, rForm, c)
+	send("SessionEnded after the form refused", win.WM_ENDSESSION, 0, 0, 0, "SessionEnded")
+	cancel = false
+	c.reset()
+	rForm = win.SendMessage(mw.Handle(), win.WM_QUERYENDSESSION, 0, 0)
+	rHidden = win.SendMessage(hwnd, win.WM_QUERYENDSESSION, 0, 0)
+	check("SessionEnding not canceled with a blocking form", rHidden == 1 && rForm == 1 && c.only("SessionEnding"),
+		"hidden window %d, form %d (want 1), events %v", rHidden, rForm, c)
+	send("SessionEnded after the form agreed", win.WM_ENDSESSION, 0, 0, 0, "SessionEnded")
+	mw.SetShutdownBlockReason("")
 
 	// Session changes.
 	send("SessionLocked", win.WM_WTSSESSION_CHANGE, win.WTS_SESSION_LOCK, 7, 0, "SessionChanged", "SessionLocked")
@@ -402,7 +429,10 @@ func testDispose(s *walk.SystemService, hwnd win.HWND) {
 	s.Dispose()
 	check("Dispose destroys the window", !win.IsWindow(hwnd) && len(threadWindows()) == 0, "windows %v", threadWindows())
 
-	s2 := walk.System()
+	s2, err := walk.System()
+	if !check("System after Dispose returns no error", err == nil, "%v", err) {
+		return
+	}
 	ws := threadWindows()
 	check("System after Dispose", s2 != s && len(ws) == 1 && ws[0] != hwnd, "same %v, windows %v", s2 == s, ws)
 	if len(ws) == 1 {
@@ -421,8 +451,35 @@ func main() {
 	}
 	runtime.LockOSThread()
 
-	s := walk.System()
-	check("System returns the same service", walk.System() == s, "different services")
+	// A thread without a walk window gets no service: its hidden window
+	// would never process messages.
+	done := make(chan error)
+	go func() {
+		runtime.LockOSThread() // the thread ends with the goroutine
+		_, err := walk.System()
+		done <- err
+	}()
+	err := <-done
+	check("System on a thread without a walk window", err != nil, "no error")
+
+	var mw *walk.MainWindow
+	if err := (MainWindow{
+		AssignTo: &mw,
+		Title:    "walk system test",
+		Layout:   VBox{},
+		Children: []Widget{Label{Text: "System events test"}},
+	}).Create(); err != nil {
+		check("MainWindow", false, "%v", err)
+		os.Exit(1)
+	}
+	mw.Show()
+
+	s, err := walk.System()
+	if !check("System", err == nil && s != nil, "%v", err) {
+		os.Exit(1)
+	}
+	s2, _ := walk.System()
+	check("System returns the same service", s2 == s, "different services")
 	ws := threadWindows()
 	if !check("one hidden window", len(ws) == 1, "windows %v", ws) {
 		os.Exit(1)
@@ -436,28 +493,22 @@ func main() {
 	check("hidden window is not visible", !win.IsWindowVisible(hwnd), "visible")
 	check("hidden window belongs to this thread", uint32(tid) == win.GetCurrentThreadId() && int(pid) == os.Getpid(), "thread %d, process %d", tid, pid)
 
-	var mw *walk.MainWindow
-	if err := (MainWindow{
-		AssignTo: &mw,
-		Title:    "walk system test",
-		Layout:   VBox{},
-		Children: []Widget{Label{Text: "System events test"}},
-	}).Create(); err != nil {
-		check("MainWindow", false, "%v", err)
-		os.Exit(1)
-	}
-
 	// Windows sends the current power settings right after the
-	// registration.
+	// registration. In a Remote Desktop session and in Windows Sandbox
+	// (which uses Remote Desktop) the display notifications may not come.
 	deadline := time.Now().Add(5 * time.Second)
 	for s.DisplayState() == walk.DisplayStateUnknown && time.Now().Before(deadline) {
 		pump(50 * time.Millisecond)
 	}
 	pump(300 * time.Millisecond)
-	check("DisplayState known after registration", s.DisplayState() != walk.DisplayStateUnknown, "unknown after 5 seconds")
+	if s.DisplayState() == walk.DisplayStateUnknown && (walk.IsRemoteSession() || strings.EqualFold(os.Getenv("USERNAME"), "WDAGUtilityAccount")) {
+		fmt.Println("INFO DisplayState unknown after 5 seconds in a remote session or Windows Sandbox")
+	} else {
+		check("DisplayState known after registration", s.DisplayState() != walk.DisplayStateUnknown, "unknown after 5 seconds")
+	}
 
 	testQueries(s)
-	testEvents(s, hwnd)
+	testEvents(s, hwnd, mw)
 	testKeepAwake()
 	testShutdownBlockReason(mw)
 	testDispose(s, hwnd)
@@ -473,7 +524,7 @@ func manual() {
 	var status *walk.Label
 	var logEdit *walk.TextEdit
 	var block *walk.CheckBox
-	s := walk.System()
+	var s *walk.SystemService
 
 	report := func(text string) {
 		line := time.Now().Format("15:04:05") + " " + text
@@ -482,10 +533,10 @@ func manual() {
 		status.SetText(text)
 	}
 	describe := func() string {
-		hc, scheme, _ := s.HighContrast()
-		bs, _ := s.Battery()
+		hc, scheme, _ := walk.HighContrast()
+		bs, _ := walk.Battery()
 		return fmt.Sprintf("power source %d, energy saver %d, display %d, battery %d%%, high contrast %v %q, dark mode %v, screen reader %v, text scale %d%%, animations %v, remote session %v",
-			s.PowerSource(), s.EnergySaver(), s.DisplayState(), bs.Percent, hc, scheme, s.AppsUseDarkTheme(), s.ScreenReaderRunning(), s.TextScaleFactor(), s.ClientAreaAnimation(), s.IsRemoteSession())
+			s.PowerSource(), s.EnergySaver(), s.DisplayState(), bs.Percent, hc, scheme, walk.AppsUseDarkTheme(), walk.ScreenReaderRunning(), walk.TextScaleFactor(), walk.ClientAreaAnimation(), walk.IsRemoteSession())
 	}
 	var release func()
 
@@ -526,6 +577,11 @@ func manual() {
 			TextEdit{AssignTo: &logEdit, ReadOnly: true, VScroll: true, MinSize: Size{Width: 500, Height: 250}},
 		},
 	}).Create(); err != nil {
+		fmt.Println("FAIL", err)
+		os.Exit(1)
+	}
+	var err error
+	if s, err = walk.System(); err != nil {
 		fmt.Println("FAIL", err)
 		os.Exit(1)
 	}

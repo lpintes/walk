@@ -1505,6 +1505,7 @@ func GetWindowLong
 func GetWindowLongPtr fallback=GetWindowLong result=uintptr
 func GetWindowPlacement
 func GetWindowRect
+func GetWindowThreadProcessId
 func GlobalAlloc
 func GlobalFree
 func GlobalUnlock
@@ -1723,6 +1724,7 @@ guid GUID_ACDC_POWER_SOURCE
 guid GUID_CONSOLE_DISPLAY_STATE
 guid GUID_ENERGY_SAVER_STATUS
 guid GUID_POWER_SAVING_STATUS
+guid GUID_SESSION_DISPLAY_STATUS
 guid IID_IAccPropServices
 guid IID_IClassFactory
 guid IID_IConnectionPointContainer

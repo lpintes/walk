@@ -833,8 +833,8 @@ resume, the power source, energy saver and display state
 (`WM_QUERYENDSESSION`, `WM_ENDSESSION`), lock and unlock and other session
 changes (`WTSRegisterSessionNotification`), and `WM_SETTINGCHANGE`,
 `WM_THEMECHANGED` and `WM_SYSCOLORCHANGE` with the derived events
-`HighContrastChanged`, `DarkModeChanged` and `ScreenReaderChanged`. It
-also reads high contrast, the screen reader flag, the dark mode, the text
+`HighContrastChanged`, `DarkModeChanged` and `ScreenReaderChanged`. Package
+functions read high contrast, the screen reader flag, the dark mode, the text
 size, the animation setting, the battery and whether the session is
 remote. `walk.KeepAwake` keeps the computer (and optionally the display)
 awake with a power request, and `FormBase.SetShutdownBlockReason` sets
@@ -844,6 +844,13 @@ it has run yet. Points to watch:
 - `REASON_CONTEXT` is hand-written (anonymous union; 24 bytes on 386, 32
   on 64-bit). If `KeepAwake` fails with an invalid parameter error, its
   layout is the first suspect.
+- `System` returns an error on a thread without a walk window, because
+  a hidden top-level window that nobody pumps would make broadcasts and
+  the shutdown wait.
+- When a `SessionEnding` handler cancels, a visible form with a shutdown
+  block reason refuses `WM_QUERYENDSESSION` and the hidden window agrees,
+  so that Windows lists the form with its reason, not an untitled
+  window.
 - The automated test sends the messages itself, so it cannot show that
   Windows really delivers them to a hidden window; only the first power
   setting notification (the display state, which Windows sends right
@@ -888,8 +895,14 @@ How to test, on 386 and amd64 (after `build.ps1`):
   - Check "Block sign-out and shutdown", then choose Restart from the
     Start menu: Windows must show the blocking screen with "walk system
     manual test blocks the shutdown"; report whether NVDA reads it.
+    Report how the program is listed there: it must be the window
+    "walk system manual test" with its reason, not an untitled window or
+    the program name without a reason.
     Choose Cancel there; the log must contain "Session ending ...
-    canceled true" and "Session ended false". Uncheck the box afterwards.
+    canceled true" once and "Session ended false". Uncheck the box
+    afterwards.
+  - With the box unchecked, the program must not appear on that screen
+    when another program blocks (optional, if one is available).
     Optional, only if no work is open: with the box unchecked, sign out
     and check that the program did not block it.
 - Optional: the same with Narrator or JAWS, if available.

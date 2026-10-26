@@ -904,45 +904,58 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   on Windows (task 20 of `TESTING_ON_WINDOWS.md`, test program
   `tests/_wingui/system` with a `manual` mode). Power, session and
   settings events and system settings.
-  - `walk.System()` returns the `SystemService` of the calling thread
-    (locks the goroutine to its OS thread). It owns a hidden top-level
+  - `walk.System()` returns the `SystemService` of the calling thread,
+    or an error on a thread without a walk window group (a hidden
+    top-level window nobody pumps would make broadcasts and the
+    shutdown wait). It owns a hidden top-level
     window (class `\o/ Walk_System_Class \o/`, `WS_POPUP`,
     `WS_EX_TOOLWINDOW`), created on the first call per thread, because
     broadcasts reach top-level windows only, not message-only ones; the
-    events are published on that thread. `Dispose` destroys it and
-    unregisters everything; a later `System` creates a new one.
+    events are published on that thread; `systemWndProc` publishes
+    panics to `App().Panicking` like `defaultWndProc`. `Dispose`
+    destroys it and unregisters everything; a later `System` creates a
+    new one. A stored service whose window is gone or belongs to
+    another thread (reused thread ID) is replaced.
   - Power: `Suspending` (`PBT_APMSUSPEND`), `Resumed`
     (`PBT_APMRESUMEAUTOMATIC`), `ResumedByUser` (`PBT_APMRESUMESUSPEND`),
     `PowerStatusChanged`, and with `RegisterPowerSettingNotification`
     (unregistered on destroy) `PowerSourceChanged`
     (`GUID_ACDC_POWER_SOURCE`), `EnergySaverChanged`
     (`GUID_ENERGY_SAVER_STATUS` on Windows 11, `GUID_POWER_SAVING_STATUS`
-    before) and `DisplayStateChanged` (`GUID_CONSOLE_DISPLAY_STATE`).
+    before) and `DisplayStateChanged` (`GUID_CONSOLE_DISPLAY_STATE` and
+    `GUID_SESSION_DISPLAY_STATUS`, which also works in Remote Desktop).
     Windows sends each setting right after the registration; that first
     value is cached without an event, later ones publish only on a
     change. `PowerSource`, `EnergySaver` and `DisplayState` return the
-    cached values (the first two fall back to `GetSystemPowerStatus`),
-    `Battery` the battery status.
+    cached values (the first two fall back to `GetSystemPowerStatus`);
+    the package function `Battery` returns the battery status.
   - `KeepAwake(reason, display)` returns a release function. It uses
     `PowerCreateRequest` and `PowerSetRequest` (system, optionally
     display required), not `SetThreadExecutionState`: every call has its
     own request, the state does not belong to an OS thread, and the
-    reason shows in `powercfg /requests`. `REASON_CONTEXT` is
+    reason shows in `powercfg /requests`. A release function never
+    called keeps the request until the process exits. `REASON_CONTEXT` is
     hand-written in `internal/win/power.go` (anonymous union).
   - Shutdown: `SessionEnding` (`WM_QUERYENDSESSION`, handler
     `func(canceled *bool, reason EndSessionReason)`) and `SessionEnded`
     (`WM_ENDSESSION`, `func(ending bool, reason)`);
     `FormBase.SetShutdownBlockReason` (empty removes it) and
-    `ShutdownBlockReason`. Session: `SessionChanged` (`SessionChange`
+    `ShutdownBlockReason`. Every top-level window gets
+    `WM_QUERYENDSESSION`; the handlers run once per round (until
+    `WM_ENDSESSION`, at most ten seconds). When they cancel, a visible
+    form with a block reason refuses (`FormBase.WndProc`) and the hidden
+    window agrees, so Windows lists the form with its reason; without
+    such a form the hidden window refuses. Session: `SessionChanged` (`SessionChange`
     and session ID), `SessionLocked` and `SessionUnlocked`
     (`WTSRegisterSessionNotification` for this session, unregistered on
-    destroy), `IsRemoteSession`.
+    destroy), the package function `IsRemoteSession`.
   - Settings: `SettingsChanged` with `SettingsChange` (kind
     `WM_SETTINGCHANGE`, `WM_THEMECHANGED` or `WM_SYSCOLORCHANGE`, the
     SPI action and the area string such as `ImmersiveColorSet`), and
     after it `HighContrastChanged`, `DarkModeChanged` and
     `ScreenReaderChanged`, published only when the value really changed.
-    Queries: `HighContrast` (on and scheme), `ScreenReaderRunning`,
+    Package functions for any goroutine: `HighContrast` (on and
+    scheme), `ScreenReaderRunning`,
     `AppsUseDarkTheme` (registry `AppsUseLightTheme`, the documented
     way), `TextScaleFactor` (registry `TextScaleFactor`, no event),
     `ClientAreaAnimation`.
@@ -950,7 +963,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `SessionEndedEvent`, `SessionChangedEvent`, `SettingsChangedEvent`.
   - New in `internal/win` (generated): `wtsapi32.dll`, the power,
     session, shutdown and settings functions, constants and GUIDs,
-    `SYSTEM_POWER_STATUS`, `POWERBROADCAST_SETTING` and `IsWindow`.
+    `SYSTEM_POWER_STATUS`, `POWERBROADCAST_SETTING`, `IsWindow` and
+    `GetWindowThreadProcessId`.
 - Steps 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
