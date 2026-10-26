@@ -142,6 +142,36 @@ func shellFiles() ([]string, error) {
 
 var cb = walk.Clipboard()
 
+// retry calls f again while it fails because another program has the
+// clipboard open: the old methods Text, ContainsText, SetText and Clear try
+// OpenClipboard only once, and clipboard monitors (the clipboard history,
+// the clipboard sharing of Windows Sandbox and remote desktop) open the
+// clipboard after every change.
+func retry(f func() error) error {
+	var err error
+	for range 50 {
+		if err = f(); err == nil || !strings.Contains(err.Error(), "OpenClipboard") {
+			return err
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return err
+}
+
+func getText() (s string, err error) {
+	err = retry(func() (err error) { s, err = cb.Text(); return })
+	return
+}
+
+func containsText() (ok bool, err error) {
+	err = retry(func() (err error) { ok, err = cb.ContainsText(); return })
+	return
+}
+
+func setText(s string) error { return retry(func() error { return cb.SetText(s) }) }
+
+func clearClipboard() error { return retry(cb.Clear) }
+
 // headerValue returns the number after "key:" in the CF_HTML header.
 func headerValue(data []byte, key string) int {
 	i := bytes.Index(data, []byte("\r\n"+key+":"))
@@ -162,10 +192,10 @@ func headerValue(data []byte, key string) int {
 
 func testText() {
 	const s = "walk clipboard test: ľščťžýáíé 日本 😀"
-	err := cb.SetText(s)
-	got, err2 := cb.Text()
+	err := setText(s)
+	got, err2 := getText()
 	check("SetText and Text", err == nil && err2 == nil && got == s, "%q, %v, %v", got, err, err2)
-	ok, err := cb.ContainsText()
+	ok, err := containsText()
 	check("ContainsText", ok && err == nil, "%v, %v", ok, err)
 }
 
@@ -210,7 +240,7 @@ func testHTML() {
 	check("HTML Fragment", h.Fragment == fragment, "%q", h.Fragment)
 	check("HTML Document", h.Document == string(raw[sh:eh]), "%q", h.Document)
 	check("HTML SourceURL empty", h.SourceURL == "", "%q", h.SourceURL)
-	text, err := cb.Text()
+	text, err := getText()
 	check("HTML plain text alternative", err == nil && text == plain, "%q, %v", text, err)
 	ok, err := cb.ContainsHTML()
 	check("ContainsHTML", ok && err == nil, "%v, %v", ok, err)
@@ -221,7 +251,7 @@ func testHTML() {
 	h, err2 := cb.HTML()
 	check("HTML with SourceURL", err == nil && err2 == nil && h.Fragment == "<i>x</i>" && h.SourceURL == "https://example.com/page?a=1",
 		"%+v, %v, %v", h, err, err2)
-	ok, _ = cb.ContainsText()
+	ok, _ = containsText()
 	check("SetData with HTML only has no text", !ok, "text available")
 }
 
@@ -234,10 +264,13 @@ func testRTF(re1, re2 *walk.RichEdit) {
 	check("RTF", err == nil && got == sampleRTF, "%q, %v", got, err)
 	raw, err := rawData(walk.ClipboardFormatRTF)
 	check("RTF raw data", err == nil && bytes.HasPrefix(raw, append([]byte(sampleRTF), 0)), "%q, %v", raw, err)
-	text, _ := cb.Text()
+	text, _ := getText()
 	check("RTF plain text alternative", text == "Plain bold and italic.", "%q", text)
 	ok, err := cb.ContainsRTF()
 	check("ContainsRTF", ok && err == nil, "%v, %v", ok, err)
+	err = cb.SetRTF(`{\rtf1 ľ}`, "")
+	got, _ = cb.RTF()
+	check("SetRTF with a byte above 127 fails and changes nothing", err != nil && got == sampleRTF, "%v, %q", err, got)
 
 	// From one RichEdit through the clipboard into another.
 	if err := re1.SetRTF(sampleRTF); err != nil {
@@ -460,7 +493,7 @@ func testMultiple(customFormat walk.ClipboardFormat) {
 	check("Formats in the order of setting", err == nil && inOrder, "%v, %v", names, err)
 	check("Formats name of the custom format", customFormat.Name() == "walk clipboard test format", "%q", customFormat.Name())
 
-	text, err1 := cb.Text()
+	text, err1 := getText()
 	h, err2 := cb.HTML()
 	rtf, err3 := cb.RTF()
 	files, err4 := cb.Files()
@@ -475,7 +508,7 @@ func testMultiple(customFormat walk.ClipboardFormat) {
 	check("SetData custom format", err6 == nil && bytes.HasPrefix(custom, []byte{1, 2, 3, 0, 4}), "%x, %v", custom, err6)
 
 	for name, f := range map[string]func() (bool, error){
-		"ContainsText": cb.ContainsText, "ContainsHTML": cb.ContainsHTML, "ContainsRTF": cb.ContainsRTF,
+		"ContainsText": containsText, "ContainsHTML": cb.ContainsHTML, "ContainsRTF": cb.ContainsRTF,
 		"ContainsFiles": cb.ContainsFiles, "ContainsImage": cb.ContainsImage,
 	} {
 		ok, err := f()
@@ -489,16 +522,16 @@ func testMultiple(customFormat walk.ClipboardFormat) {
 	bad.SetText("must not appear")
 	bad.SetHTML("a\x00b", "")
 	err = cb.SetData(&bad)
-	text, _ = cb.Text()
+	text, _ = getText()
 	check("SetData with an invalid item fails and changes nothing", err != nil && text == "multi text, replaced", "%v, %q", err, text)
 
-	if err := cb.Clear(); err != nil {
+	if err := clearClipboard(); err != nil {
 		check("Clear", false, "%v", err)
 	}
 	formats, _ = cb.Formats()
 	check("Clear empties the clipboard", len(formats) == 0, "%v", formats)
 	for name, f := range map[string]func() (bool, error){
-		"ContainsText": cb.ContainsText, "ContainsHTML": cb.ContainsHTML, "ContainsRTF": cb.ContainsRTF,
+		"ContainsText": containsText, "ContainsHTML": cb.ContainsHTML, "ContainsRTF": cb.ContainsRTF,
 		"ContainsFiles": cb.ContainsFiles, "ContainsImage": cb.ContainsImage,
 	} {
 		ok, err := f()
@@ -517,7 +550,7 @@ func testMultiple(customFormat walk.ClipboardFormat) {
 func testSensitive() {
 	err := cb.SetSensitiveText("secret password")
 	check("SetSensitiveText", err == nil, "%v", err)
-	text, err := cb.Text()
+	text, err := getText()
 	check("sensitive text can be pasted", err == nil && text == "secret password", "%q, %v", text, err)
 	for _, f := range []walk.ClipboardFormat{walk.ClipboardFormatExcludeFromMonitorProcessing,
 		walk.ClipboardFormatCanIncludeInClipboardHistory, walk.ClipboardFormatCanUploadToCloudClipboard} {
@@ -561,10 +594,10 @@ func main() {
 
 	// Save the user's clipboard: only text can be put back.
 	savedFormats, _ := cb.Formats()
-	hadText, _ := cb.ContainsText()
+	hadText, _ := containsText()
 	var savedText string
 	if hadText {
-		savedText, _ = cb.Text()
+		savedText, _ = getText()
 	}
 	textFormats := []walk.ClipboardFormat{walk.ClipboardFormatText, 1, 7, 16} // CF_TEXT, CF_OEMTEXT, CF_LOCALE
 	var lost []string
@@ -603,7 +636,7 @@ func main() {
 					d.SetText(savedText)
 					err = cb.SetData(&d)
 				} else {
-					err = cb.Clear()
+					err = clearClipboard()
 				}
 				fmt.Printf("INFO clipboard restored (text: %v), error: %v\n", hadText, err)
 				mw.Close()
@@ -650,8 +683,8 @@ func describeClipboard() string {
 	if s, _ := cb.IsSensitive(); s {
 		parts = append(parts, "Marked as sensitive.")
 	}
-	if ok, _ := cb.ContainsText(); ok {
-		text, _ := cb.Text()
+	if ok, _ := containsText(); ok {
+		text, _ := getText()
 		if len([]rune(text)) > 100 {
 			text = string([]rune(text)[:100]) + "..."
 		}

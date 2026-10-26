@@ -291,6 +291,10 @@ func TestDecodeDIBVariants(t *testing.T) {
 		"rle":        append(dibHeader(1, 1, 8, 1, 0), make([]byte, 1024)...),
 		"zero width": append(dibHeader(0, 1, 24, 0, 0), 0, 0, 0, 0),
 		"huge":       dibHeader(1<<20, 1<<20, 24, 0, 0),
+		"overflow":   dibHeader(1<<16+1, 1<<16+1, 32, 0, 0),
+		"wide":       dibHeader(1<<30, 1, 32, 0, 0),
+		"min height": dibHeader(1, -1<<31, 32, 0, 0),
+		"colors":     append(dibHeader(1, 1, 8, 0, 0xFFFFFFFF), make([]byte, 64)...),
 	} {
 		if _, err := DecodeDIB(d); err == nil {
 			t.Errorf("%s accepted", name)
@@ -312,5 +316,71 @@ func TestUTF16(t *testing.T) {
 	}
 	if String([]byte("{\\rtf1 x}\x00junk")) != "{\\rtf1 x}" {
 		t.Error("String")
+	}
+}
+
+func TestDIBV5ExtraMasks(t *testing.T) {
+	src := testImage()
+	data, err := EncodeDIBV5(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The masks once more after the header, as some programs write them.
+	extra := append(append(bytes.Clone(data[:124]), data[40:52]...), data[124:]...)
+	for name, d := range map[string][]byte{"plain": data, "extra masks": extra} {
+		got, err := DecodeDIB(d)
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		for y := range 3 {
+			for x := range 5 {
+				if a, b := src.NRGBAAt(10+x, 20+y), got.NRGBAAt(x, y); a != b {
+					t.Errorf("%s: pixel %d,%d: %v, want %v", name, x, y, b, a)
+				}
+			}
+		}
+	}
+}
+
+func TestEncodeLargeImage(t *testing.T) {
+	// A huge image is refused before any pixel is read; on 386 the size
+	// would overflow int.
+	im := image.NewNRGBA(image.Rect(0, 0, 0, 0))
+	im.Rect = image.Rect(0, 0, 1<<16+1, 1<<16+1)
+	if _, err := EncodeDIBV5(im); err == nil {
+		t.Error("huge image accepted")
+	}
+}
+
+func TestFastPaths(t *testing.T) {
+	// RGBA (premultiplied) and NRGBA must give the same pixels as the
+	// generic conversion.
+	rgba := image.NewRGBA(image.Rect(3, 4, 259, 260))
+	nrgba := image.NewNRGBA(rgba.Rect)
+	for y := range 256 {
+		for x := range 256 {
+			a := uint8(y)
+			v := uint8(x)
+			if v > a {
+				v = a // valid premultiplied color
+			}
+			rgba.SetRGBA(3+x, 4+y, color.RGBA{v, v / 2, a - v, a})
+			nrgba.SetNRGBA(3+x, 4+y, color.NRGBA{uint8(x), uint8(y), uint8(x ^ y), uint8(x + y)})
+		}
+	}
+	for _, im := range []image.Image{rgba, nrgba} {
+		_, _, pix, err := nrgbaPixels(im)
+		if err != nil {
+			t.Fatal(err)
+		}
+		i := 0
+		for y := im.Bounds().Min.Y; y < im.Bounds().Max.Y; y++ {
+			for x := im.Bounds().Min.X; x < im.Bounds().Max.X; x++ {
+				if want := color.NRGBAModel.Convert(im.At(x, y)).(color.NRGBA); pix[i] != want {
+					t.Fatalf("%T pixel %d,%d: %v, want %v", im, x, y, pix[i], want)
+				}
+				i++
+			}
+		}
 	}
 }

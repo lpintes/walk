@@ -282,9 +282,16 @@ const (
 	pelsPerMeter96DPI = 3780
 )
 
-// maxPixels limits the size of decoded and encoded bitmaps, so that a
-// corrupt header cannot make the decoder allocate gigabytes.
-const maxPixels = 1 << 28
+// maxPixels limits the size of decoded and encoded bitmaps (8192 x 8192),
+// so that a corrupt header cannot make the decoder allocate gigabytes,
+// also in the address space of a 32-bit process.
+const maxPixels = 1 << 26
+
+// validSize reports whether w x h is a positive size of at most maxPixels.
+// It does not multiply, so it cannot overflow a 32-bit int.
+func validSize(w, h int) bool {
+	return w > 0 && h > 0 && w <= maxPixels/h
+}
 
 func nrgbaPixels(im image.Image) (w, h int, pix []color.NRGBA, err error) {
 	b := im.Bounds()
@@ -292,10 +299,31 @@ func nrgbaPixels(im image.Image) (w, h int, pix []color.NRGBA, err error) {
 	if w <= 0 || h <= 0 {
 		return 0, 0, nil, errors.New("empty image")
 	}
-	if w > 1<<20 || h > 1<<20 || w*h > maxPixels {
+	if !validSize(w, h) {
 		return 0, 0, nil, errors.New("image too large")
 	}
 	pix = make([]color.NRGBA, 0, w*h)
+	switch im := im.(type) {
+	case *image.NRGBA:
+		for y := b.Min.Y; y < b.Max.Y; y++ {
+			row := im.Pix[im.PixOffset(b.Min.X, y):]
+			for x := range w {
+				q := row[4*x:]
+				pix = append(pix, color.NRGBA{q[0], q[1], q[2], q[3]})
+			}
+		}
+		return w, h, pix, nil
+	case *image.RGBA:
+		// Premultiplied alpha: divide the colors by alpha.
+		for y := b.Min.Y; y < b.Max.Y; y++ {
+			row := im.Pix[im.PixOffset(b.Min.X, y):]
+			for x := range w {
+				q := row[4*x:]
+				pix = append(pix, unpremultiply(q[0], q[1], q[2], q[3]))
+			}
+		}
+		return w, h, pix, nil
+	}
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			pix = append(pix, color.NRGBAModel.Convert(im.At(x, y)).(color.NRGBA))
@@ -377,6 +405,20 @@ func EncodeDIB(im image.Image) ([]byte, error) {
 	return b, nil
 }
 
+// unpremultiply converts a premultiplied color to straight alpha, as
+// color.NRGBAModel does.
+func unpremultiply(r, g, b, a uint8) color.NRGBA {
+	switch a {
+	case 0:
+		return color.NRGBA{}
+	case 255:
+		return color.NRGBA{r, g, b, 255}
+	}
+	// 255 * 0x101 * 0xffff fits into uint32.
+	f := func(v uint8) uint8 { return uint8(uint32(v) * 0x101 * 0xffff / (uint32(a) * 0x101) >> 8) }
+	return color.NRGBA{f(r), f(g), f(b), a}
+}
+
 type channel struct {
 	mask  uint32
 	shift int
@@ -422,12 +464,17 @@ func DecodeDIB(data []byte) (*image.NRGBA, error) {
 	h := int(int32(le.Uint32(data[8:])))
 	bpp := int(le.Uint16(data[14:]))
 	compression := le.Uint32(data[16:])
-	clrUsed := int(le.Uint32(data[32:]))
+	sizeImage := le.Uint32(data[20:])
+	clrUsed32 := le.Uint32(data[32:])
+	if clrUsed32 > 1<<16 {
+		return nil, fmt.Errorf("DIB: invalid color count %d", clrUsed32)
+	}
+	clrUsed := int(clrUsed32)
 	topDown := h < 0
 	if topDown {
 		h = -h
 	}
-	if w <= 0 || h <= 0 || w > 1<<20 || h > 1<<20 || w*h > maxPixels {
+	if !validSize(w, h) {
 		return nil, fmt.Errorf("DIB: invalid size %d x %d", w, h)
 	}
 
@@ -497,15 +544,20 @@ func DecodeDIB(data []byte) (*image.NRGBA, error) {
 		offset += 4 * n
 	} else if clrUsed > 0 {
 		// An optional color table for palette devices precedes the pixels.
-		if clrUsed > 1<<16 {
-			return nil, fmt.Errorf("DIB: invalid color count %d", clrUsed)
-		}
 		offset += 4 * clrUsed
 	}
 
+	// At most 32 bits per pixel and maxPixels pixels: no overflow.
 	stride := (w*bpp + 31) / 32 * 4
-	if offset > len(data) || len(data)-offset < stride*h {
+	need := stride * h
+	if offset > len(data) || len(data)-offset < need {
 		return nil, errors.New("DIB: pixel data truncated")
+	}
+	if hdr > bitmapInfoHeaderSize && (compression == biBitfields || compression == biAlphaBitfields) &&
+		int64(sizeImage) == int64(need) && len(data)-offset == need+12 {
+		// Some programs write the three masks after a BITMAPV4HEADER or
+		// BITMAPV5HEADER too, although they are part of it.
+		offset += 12
 	}
 
 	im := image.NewNRGBA(image.Rect(0, 0, w, h))

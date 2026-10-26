@@ -839,13 +839,18 @@ the exchange with Windows and with other programs.
 The test replaces the contents of the clipboard. It saves the text on the
 clipboard and puts it back at the end; other formats (an image, copied
 files) are lost, and an INFO line names them. Copy nothing important
-before running it.
+before running it. This also holds in Windows Sandbox: the sandbox shares
+its clipboard with the host through its remote desktop connection
+(`rdpclip`), so the test overwrites the clipboard of the host too and
+restores only its text. `rdpclip`, like the clipboard history, opens the
+clipboard after every change; the new methods and the test retry
+`OpenClipboard` for that.
 
 How to test, on 386 and amd64 (after `build.ps1`):
 
 - `tests/_wingui/scripts/run.ps1 -Only clipboard`. It also runs in
-  Windows Sandbox (`sandbox.ps1 -Only clipboard`), whose clipboard is
-  separate from the host. Report every FAIL line and the INFO lines (the
+  Windows Sandbox (`sandbox.ps1 -Only clipboard`; see above about the
+  clipboard of the host). Report every FAIL line and the INFO lines (the
   HTML offsets, the formats Windows adds to an image, for example
   `CF_BITMAP`, the list of formats after `SetData`, how often
   `ContentsChanged` was published and whether the clipboard was
@@ -861,24 +866,33 @@ How to test, on 386 and amd64 (after `build.ps1`):
 - `clipboard.exe manual` (in `%TEMP%\walk-wingui\<arch>\tests\clipboard`)
   with NVDA on amd64. Each button announces what it did in a polite live
   region; "Read clipboard" announces the formats and the content.
-  - "Copy HTML", then paste into Word or WordPad, and into a plain
+  WordPad is no longer part of Windows 11 24H2; use Word or another
+  editor that reads Rich Text Format (for example LibreOffice Writer).
+  - "Copy HTML", then paste into Word, and into a plain
     editor (Notepad): Word must show a heading, bold and italic text, a
     link and a list with two items; Notepad the plain text. Then copy a
     part of a web page in Edge or a paragraph in Word and press "Read
     clipboard": it must report an HTML fragment and the source URL for
     the web page.
-  - "Copy RTF", then paste into WordPad or Word: "Plain bold and italic."
-    with formatting. Copy formatted text in WordPad and "Read clipboard":
-    it must report Rich Text Format.
+  - "Copy RTF", then paste into Word: "Plain bold and italic." with
+    formatting. Copy formatted text in Word and "Read clipboard": it must
+    report Rich Text Format.
   - "Copy files", then paste into a folder in Explorer: the two files
     from `%TEMP%\walk-clipboard-manual` are copied (one name is not
     ASCII). "Cut files" and paste: they are moved. Then copy and cut
     files in Explorer and "Read clipboard": it must list them and say
     "copied" or "cut".
-  - "Copy image", then paste into Paint and Word: a color gradient of 200
-    by 100 pixels; Word shows the right edge fading out, Paint shows it on
-    white. Take a screenshot (Windows+Shift+S or Print Screen) and "Read
-    clipboard": it must report its size.
+  - "Copy image", then paste into Paint, into Word and into a web page
+    that accepts pasted images in a browser (for example a new message in
+    a web mail): a color gradient of 200 by 100 pixels; Word and the
+    browser may show the right edge fading out, Paint shows it on white.
+    Report which program took which format and whether the colors or the
+    transparency look wrong (straight or premultiplied alpha in
+    `CF_DIBV5` is not standardized). Then press Print Screen (a
+    screenshot of the screen, put on the clipboard by Windows) and "Read
+    clipboard": it must report an image of the screen size, read with
+    `Image()`. Also copy an image in Paint and in a browser ("Copy
+    image") and "Read clipboard"; report the formats and any error.
   - "Copy password (sensitive)", then open Windows+V: the password must
     not be in the history. Paste into Notepad: it must work.
 - Report for each program what was pasted, and every error the live

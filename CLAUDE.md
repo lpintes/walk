@@ -940,7 +940,19 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     an alpha mask, sRGB, straight alpha) and CF_DIB (24 bits, blended
     onto white); decoding reads 1, 4, 8, 16, 24 and 32 bits per pixel,
     bit fields and color tables, bottom-up and top-down, and treats a
-    32-bit bitmap whose alpha values are all zero as opaque.
+    32-bit bitmap whose alpha values are all zero as opaque. It also
+    skips the 12 mask bytes some programs write after a V4 or V5 header
+    (only when the data is exactly that much longer). Sizes are limited
+    to 2^26 pixels and checked without multiplying, so they cannot
+    overflow on 386 (the unit tests run with `GOARCH=386` too). RTF must
+    be 7-bit ASCII; `SetRTF` rejects other bytes.
+  - Fixed on the way: `OpenClipboard` and `CloseClipboard` work per
+    thread, so both the old `withOpenClipboard` and the new helper lock
+    the goroutine to its thread for the session; before, a goroutine
+    could move between them and leave the clipboard open.
+  - Windows Sandbox shares the clipboard with the host (`rdpclip`), so
+    the test overwrites the host clipboard too and retries the old
+    methods while another program has the clipboard open.
   - Sensitive data: `ExcludeClipboardContentFromMonitorProcessing`,
     and 0 for `CanIncludeInClipboardHistory` and
     `CanUploadToCloudClipboard`.

@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
-	"strings"
+	"runtime"
 	"syscall"
 	"time"
 	"unsafe"
@@ -214,12 +214,15 @@ func (d *ClipboardData) SetHTML(fragment, sourceURL string) {
 }
 
 // SetRTF sets Rich Text Format (ClipboardFormatRTF), such as RichEdit.RTF
-// returns. RTF is 7-bit text; the string is stored as it is, followed by
-// NUL.
+// returns. RTF is 7-bit text: other characters must be written as escapes
+// such as \u269? or \'e1, so SetData returns an error if rtf contains a
+// byte above 127 or NUL. The string is stored as it is, followed by NUL.
 func (d *ClipboardData) SetRTF(rtf string) {
 	d.add(ClipboardFormatRTF, func() ([]byte, error) {
-		if strings.IndexByte(rtf, 0) >= 0 {
-			return nil, errors.New("RTF contains NUL")
+		for i := range len(rtf) {
+			if rtf[i] == 0 || rtf[i] >= 0x80 {
+				return nil, fmt.Errorf("RTF contains the byte 0x%02X at %d; RTF must be 7-bit ASCII with escapes", rtf[i], i)
+			}
 		}
 		return append([]byte(rtf), 0), nil
 	})
@@ -361,7 +364,13 @@ func clipboardBytes(format ClipboardFormat) ([]byte, error) {
 // withOpenClipboardRetry is withOpenClipboard, but tries again for a short
 // time if another program has the clipboard open. Clipboard monitors, such
 // as the clipboard history of Windows, open it right after every change.
+//
+// The clipboard is open for a thread, so the goroutine stays on its thread
+// until the clipboard is closed.
 func (c *ClipboardService) withOpenClipboardRetry(f func() error) error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	for i := 0; ; i++ {
 		if win.OpenClipboard(c.hwnd) {
 			break
@@ -500,7 +509,10 @@ func (c *ClipboardService) SetHTML(fragment, plainText string) error {
 	return c.SetData(&d)
 }
 
-// RTF returns the Rich Text Format on the clipboard.
+// RTF returns the Rich Text Format on the clipboard: its bytes up to the
+// first NUL, as they are. RTF is 7-bit text, so characters outside ASCII
+// are escapes in the string; a program that writes 8-bit bytes anyway gets
+// them back unchanged, not converted to UTF-8.
 func (c *ClipboardService) RTF() (string, error) {
 	b, err := c.Data(ClipboardFormatRTF)
 	if err != nil {
@@ -510,7 +522,8 @@ func (c *ClipboardService) RTF() (string, error) {
 }
 
 // SetRTF replaces the contents of the clipboard with Rich Text Format and,
-// if plainText is not empty, the same content as plain text.
+// if plainText is not empty, the same content as plain text. rtf must be
+// 7-bit ASCII; see ClipboardData.SetRTF.
 func (c *ClipboardService) SetRTF(rtf, plainText string) error {
 	var d ClipboardData
 	d.SetRTF(rtf)
