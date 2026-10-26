@@ -821,6 +821,69 @@ How to test, on 386 and amd64 (after `build.ps1`):
   tree of `WinTest.cs`, the bounds of the `Chrome_WidgetWin` child must
   match the client area of the widget.
 
+## Task 21: more clipboard formats
+
+(Tasks 18 to 20 belong to other branches.)
+
+Step 14 part 3 gives `walk.ClipboardService`, which only knew text, the
+formats HTML (`HTML Format`), Rich Text Format, file lists (`CF_HDROP`
+with `Preferred DropEffect` for cut and copy), images (PNG, `CF_DIBV5`
+and `CF_DIB`), several formats at once (`ClipboardData` and `SetData`),
+the list of formats, a `ContainsX` method for each kind, and marking data
+as sensitive (`ExcludeClipboardContentFromMonitorProcessing`,
+`CanIncludeInClipboardHistory` and `CanUploadToCloudClipboard`), for
+example for passwords. The byte layouts are built in Go (package
+`internal/clipfmt`, unit tested in the container); what has not run yet is
+the exchange with Windows and with other programs.
+
+The test replaces the contents of the clipboard. It saves the text on the
+clipboard and puts it back at the end; other formats (an image, copied
+files) are lost, and an INFO line names them. Copy nothing important
+before running it.
+
+How to test, on 386 and amd64 (after `build.ps1`):
+
+- `tests/_wingui/scripts/run.ps1 -Only clipboard`. It also runs in
+  Windows Sandbox (`sandbox.ps1 -Only clipboard`), whose clipboard is
+  separate from the host. Report every FAIL line and the INFO lines (the
+  HTML offsets, the formats Windows adds to an image, for example
+  `CF_BITMAP`, the list of formats after `SetData`, how often
+  `ContentsChanged` was published and whether the clipboard was
+  restored). The checks read the clipboard with their own Win32 calls,
+  so they test the bytes other programs see: the HTML header offsets
+  byte by byte, the file list with `DragQueryFileW` as the shell reads
+  it, the `CF_DIBV5` header, the PNG signature, every pixel of each image
+  format and of a walk `Bitmap`, and RTF from one `RichEdit` into
+  another.
+- With the clipboard history on (Settings, System, Clipboard): after the
+  test, Windows+V must not list "secret password" (the sensitive text);
+  the other test texts may appear there. Report what the history shows.
+- `clipboard.exe manual` (in `%TEMP%\walk-wingui\<arch>\tests\clipboard`)
+  with NVDA on amd64. Each button announces what it did in a polite live
+  region; "Read clipboard" announces the formats and the content.
+  - "Copy HTML", then paste into Word or WordPad, and into a plain
+    editor (Notepad): Word must show a heading, bold and italic text, a
+    link and a list with two items; Notepad the plain text. Then copy a
+    part of a web page in Edge or a paragraph in Word and press "Read
+    clipboard": it must report an HTML fragment and the source URL for
+    the web page.
+  - "Copy RTF", then paste into WordPad or Word: "Plain bold and italic."
+    with formatting. Copy formatted text in WordPad and "Read clipboard":
+    it must report Rich Text Format.
+  - "Copy files", then paste into a folder in Explorer: the two files
+    from `%TEMP%\walk-clipboard-manual` are copied (one name is not
+    ASCII). "Cut files" and paste: they are moved. Then copy and cut
+    files in Explorer and "Read clipboard": it must list them and say
+    "copied" or "cut".
+  - "Copy image", then paste into Paint and Word: a color gradient of 200
+    by 100 pixels; Word shows the right edge fading out, Paint shows it on
+    white. Take a screenshot (Windows+Shift+S or Print Screen) and "Read
+    clipboard": it must report its size.
+  - "Copy password (sensitive)", then open Windows+V: the password must
+    not be in the history. Paste into Notepad: it must work.
+- Report for each program what was pasted, and every error the live
+  region announces.
+
 ## Reporting
 
 For each task, tell the user in Slovak, in plain text: what was run, on

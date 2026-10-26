@@ -900,6 +900,58 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
+- Step 14, part 3: draft pull request (number pending), not yet tested
+  on Windows (task 21 of `TESTING_ON_WINDOWS.md`, test program
+  `tests/_wingui/clipboard` with a `manual` mode). More formats in
+  `ClipboardService`; `Text`, `SetText`, `ContainsText`, `Clear` and
+  `ContentsChanged` are unchanged.
+  - `ClipboardFormat` with `Name`, the constants `ClipboardFormatText`,
+    `DIB`, `DIBV5` and `Files` (CF_HDROP), the registered formats as
+    package variables (`ClipboardFormatHTML`, `RTF`, `PNG`,
+    `PreferredDropEffect` and the three history and cloud exclusion
+    formats), `RegisterClipboardFormat`, `DropEffect` and
+    `ErrClipboardFormatNotAvailable`.
+  - `ClipboardData` collects several formats (`SetText`, `SetHTML`,
+    `SetRTF`, `SetFiles`, `SetImage`, `SetFormat` for raw bytes,
+    `SetSensitive`); `ClipboardService.SetData` converts everything
+    first (a failed conversion leaves the clipboard unchanged), then
+    empties the clipboard and sets all formats in one `OpenClipboard`
+    session, in the order given. Each format is copied into its own
+    `GlobalAlloc(GMEM_MOVEABLE)` memory, freed if `SetClipboardData`
+    fails (the clipboard is then emptied); Windows never gets a Go
+    pointer.
+  - Getters: `Data` (raw bytes), `Formats`, `ContainsFormat`,
+    `ContainsHTML`, `ContainsRTF`, `ContainsFiles`, `ContainsImage`,
+    `IsSensitive`, `HTML` (`ClipboardHTML`: fragment, document, source
+    URL), `RTF`, `Files` (`DragQueryFileW`), `PreferredDropEffect`,
+    `Image`, `ImageOfFormat`, `Bitmap(dpi)`. Setters: `SetHTML` and
+    `SetRTF` with an optional plain text alternative, `SetFiles` with
+    copy or move (cut), `SetImage`, `SetBitmap`, `SetSensitiveText`.
+    The new methods retry `OpenClipboard` for about 100 ms, because
+    clipboard monitors open the clipboard after every change.
+  - The byte formats are in the new package `internal/clipfmt`, which
+    calls no Windows function and has unit tests that run in the
+    container (`go test ./internal/clipfmt`): CF_HTML with 10-digit
+    UTF-8 byte offsets, version 0.9 and a terminating NUL (decoding
+    also accepts other offsets, -1 and LF line ends, and falls back to
+    the fragment comments), DROPFILES with wide paths, and DIBs without
+    GDI (so the `BITMAPINFO` problem under "Known issues" does not
+    matter): `SetImage` writes PNG, CF_DIBV5 (32 bits, bit fields with
+    an alpha mask, sRGB, straight alpha) and CF_DIB (24 bits, blended
+    onto white); decoding reads 1, 4, 8, 16, 24 and 32 bits per pixel,
+    bit fields and color tables, bottom-up and top-down, and treats a
+    32-bit bitmap whose alpha values are all zero as opaque.
+  - Sensitive data: `ExcludeClipboardContentFromMonitorProcessing`,
+    and 0 for `CanIncludeInClipboardHistory` and
+    `CanUploadToCloudClipboard`.
+  - New in `internal/win` (generated): the `CF_*` constants,
+    `DROPEFFECT_*`, `LCS_sRGB`, `LCS_GM_IMAGES`, `GlobalSize`,
+    `RegisterClipboardFormatW`, `GetClipboardFormatNameW` and
+    `EnumClipboardFormats`.
+  - Open questions: whether `Text` and `SetText` should retry
+    `OpenClipboard` too (a behavior change), and whether `SetText`
+    should empty the clipboard first (today it adds the text to what
+    another program put there without becoming the owner).
 - Steps 9 and 11: not started; step 8 can continue (generic
   event types are step 9).
 
