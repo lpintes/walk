@@ -725,7 +725,10 @@ How to test, on 386 and amd64 (after `build.ps1`):
   Automation) and three task dialogs (a radio button, the check box and a
   custom button operated through UI Automation; one closed with
   `WM_CLOSE`; one with a hyperlink invoked through UI Automation and
-  closed with `TDM_CLICK_BUTTON`). Report the FAIL lines with their
+  closed with `TDM_CLICK_BUTTON`; Windows 11 sends no
+  `TDN_HYPERLINK_CLICKED` for that `Invoke`, so a missing
+  `OnHyperlinkClicked` is an INFO line, and the link is tested with the
+  keyboard in the manual mode). Report the FAIL lines with their
   details and all INFO lines: they show how UI Automation sees the
   message box, the walk dialog and the task dialog (control type,
   localized control type, role, `IsDialog`, `IsModal`), which tells

@@ -745,10 +745,29 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - `tests/_wingui/uia` has a `TableView` (30 rows, 2 columns) for the
     grid checks; `dump` reads the tree with one cache request and falls
     back to the tree walker if that fails.
-- Step 4: draft pull request lpintes/walk#24, not yet tested on Windows (task
-  16 of `TESTING_ON_WINDOWS.md`, test program `tests/_wingui/dialogs`).
-  Option A only; option B (`#32770` through `CreateDialogIndirectParam`)
-  is not implemented.
+- Step 4: draft pull request lpintes/walk#24. Task 16 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/dialogs`) passed
+  on Windows 11 (2026-10-26): `run.ps1` and `examples.ps1` on 386 and
+  amd64 on the host and in Windows Sandbox, and the manual test with
+  NVDA on amd64. Option A only; option B (`#32770` through
+  `CreateDialogIndirectParam`) is not implemented and not needed for
+  NVDA.
+  - Results: UI Automation passes the annotation on; the walk dialog,
+    the message box and the task dialog all have ControlType Window,
+    Role 18, `IsDialog` true and `IsModal` true. Only the localized
+    control type differs: "okno" (window) for the walk dialog,
+    "dialógové okno" (dialog window) for the other two, so Narrator may
+    still say "window"; not tested with Narrator or JAWS yet. NVDA says
+    the title, "dialog" and the static texts of a walk dialog, like for
+    the message box; Tab, Enter and Escape work. The task dialog reads
+    and works with the keyboard (radio buttons, check box, expand
+    button, footer link, buttons; Escape and Alt+F4 return Cancel);
+    command links are announced as buttons with their second line read
+    after the first, as in system task dialogs.
+  - The footer link fires `OnHyperlinkClicked` on every Enter or Space,
+    but UI Automation `Invoke` on the link returns `S_OK` and sends no
+    `TDN_HYPERLINK_CLICKED` (`DoDefaultAction` fails with
+    `DISP_E_EXCEPTION`), so the automated test reports that as INFO.
   - Every `Dialog` gets, through Dynamic Annotation when it is created,
     the MSAA role `ROLE_SYSTEM_DIALOG` on its client object and the UI
     Automation property `IsDialog` (`IsDialog_Property_GUID`, Windows 10
@@ -795,13 +814,9 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     build checks the packed sizes against the SDK (96 and 8 bytes on 386,
     160 and 12 on 64-bit). Also `TD_*_ICON` (`MAKEINTRESOURCEW(-1)` to
     `(-4)`) and `TaskDialogIndirectAvailable`.
-  - To check on Windows: whether UI Automation passes the annotated
-    `IsDialog` on (the test compares with a message box), what
-    `IsModal` reports (walk dialogs cannot annotate it; it is printed),
-    and how NVDA, Narrator and JAWS announce the dialog. A concrete
-    reason for option B would be a screen reader that ignores the role
-    and looks for the `#32770` class, or `IsDialog` not passed on by UI
-    Automation.
+  - A concrete reason for option B would still be a screen reader that
+    ignores the role and looks for the `#32770` class, or Narrator
+    saying "window" because of the localized control type.
   - Not done: `Announce` for validation errors (step 10 leftover), a
     declarative counterpart of `TaskDialog` (it is a plain struct
     already), progress bars and timers in task dialogs.
