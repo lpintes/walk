@@ -374,6 +374,12 @@ var key2string = map[Key]string{
 type Modifiers byte
 
 func (m Modifiers) String() string {
+	if m&ModWin != 0 {
+		if rest := modifiers2string[m&^ModWin]; rest != "" {
+			return "Win+" + rest
+		}
+		return "Win"
+	}
 	return modifiers2string[m]
 }
 
@@ -391,6 +397,11 @@ const (
 	ModShift Modifiers = 1 << iota
 	ModControl
 	ModAlt
+
+	// ModWin is the Windows key. Only global hotkeys (NewGlobalHotkey)
+	// use it; ModifiersDown does not report it, so shortcuts of actions
+	// with ModWin never match.
+	ModWin
 )
 
 func ModifiersDown() Modifiers {

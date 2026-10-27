@@ -229,6 +229,26 @@ feature `Containers-DisposableClientVM` and reboot once):
   icons, `CloseAllMdiChildren` and closing the frame. `mdi.exe manual`
   shows a frame with three documents for a test with a screen reader;
   events go to standard output and the status bar.
+- `hotkeys`: global hotkeys and the single instance support (step 14
+  part 1). The test is the first instance of an application ID and
+  starts copies of itself (environment variable `WALK_HOTKEYS_CHILD`)
+  as other instances: one before it calls `Listen` (it must wait), one
+  after, one without arguments, and two at the same time with a new ID
+  (exactly one becomes the first instance, exit code 2, the other hands
+  over its arguments, exit code 0). The arguments, the working
+  directory and the thread of `OtherInstanceStarted` are checked.
+  Hotkeys: one of Ctrl+Alt+Shift+F9 to F11 is registered (SKIP if all
+  are taken), the same combination again must fail with
+  `ErrHotkeyAlreadyRegistered`, also in a copy of the test (exit code
+  3); `WM_HOTKEY` posted to the window with the hotkey's ID must publish
+  `Activated` once, other IDs nothing; then the options, Win as a
+  modifier (INFO when Windows reserves it), invalid arguments, the wrong
+  thread, `Dispose` (also from another goroutine) and the disposal of
+  the owner window. No keyboard input is sent. `hotkeys.exe manual`
+  registers Ctrl+Alt+Shift+W and announces each press in a polite live
+  region after bringing its window to the foreground; starting
+  `hotkeys.exe manual` again with arguments hands them to the running
+  window, which announces them.
 - `clipboard`: the clipboard formats of `ClipboardService` (step 14 part
   3), read back both through walk and with the test's own Win32 calls:
   text, HTML (the header offsets checked byte by byte, the fragment, the

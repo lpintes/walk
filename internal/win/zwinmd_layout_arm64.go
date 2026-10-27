@@ -82,6 +82,14 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(COPYDATASTRUCT{})-24]
+	_ = layoutCheck[unsafe.Alignof(COPYDATASTRUCT{})-8]
+	_ = layoutCheck[unsafe.Offsetof(COPYDATASTRUCT{}.DwData)-0]
+	_ = layoutCheck[unsafe.Offsetof(COPYDATASTRUCT{}.CbData)-8]
+	_ = layoutCheck[unsafe.Offsetof(COPYDATASTRUCT{}.LpData)-16]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(DIBSECTION{})-104]
 	_ = layoutCheck[unsafe.Alignof(DIBSECTION{})-8]
 	_ = layoutCheck[unsafe.Offsetof(DIBSECTION{}.DsBm)-0]

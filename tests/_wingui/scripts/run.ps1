@@ -132,6 +132,13 @@ if (Want "webview2") {
 	Report "webview2" $p (Stop-Test $p 120)
 }
 
+if (Want "hotkeys") {
+	# Starts copies of itself as other instances of the program; each may
+	# wait up to 30 seconds for the first one.
+	$p = Start-Test (Join-Path $root "hotkeys") "hotkeys"
+	Report "hotkeys" $p (Stop-Test $p 180)
+}
+
 if (Want "mdi") {
 	$p = Start-Test (Join-Path $root "mdi") "mdi"
 	Report "mdi" $p (Stop-Test $p 90)
