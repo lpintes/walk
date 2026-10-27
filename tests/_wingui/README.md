@@ -300,9 +300,11 @@ checks, for a look with a screen reader; the scripts do not use it.
 - PowerShell passes `""`, not NULL, for a string P/Invoke parameter given
   `$null`; pass `[NullString]::Value` instead (for example for the class
   name of `FindWindow`).
-- The 386 builds of the examples are console programs, so
-  `Process.MainWindowHandle` is the console window; find the walk window
-  with `FindWindow` by its title.
+- `build.ps1` links every program with `-ldflags=-H=windowsgui`, so it
+  has no console window and `cmd` does not wait for it; output goes only
+  where it is redirected (the `.out.txt` and `.err.txt` files). A console
+  build would make `Process.MainWindowHandle` the console window; find the
+  walk window with `FindWindow` by its title in that case.
 - `internal/win` declares only what walk uses. A test that needs other
   Win32 functions or constants declares them itself with
   `windows.NewLazySystemDLL` and plain constants.

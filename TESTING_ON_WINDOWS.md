@@ -65,8 +65,8 @@ Read `CLAUDE.md` first. In particular:
     `validator`, and `disconnect_reader` at the end. Before every key,
     check with `get_focus_info` (and `nvda+t`, which reads the window
     title) that focus is in the tested example; keys land wherever system
-    focus is. Build the examples for this with `-ldflags=-H=windowsgui`:
-    a console build opens a terminal window, which may take the focus.
+    focus is. `build.ps1` builds with `-ldflags=-H=windowsgui`; a
+    console build opens a terminal window, which may take the focus.
     `run_sequence` with `press_gesture`, `type_text`, `delay` and
     `read: ["focus"]` steps returns what NVDA said for each key. The
     keys are the ordinary user's: `tab`, `shift+tab`, arrows, `space`,
