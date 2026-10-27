@@ -836,8 +836,9 @@ func (s *SystemService) ScreenReaderChanged() *Event {
 }
 
 // HighContrast returns whether high contrast is on and the name of the
-// high contrast scheme (SPI_GETHIGHCONTRAST). It may be called from any
-// goroutine.
+// high contrast scheme (SPI_GETHIGHCONTRAST). The scheme may be empty
+// although high contrast is on: Windows 11 does not report the name of
+// its contrast themes. It may be called from any goroutine.
 func HighContrast() (on bool, scheme string, err error) {
 	var hc win.HIGHCONTRAST
 	hc.CbSize = uint32(unsafe.Sizeof(hc))

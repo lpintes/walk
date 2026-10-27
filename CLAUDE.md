@@ -987,10 +987,17 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `SetWindowText`, `COPYDATASTRUCT`, `WM_HOTKEY`, `WM_COPYDATA`,
     `MOD_*`, `ERROR_HOTKEY_ALREADY_REGISTERED`, `ERROR_ACCESS_DENIED`,
     `WAIT_*`, `SMTO_ABORTIFHUNG` and `SW_RESTORE`.
-- Step 14, part 2: draft pull request lpintes/walk#29, not yet tested
-  on Windows (task 20 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/system` with a `manual` mode). Power, session and
-  settings events and system settings.
+- Step 14, part 2: pull request lpintes/walk#29. Task 20 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/system` with a
+  `manual` mode) passed on Windows 11 (2026-10-27): `run.ps1 -Only
+  system` in Windows Sandbox on 386 and amd64 with every check PASS,
+  and a partial manual test on amd64 with NVDA (initial status, keep
+  awake and shutdown block reason toggled, "High contrast changed" once
+  per change, "Locked" and a real "Display state changed"). Not tested
+  by hand: unlock, dark mode, NVDA restart, power source, energy saver,
+  sleep, `powercfg /requests` and the shutdown blocking screen. Windows
+  11 reports an empty high contrast scheme name for its contrast
+  themes. Power, session and settings events and system settings.
   - `walk.System()` returns the `SystemService` of the calling thread,
     or an error on a thread without a walk window group (a hidden
     top-level window nobody pumps would make broadcasts and the
