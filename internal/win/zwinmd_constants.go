@@ -322,6 +322,15 @@ const (
 	HCF_HIGHCONTRASTON = 1
 )
 
+// HOT_KEY_MODIFIERS
+const (
+	MOD_ALT      = 1
+	MOD_CONTROL  = 2
+	MOD_NOREPEAT = 0x4000
+	MOD_SHIFT    = 4
+	MOD_WIN      = 8
+)
+
 // IMAGELIST_CREATION_FLAGS
 const (
 	ILC_COLOR32 = 0x20
@@ -747,6 +756,11 @@ const (
 	SIF_TRACKPOS = 0x10
 )
 
+// SEND_MESSAGE_TIMEOUT_FLAGS
+const (
+	SMTO_ABORTIFHUNG = 2
+)
+
 // SET_WINDOW_POS_FLAGS
 const (
 	SWP_FRAMECHANGED  = 0x20
@@ -767,6 +781,7 @@ const (
 // SHOW_WINDOW_CMD
 const (
 	SW_HIDE       = 0
+	SW_RESTORE    = 9
 	SW_SHOW       = 5
 	SW_SHOWNA     = 8
 	SW_SHOWNORMAL = 1
@@ -1263,12 +1278,21 @@ const (
 	VK_ZOOM                = 0xfb
 )
 
+// WAIT_EVENT
+const (
+	WAIT_ABANDONED = 0x80
+	WAIT_OBJECT_0  = 0
+	WAIT_TIMEOUT   = 0x102
+)
+
 // WIN32_ERROR
 const (
-	ERROR_CANCELLED         = 0x4c7
-	ERROR_FILE_NOT_FOUND    = 2
-	ERROR_INVALID_PARAMETER = 0x57
-	ERROR_SUCCESS           = 0
+	ERROR_ACCESS_DENIED             = 5
+	ERROR_CANCELLED                 = 0x4c7
+	ERROR_FILE_NOT_FOUND            = 2
+	ERROR_HOTKEY_ALREADY_REGISTERED = 0x581
+	ERROR_INVALID_PARAMETER         = 0x57
+	ERROR_SUCCESS                   = 0
 )
 
 // WINDOW_EX_STYLE
@@ -1872,6 +1896,7 @@ const (
 	WM_COMMAND                          = 0x111
 	WM_CONTEXTMENU                      = 0x7b
 	WM_COPY                             = 0x301
+	WM_COPYDATA                         = 0x4a
 	WM_CTLCOLOREDIT                     = 0x133
 	WM_CTLCOLORSTATIC                   = 0x138
 	WM_CUT                              = 0x300
@@ -1886,6 +1911,7 @@ const (
 	WM_GETMINMAXINFO                    = 0x24
 	WM_GETTEXT                          = 0xd
 	WM_GETTEXTLENGTH                    = 0xe
+	WM_HOTKEY                           = 0x312
 	WM_HSCROLL                          = 0x114
 	WM_INITMENUPOPUP                    = 0x117
 	WM_KEYDOWN                          = 0x100

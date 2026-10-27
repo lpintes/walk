@@ -28,6 +28,7 @@ var (
 	libuxtheme          = windows.NewLazySystemDLL("uxtheme.dll")
 
 	procAddFontMemResourceEx        = libgdi32.NewProc("AddFontMemResourceEx")
+	procAllowSetForegroundWindow    = libuser32.NewProc("AllowSetForegroundWindow")
 	procAlphaBlend                  = libmsimg32.NewProc("AlphaBlend")
 	procBeginDeferWindowPos         = libuser32.NewProc("BeginDeferWindowPos")
 	procBeginPaint                  = libuser32.NewProc("BeginPaint")
@@ -38,6 +39,7 @@ var (
 	procClientToScreen              = libuser32.NewProc("ClientToScreen")
 	procCloseClipboard              = libuser32.NewProc("CloseClipboard")
 	procCloseEnhMetaFile            = libgdi32.NewProc("CloseEnhMetaFile")
+	procCloseHandle                 = libkernel32.NewProc("CloseHandle")
 	procCloseThemeData              = libuxtheme.NewProc("CloseThemeData")
 	procCoCreateInstance            = libole32.NewProc("CoCreateInstance")
 	procCoGetClassObject            = libole32.NewProc("CoGetClassObject")
@@ -56,6 +58,7 @@ var (
 	procCreateFontIndirectW         = libgdi32.NewProc("CreateFontIndirectW")
 	procCreateIconIndirect          = libuser32.NewProc("CreateIconIndirect")
 	procCreateMenu                  = libuser32.NewProc("CreateMenu")
+	procCreateMutexW                = libkernel32.NewProc("CreateMutexW")
 	procCreatePatternBrush          = libgdi32.NewProc("CreatePatternBrush")
 	procCreatePopupMenu             = libuser32.NewProc("CreatePopupMenu")
 	procCreateRectRgn               = libgdi32.NewProc("CreateRectRgn")
@@ -87,6 +90,7 @@ var (
 	procFillRgn                     = libgdi32.NewProc("FillRgn")
 	procFindResourceW               = libkernel32.NewProc("FindResourceW")
 	procFindWindowW                 = libuser32.NewProc("FindWindowW")
+	procFindWindowExW               = libuser32.NewProc("FindWindowExW")
 	procFlashWindowEx               = libuser32.NewProc("FlashWindowEx")
 	procGdiFlush                    = libgdi32.NewProc("GdiFlush")
 	procGdipCreateBitmapFromFile    = libgdiplus.NewProc("GdipCreateBitmapFromFile")
@@ -132,6 +136,7 @@ var (
 	procGetWindowLongW              = libuser32.NewProc("GetWindowLongW")
 	procGetWindowPlacement          = libuser32.NewProc("GetWindowPlacement")
 	procGetWindowRect               = libuser32.NewProc("GetWindowRect")
+	procGetWindowThreadProcessId    = libuser32.NewProc("GetWindowThreadProcessId")
 	procGlobalAlloc                 = libkernel32.NewProc("GlobalAlloc")
 	procGlobalFree                  = libkernel32.NewProc("GlobalFree")
 	procGlobalSize                  = libkernel32.NewProc("GlobalSize")
@@ -151,6 +156,7 @@ var (
 	procIsChild                     = libuser32.NewProc("IsChild")
 	procIsClipboardFormatAvailable  = libuser32.NewProc("IsClipboardFormatAvailable")
 	procIsDialogMessageW            = libuser32.NewProc("IsDialogMessageW")
+	procIsIconic                    = libuser32.NewProc("IsIconic")
 	procIsWindowEnabled             = libuser32.NewProc("IsWindowEnabled")
 	procIsWindowVisible             = libuser32.NewProc("IsWindowVisible")
 	procKillTimer                   = libuser32.NewProc("KillTimer")
@@ -178,9 +184,11 @@ var (
 	procRegQueryValueExW            = libadvapi32.NewProc("RegQueryValueExW")
 	procRegisterClassExW            = libuser32.NewProc("RegisterClassExW")
 	procRegisterClipboardFormatW    = libuser32.NewProc("RegisterClipboardFormatW")
+	procRegisterHotKey              = libuser32.NewProc("RegisterHotKey")
 	procRegisterWindowMessageW      = libuser32.NewProc("RegisterWindowMessageW")
 	procReleaseCapture              = libuser32.NewProc("ReleaseCapture")
 	procReleaseDC                   = libuser32.NewProc("ReleaseDC")
+	procReleaseMutex                = libkernel32.NewProc("ReleaseMutex")
 	procRemoveFontMemResourceEx     = libgdi32.NewProc("RemoveFontMemResourceEx")
 	procRemoveMenu                  = libuser32.NewProc("RemoveMenu")
 	procRoundRect                   = libgdi32.NewProc("RoundRect")
@@ -195,6 +203,7 @@ var (
 	procScreenToClient              = libuser32.NewProc("ScreenToClient")
 	procSelectObject                = libgdi32.NewProc("SelectObject")
 	procSendMessageW                = libuser32.NewProc("SendMessageW")
+	procSendMessageTimeoutW         = libuser32.NewProc("SendMessageTimeoutW")
 	procSetActiveWindow             = libuser32.NewProc("SetActiveWindow")
 	procSetBkColor                  = libgdi32.NewProc("SetBkColor")
 	procSetBkMode                   = libgdi32.NewProc("SetBkMode")
@@ -219,6 +228,7 @@ var (
 	procSetWindowLongW              = libuser32.NewProc("SetWindowLongW")
 	procSetWindowPlacement          = libuser32.NewProc("SetWindowPlacement")
 	procSetWindowPos                = libuser32.NewProc("SetWindowPos")
+	procSetWindowTextW              = libuser32.NewProc("SetWindowTextW")
 	procSetWindowTheme              = libuxtheme.NewProc("SetWindowTheme")
 	procShellExecuteExW             = libshell32.NewProc("ShellExecuteExW")
 	procShell_NotifyIconW           = libshell32.NewProc("Shell_NotifyIconW")
@@ -235,8 +245,10 @@ var (
 	procUiaClientsAreListening      = libuiautomationcore.NewProc("UiaClientsAreListening")
 	procUiaHostProviderFromHwnd     = libuiautomationcore.NewProc("UiaHostProviderFromHwnd")
 	procUiaRaiseNotificationEvent   = libuiautomationcore.NewProc("UiaRaiseNotificationEvent")
+	procUnregisterHotKey            = libuser32.NewProc("UnregisterHotKey")
 	procUpdateWindow                = libuser32.NewProc("UpdateWindow")
 	procVariantClear                = liboleaut32.NewProc("VariantClear")
+	procWaitForSingleObject         = libkernel32.NewProc("WaitForSingleObject")
 	procWindowFromDC                = libuser32.NewProc("WindowFromDC")
 	procTaskDialogIndirect          = libcomctl32.NewProc("TaskDialogIndirect")
 )
@@ -244,6 +256,11 @@ var (
 func AddFontMemResourceEx(pFileView uintptr, cjSize uint32, pvResrved unsafe.Pointer, pNumFonts *uint32) HANDLE {
 	r1, _, _ := syscall.SyscallN(procAddFontMemResourceEx.Addr(), pFileView, uintptr(cjSize), uintptr(pvResrved), uintptr(unsafe.Pointer(pNumFonts)))
 	return HANDLE(r1)
+}
+
+func AllowSetForegroundWindow(dwProcessId uint32) bool {
+	r1, _, _ := syscall.SyscallN(procAllowSetForegroundWindow.Addr(), uintptr(dwProcessId))
+	return r1 != 0
 }
 
 func AlphaBlend(hdcDest HDC, xoriginDest int32, yoriginDest int32, wDest int32, hDest int32, hdcSrc HDC, xoriginSrc int32, yoriginSrc int32, wSrc int32, hSrc int32, ftn BLENDFUNCTION) bool {
@@ -294,6 +311,11 @@ func CloseClipboard() bool {
 func CloseEnhMetaFile(hdc HDC) HENHMETAFILE {
 	r1, _, _ := syscall.SyscallN(procCloseEnhMetaFile.Addr(), uintptr(hdc))
 	return HENHMETAFILE(r1)
+}
+
+func CloseHandle(hObject HANDLE) bool {
+	r1, _, _ := syscall.SyscallN(procCloseHandle.Addr(), uintptr(hObject))
+	return r1 != 0
 }
 
 func CloseThemeData(hTheme HTHEME) HRESULT {
@@ -382,6 +404,11 @@ func CreateIconIndirect(piconinfo *ICONINFO) HICON {
 func CreateMenu() HMENU {
 	r1, _, _ := syscall.SyscallN(procCreateMenu.Addr())
 	return HMENU(r1)
+}
+
+func CreateMutex(lpMutexAttributes uintptr, bInitialOwner bool, lpName *uint16) HANDLE {
+	r1, _, _ := syscall.SyscallN(procCreateMutexW.Addr(), lpMutexAttributes, uintptr(BoolToBOOL(bInitialOwner)), uintptr(unsafe.Pointer(lpName)))
+	return HANDLE(r1)
 }
 
 func CreatePatternBrush(hbm HBITMAP) HBRUSH {
@@ -535,6 +562,11 @@ func FindResource(hModule HMODULE, lpName *uint16, lpType *uint16) HRSRC {
 
 func FindWindow(lpClassName *uint16, lpWindowName *uint16) HWND {
 	r1, _, _ := syscall.SyscallN(procFindWindowW.Addr(), uintptr(unsafe.Pointer(lpClassName)), uintptr(unsafe.Pointer(lpWindowName)))
+	return HWND(r1)
+}
+
+func FindWindowEx(hWndParent HWND, hWndChildAfter HWND, lpszClass *uint16, lpszWindow *uint16) HWND {
+	r1, _, _ := syscall.SyscallN(procFindWindowExW.Addr(), uintptr(hWndParent), uintptr(hWndChildAfter), uintptr(unsafe.Pointer(lpszClass)), uintptr(unsafe.Pointer(lpszWindow)))
 	return HWND(r1)
 }
 
@@ -768,6 +800,11 @@ func GetWindowRect(hWnd HWND, lpRect *RECT) bool {
 	return r1 != 0
 }
 
+func GetWindowThreadProcessId(hWnd HWND, lpdwProcessId *uint32) uint32 {
+	r1, _, _ := syscall.SyscallN(procGetWindowThreadProcessId.Addr(), uintptr(hWnd), uintptr(unsafe.Pointer(lpdwProcessId)))
+	return uint32(r1)
+}
+
 func GlobalAlloc(uFlags uint32, dwBytes uintptr) HGLOBAL {
 	r1, _, _ := syscall.SyscallN(procGlobalAlloc.Addr(), uintptr(uFlags), dwBytes)
 	return HGLOBAL(r1)
@@ -860,6 +897,11 @@ func IsClipboardFormatAvailable(format uint32) bool {
 
 func IsDialogMessage(hDlg HWND, lpMsg *MSG) bool {
 	r1, _, _ := syscall.SyscallN(procIsDialogMessageW.Addr(), uintptr(hDlg), uintptr(unsafe.Pointer(lpMsg)))
+	return r1 != 0
+}
+
+func IsIconic(hWnd HWND) bool {
+	r1, _, _ := syscall.SyscallN(procIsIconic.Addr(), uintptr(hWnd))
 	return r1 != 0
 }
 
@@ -995,6 +1037,11 @@ func RegisterClipboardFormat(lpszFormat *uint16) uint32 {
 	return uint32(r1)
 }
 
+func RegisterHotKey(hWnd HWND, id int32, fsModifiers uint32, vk uint32) bool {
+	r1, _, _ := syscall.SyscallN(procRegisterHotKey.Addr(), uintptr(hWnd), uintptr(id), uintptr(fsModifiers), uintptr(vk))
+	return r1 != 0
+}
+
 func RegisterWindowMessage(lpString *uint16) uint32 {
 	r1, _, _ := syscall.SyscallN(procRegisterWindowMessageW.Addr(), uintptr(unsafe.Pointer(lpString)))
 	return uint32(r1)
@@ -1007,6 +1054,11 @@ func ReleaseCapture() bool {
 
 func ReleaseDC(hWnd HWND, hDC HDC) bool {
 	r1, _, _ := syscall.SyscallN(procReleaseDC.Addr(), uintptr(hWnd), uintptr(hDC))
+	return r1 != 0
+}
+
+func ReleaseMutex(hMutex HANDLE) bool {
+	r1, _, _ := syscall.SyscallN(procReleaseMutex.Addr(), uintptr(hMutex))
 	return r1 != 0
 }
 
@@ -1077,6 +1129,11 @@ func SelectObject(hdc HDC, h HGDIOBJ) HGDIOBJ {
 
 func SendMessage(hWnd HWND, Msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	r1, _, _ := syscall.SyscallN(procSendMessageW.Addr(), uintptr(hWnd), uintptr(Msg), wParam, lParam)
+	return r1
+}
+
+func SendMessageTimeout(hWnd HWND, Msg uint32, wParam uintptr, lParam uintptr, fuFlags uint32, uTimeout uint32, lpdwResult *uintptr) uintptr {
+	r1, _, _ := syscall.SyscallN(procSendMessageTimeoutW.Addr(), uintptr(hWnd), uintptr(Msg), wParam, lParam, uintptr(fuFlags), uintptr(uTimeout), uintptr(unsafe.Pointer(lpdwResult)))
 	return r1
 }
 
@@ -1204,6 +1261,11 @@ func SetWindowPos(hWnd HWND, hWndInsertAfter HWND, X int32, Y int32, cx int32, c
 	return r1 != 0
 }
 
+func SetWindowText(hWnd HWND, lpString *uint16) bool {
+	r1, _, _ := syscall.SyscallN(procSetWindowTextW.Addr(), uintptr(hWnd), uintptr(unsafe.Pointer(lpString)))
+	return r1 != 0
+}
+
 func SetWindowTheme(hwnd HWND, pszSubAppName *uint16, pszSubIdList *uint16) HRESULT {
 	r1, _, _ := syscall.SyscallN(procSetWindowTheme.Addr(), uintptr(hwnd), uintptr(unsafe.Pointer(pszSubAppName)), uintptr(unsafe.Pointer(pszSubIdList)))
 	return HRESULT(r1)
@@ -1283,6 +1345,11 @@ func UiaRaiseNotificationEvent(provider *IRawElementProviderSimple, notification
 	return HRESULT(r1)
 }
 
+func UnregisterHotKey(hWnd HWND, id int32) bool {
+	r1, _, _ := syscall.SyscallN(procUnregisterHotKey.Addr(), uintptr(hWnd), uintptr(id))
+	return r1 != 0
+}
+
 func UpdateWindow(hWnd HWND) bool {
 	r1, _, _ := syscall.SyscallN(procUpdateWindow.Addr(), uintptr(hWnd))
 	return r1 != 0
@@ -1291,6 +1358,11 @@ func UpdateWindow(hWnd HWND) bool {
 func VariantClear(pvarg *VARIANT) HRESULT {
 	r1, _, _ := syscall.SyscallN(procVariantClear.Addr(), uintptr(unsafe.Pointer(pvarg)))
 	return HRESULT(r1)
+}
+
+func WaitForSingleObject(hHandle HANDLE, dwMilliseconds uint32) uint32 {
+	r1, _, _ := syscall.SyscallN(procWaitForSingleObject.Addr(), uintptr(hHandle), uintptr(dwMilliseconds))
+	return uint32(r1)
 }
 
 func WindowFromDC(hDC HDC) HWND {

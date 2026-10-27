@@ -171,6 +171,32 @@ func (fb *FormBase) RequestAttention() {
 	win.FlashWindowEx(&fwi)
 }
 
+// BringToForeground restores the form if it is minimized and makes it the
+// foreground window, so that it gets the keyboard focus and screen readers
+// announce it. A hidden form is not shown.
+//
+// Windows lets a program take the foreground only in some situations, for
+// example right after the user pressed one of its global hotkeys
+// (GlobalHotkey) or when another instance passed its arguments to it
+// (SingleInstance). Otherwise Windows flashes the taskbar button instead
+// and BringToForeground returns an error.
+func (fb *FormBase) BringToForeground() error {
+	if fb.hWnd == 0 {
+		return newError("BringToForeground: the form is disposed")
+	}
+	// SW_RESTORE would show a hidden window, so check visibility first.
+	if !win.IsWindowVisible(fb.hWnd) {
+		return nil
+	}
+	if win.IsIconic(fb.hWnd) {
+		win.ShowWindow(fb.hWnd, win.SW_RESTORE)
+	}
+	if !win.SetForegroundWindow(fb.hWnd) {
+		return newErrorNoPanic("BringToForeground: Windows did not let the program take the foreground")
+	}
+	return nil
+}
+
 func (fb *FormBase) AsContainerBase() *ContainerBase {
 	if fb.clientComposite == nil {
 		return nil
