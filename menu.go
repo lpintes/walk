@@ -18,6 +18,11 @@ type Menu struct {
 	window  Window
 	actions *ActionList
 	getDPI  func() int
+
+	// positionOffset, if not nil, returns the number of items Windows
+	// inserted before the items of the actions: the menu bar of an MDI
+	// frame has the system menu of a maximized child as its first item.
+	positionOffset func() int
 }
 
 func newMenuBar(window Window) (*Menu, error) {
@@ -176,12 +181,12 @@ func (m *Menu) onActionChanged(action *Action) error {
 
 	m.initMenuItemInfoFromAction(&mii, action)
 
-	if !win.SetMenuItemInfo(m.hMenu, uint32(m.actions.indexInObserver(action)), true, &mii) {
+	if !win.SetMenuItemInfo(m.hMenu, m.position(m.actions.indexInObserver(action)), true, &mii) {
 		return newError("SetMenuItemInfo failed")
 	}
 
 	if action.Default() {
-		win.SetMenuDefaultItem(m.hMenu, uint32(m.actions.indexInObserver(action)), true)
+		win.SetMenuDefaultItem(m.hMenu, m.position(m.actions.indexInObserver(action)), true)
 	}
 
 	if action.Exclusive() && action.Checked() {
@@ -203,7 +208,7 @@ func (m *Menu) onActionChanged(action *Action) error {
 			}
 		}
 
-		if !win.CheckMenuRadioItem(m.hMenu, uint32(first), uint32(last), uint32(index), win.MF_BYPOSITION) {
+		if !win.CheckMenuRadioItem(m.hMenu, m.position(first), m.position(last), m.position(index), win.MF_BYPOSITION) {
 			return newError("CheckMenuRadioItem failed")
 		}
 	}
@@ -245,12 +250,12 @@ func (m *Menu) insertAction(action *Action, visibleChanged bool) (err error) {
 
 	m.initMenuItemInfoFromAction(&mii, action)
 
-	if !win.InsertMenuItem(m.hMenu, uint32(index), true, &mii) {
+	if !win.InsertMenuItem(m.hMenu, m.position(index), true, &mii) {
 		return newError("InsertMenuItem failed")
 	}
 
 	if action.Default() {
-		win.SetMenuDefaultItem(m.hMenu, uint32(m.actions.indexInObserver(action)), true)
+		win.SetMenuDefaultItem(m.hMenu, m.position(m.actions.indexInObserver(action)), true)
 	}
 
 	menu := action.menu
@@ -266,7 +271,7 @@ func (m *Menu) insertAction(action *Action, visibleChanged bool) (err error) {
 func (m *Menu) removeAction(action *Action, visibleChanged bool) error {
 	index := m.actions.indexInObserver(action)
 
-	if !win.RemoveMenu(m.hMenu, uint32(index), win.MF_BYPOSITION) {
+	if !win.RemoveMenu(m.hMenu, m.position(index), win.MF_BYPOSITION) {
 		return lastError("RemoveMenu")
 	}
 
@@ -277,6 +282,16 @@ func (m *Menu) removeAction(action *Action, visibleChanged bool) error {
 	m.ensureMenuBarRedrawn()
 
 	return nil
+}
+
+// position returns the position in the Windows menu of the item of the
+// action at index.
+func (m *Menu) position(index int) uint32 {
+	if m.positionOffset != nil {
+		index += m.positionOffset()
+	}
+
+	return uint32(index)
 }
 
 func (m *Menu) ensureMenuBarRedrawn() {

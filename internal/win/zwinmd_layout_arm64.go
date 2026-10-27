@@ -75,6 +75,13 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(CLIENTCREATESTRUCT{})-16]
+	_ = layoutCheck[unsafe.Alignof(CLIENTCREATESTRUCT{})-8]
+	_ = layoutCheck[unsafe.Offsetof(CLIENTCREATESTRUCT{}.HWindowMenu)-0]
+	_ = layoutCheck[unsafe.Offsetof(CLIENTCREATESTRUCT{}.IdFirstChild)-8]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(COPYDATASTRUCT{})-24]
 	_ = layoutCheck[unsafe.Alignof(COPYDATASTRUCT{})-8]
 	_ = layoutCheck[unsafe.Offsetof(COPYDATASTRUCT{}.DwData)-0]
@@ -292,6 +299,20 @@ func _() {
 	_ = layoutCheck[unsafe.Offsetof(LVHITTESTINFO{}.IItem)-12]
 	_ = layoutCheck[unsafe.Offsetof(LVHITTESTINFO{}.ISubItem)-16]
 	_ = layoutCheck[unsafe.Offsetof(LVHITTESTINFO{}.IGroup)-20]
+}
+
+func _() {
+	_ = layoutCheck[unsafe.Sizeof(MDICREATESTRUCT{})-56]
+	_ = layoutCheck[unsafe.Alignof(MDICREATESTRUCT{})-8]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.SzClass)-0]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.SzTitle)-8]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.HOwner)-16]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.X)-24]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.Y)-28]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.Cx)-32]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.Cy)-36]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.Style)-40]
+	_ = layoutCheck[unsafe.Offsetof(MDICREATESTRUCT{}.LParam)-48]
 }
 
 func _() {

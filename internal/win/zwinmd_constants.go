@@ -28,6 +28,11 @@ const (
 	BP_PUSHBUTTON = 1
 )
 
+// CASCADE_WINDOWS_HOW
+const (
+	MDITILE_SKIPDISABLED = 2
+)
+
 // CFE_EFFECTS
 const (
 	CFE_AUTOBACKCOLOR = 0x4000000
@@ -797,6 +802,7 @@ const (
 // SHOW_WINDOW_CMD
 const (
 	SW_HIDE       = 0
+	SW_MINIMIZE   = 6
 	SW_RESTORE    = 9
 	SW_SHOW       = 5
 	SW_SHOWNA     = 8
@@ -979,6 +985,12 @@ const (
 const (
 	TMT_FILLCOLOR = 0xeda
 	TMT_TEXTCOLOR = 0xedb
+)
+
+// TILE_WINDOWS_HOW
+const (
+	MDITILE_HORIZONTAL = 1
+	MDITILE_VERTICAL   = 0
 )
 
 // TOOLTIP_FLAGS
@@ -1882,6 +1894,7 @@ const (
 	LB_SETITEMHEIGHT                    = 0x1a0
 	LB_SETSEL                           = 0x185
 	LB_SETTOPINDEX                      = 0x197
+	MDIS_ALLCHILDSTYLES                 = 1
 	PBT_APMPOWERSTATUSCHANGE            = 0xa
 	PBT_APMRESUMEAUTOMATIC              = 0x12
 	PBT_APMRESUMESUSPEND                = 7
@@ -1893,6 +1906,7 @@ const (
 	PRF_NONCLIENT                       = 2
 	PRF_OWNED                           = 0x20
 	SC_CLOSE                            = 0xf060
+	SC_MINIMIZE                         = 0xf020
 	STATE_SYSTEM_ALERT_HIGH             = 0x10000000
 	STATE_SYSTEM_ALERT_LOW              = 0x4000000
 	STATE_SYSTEM_ALERT_MEDIUM           = 0x8000000
@@ -1930,6 +1944,7 @@ const (
 	WM_APP                              = 0x8000
 	WM_CHANGEUISTATE                    = 0x127
 	WM_CHAR                             = 0x102
+	WM_CHILDACTIVATE                    = 0x22
 	WM_CLEAR                            = 0x303
 	WM_CLIPBOARDUPDATE                  = 0x31d
 	WM_CLOSE                            = 0x10
@@ -1963,6 +1978,18 @@ const (
 	WM_LBUTTONUP                        = 0x202
 	WM_MBUTTONDOWN                      = 0x207
 	WM_MBUTTONUP                        = 0x208
+	WM_MDIACTIVATE                      = 0x222
+	WM_MDICASCADE                       = 0x227
+	WM_MDICREATE                        = 0x220
+	WM_MDIDESTROY                       = 0x221
+	WM_MDIGETACTIVE                     = 0x229
+	WM_MDIICONARRANGE                   = 0x228
+	WM_MDIMAXIMIZE                      = 0x225
+	WM_MDINEXT                          = 0x224
+	WM_MDIREFRESHMENU                   = 0x234
+	WM_MDIRESTORE                       = 0x223
+	WM_MDISETMENU                       = 0x230
+	WM_MDITILE                          = 0x226
 	WM_MEASUREITEM                      = 0x2c
 	WM_MOUSEACTIVATE                    = 0x21
 	WM_MOUSEMOVE                        = 0x200
@@ -1989,8 +2016,10 @@ const (
 	WM_SETTINGCHANGE                    = 0x1a
 	WM_SHOWWINDOW                       = 0x18
 	WM_SIZE                             = 5
+	WM_SYSCHAR                          = 0x106
 	WM_SYSCOLORCHANGE                   = 0x15
 	WM_SYSCOMMAND                       = 0x112
+	WM_SYSKEYDOWN                       = 0x104
 	WM_THEMECHANGED                     = 0x31a
 	WM_TIMER                            = 0x113
 	WM_UNDO                             = 0x304

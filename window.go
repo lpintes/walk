@@ -1904,6 +1904,12 @@ func (wb *WindowBase) RequestLayout() {
 				return
 			}
 
+			if ok && form.AsFormBase().mdiChild {
+				// An MDI child lays out its own children; its parents are
+				// the MDICLIENT window and the frame.
+				break
+			}
+
 			if widget, ok := window.(Widget); ok {
 				if window = widget.Parent(); window != nil {
 					hwnd = window.Handle()
@@ -2525,5 +2531,16 @@ func (wb *WindowBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 		}
 	}
 
+	if dwp, ok := wb.window.(defWindowProcer); ok {
+		return dwp.defWindowProc(hwnd, msg, wParam, lParam)
+	}
+
 	return win.DefWindowProc(hwnd, msg, wParam, lParam)
+}
+
+// defWindowProcer is implemented by windows whose unhandled messages go to
+// another default window procedure than DefWindowProc: DefFrameProc for an
+// MDI frame, DefMDIChildProc for an MDI child.
+type defWindowProcer interface {
+	defWindowProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr
 }

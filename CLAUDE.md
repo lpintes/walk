@@ -916,6 +916,127 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
+- Step 11: pull request lpintes/walk#30. Task 18 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/mdi` with a
+  `manual` mode, example `examples/mdi`) passed on Windows 11
+  (2026-10-27) after the fixes below: `run.ps1` and `examples.ps1` in
+  Windows Sandbox on 386 and amd64 (`mdi` every check PASS), and a
+  short manual test with NVDA on amd64: on opening NVDA says the frame
+  title, the document title and the focused field; Ctrl+F6 says the
+  document title and returns the focus to the last focused field;
+  Alt+Hyphen opens the system menu; after the last document closes
+  NVDA says "Documents". Not tested: Narrator, JAWS, 150 % scaling.
+  Fixed during the test:
+  - `DefFrameProc` (with an MDI client) and `DefMDIChildProc` set the
+    title but return 0 for `WM_SETTEXT`, so `SetTitle` failed and a
+    frame with children could not be created; both `defWindowProc`
+    methods return TRUE.
+  - With no child open the focus is in the MDI client, and
+    `IsDialogMessage` moved it to the status bar on an arrow key;
+    `translateMDISysAccel` dispatches arrow keys for the MDI client
+    without `IsDialogMessage`.
+  - Test: while the child is maximized its system menu is the first
+    item of the frame's menu bar, so Windows reports `GUI_INMENUMODE`
+    with the frame as owner, not `GUI_SYSTEMMENUMODE`.
+  - Found, not fixed here: no walk form gets the foreground when it
+    opens (any walk program started from PowerShell, while `winver`,
+    `charmap` and Notepad do), because `setWindowVisible` shows every
+    window with `SW_SHOWNA` (upstream commit 508b8cb, 2018, no reason
+    given). To be fixed separately: forms shown with activation.
+  - Decision: a separate type `MdiMainWindow` that embeds `MainWindow`
+    (menu bar, tool bar and status bar stay), not an option of
+    `MainWindow`: the frame needs another default window procedure
+    (`DefFrameProc`), its own `WM_COMMAND`, `WM_CLOSE` and activation
+    handling, and its widget list is not used. `NewMainWindowWithCfg`
+    now calls `initMainWindow(mw, window, cfg)`, which both use.
+  - `MdiMainWindow`: `NewMdiMainWindow`, `NewMdiMainWindowWithCfg`,
+    `MdiChildren`, `ActiveMdiChild`, `ActiveMdiChildChanged`,
+    `SetWindowMenu` and `WindowMenu` (`WM_MDISETMENU`), `Cascade`,
+    `TileHorizontally`, `TileVertically`, `ArrangeIcons`,
+    `ActivateNextMdiChild`, `ActivatePreviousMdiChild`,
+    `CloseAllMdiChildren` (stops at a child whose `Closing` cancels;
+    `WM_CLOSE` of the frame publishes the frame's own `Closing` first and
+    calls it only if that did not cancel, through the `FormBase` hook
+    `closeChildren`; a child that cancels cancels the frame close),
+    `SetMdiClientName` (accessible name of the `MDICLIENT` through
+    Dynamic Annotation, default "Documents").
+    The `MDICLIENT` (`WS_EX_CLIENTEDGE`, `MDIS_ALLCHILDSTYLES`, first
+    child ID 0xFF00) is a direct child of the frame, sized to
+    `ClientBoundsPixels` (between tool bar and status bar); the client
+    composite of the frame is hidden. `WM_COMMAND` with an ID that is not
+    a walk action goes to `DefFrameProc` (window menu items, the system
+    menu of a maximized child). `WM_DPICHANGED` also applies the DPI to
+    the children and lays them out. `WM_SIZE` does not reach
+    `DefFrameProc` (which would size the MDI client over the bars):
+    `MainWindow` places the bars, then the MDI client is fitted. The tool
+    bar's `BoundsChanged` and `VisibleChanged` (also of a tool bar set
+    later with `SetToolBar`, through the hook `MainWindow.toolBarSet`) fit
+    the bars and the MDI client again.
+  - `MdiChildWindow` (a `Form` on `FormBase`): `NewMdiChildWindow(frame)`
+    sends `WM_MDICREATE` for walk's class `\o/ Walk_MdiChild_Class \o/`,
+    whose window procedure calls `DefMDIChildProc` until the window is
+    registered; the child is created hidden and `Show` activates it.
+    `Frame`, `Activate`, `IsActive`, `Maximize`, `Minimize`, `Restore`,
+    `IsMaximized`, `IsMinimized`; `Run` only shows it; `SetOwner` returns
+    an error; a form owned by a child (a modal `Dialog`) is really owned
+    by the frame (`formOwnerHWnd` in `SetOwner`, `Run` and `WM_CLOSE`), so
+    the frame is disabled while it runs, and the child is activated again
+    when it closes; `Dialog` centers on the child's screen bounds; `Bounds` and `BoundsPixels` are relative to the MDI client;
+    `Dispose` uses `WM_MDIDESTROY` (also when `NewMdiChildWindow` fails
+    after creating the window). `Closing`, `Activating` and
+    `Deactivating` come from `FormBase` (`WM_CLOSE`, `WM_MDIACTIVATE`).
+    `NeedsWmSize` is true, because `DefMDIChildProc` needs `WM_SIZE` and
+    `WM_MOVE`; `WM_GETMINMAXINFO` goes to it before the layout minimum is
+    set. The `Form` of the widgets in a child stays the frame (`GA_ROOT`),
+    so the menu bar shortcuts work in every child. `RequestLayout` stops
+    at an MDI child.
+  - Focus: `WM_MDIACTIVATE` of the deactivated child saves the focused
+    control, `WM_SETFOCUS` of the child (the MDI client sets the focus to
+    an activated child) restores it or focuses the first control;
+    `WM_ACTIVATE` of the frame sends the focus to the active child unless
+    it was outside the MDI client (a saved window that no longer exists
+    counts as inside). When the last child is destroyed while the frame is
+    active, the focus goes to the MDI client: the frame cannot keep it
+    (`DefFrameProc` passes `WM_SETFOCUS` on to the MDI client), and the
+    named MDI client gives a screen reader something to say instead of an
+    unnamed pane.
+  - Message loop (`mainloop_default.go` and `mainloop_cgo.go`, the latter
+    not compiled here, no MinGW in the container): after `handleKeyDown`,
+    `FormBase.translateMDISysAccel` calls `TranslateMDISysAccel` for
+    `WM_KEYDOWN` and `WM_SYSKEYDOWN` of the frame and its descendants only
+    (other forms of the thread share the loop, and the function ignores
+    the target window) and passes `WM_SYSCHAR` '-' for a
+    control inside the active child to the child (Alt+Hyphen);
+    `IsDialogMessage` gets the active child instead of the frame for
+    messages to it or its descendants (`dialogMessageHWnd`), so Tab stays
+    inside it; for a minimized active child the frame.
+  - `WindowBase.WndProc` calls an unexported `defWindowProc` method of
+    the window, when it has one, instead of `DefWindowProc`.
+  - Menus: `Menu` has an optional `positionOffset`; the frame's menu bar
+    skips the system menu item a maximized child puts at position 0.
+    Action IDs skip 0xFF00 to 0xFFFF (the window menu items) and, after
+    the last ID, start at 3 again skipping IDs in use (`allocActionId`).
+  - Declarative `MdiMainWindow` (the fields of `MainWindow` without the
+    widgets, plus `WindowMenu **walk.Menu`, `MdiChildren` and
+    `OnActiveMdiChildChanged`) and `MdiChildWindow` (with `Bounds`,
+    `Maximized`, `OnActivating`, `OnDeactivating`, `OnClosing`;
+    `Create(frame)`). The declarative `MainWindow.Create` was split into
+    `init`, which `MdiMainWindow` uses.
+  - New in `internal/win` (generated): `DefFrameProc`, `DefMDIChildProc`,
+    `TranslateMDISysAccel`, `IsIconic`, `IsZoomed`, `CLIENTCREATESTRUCT`,
+    `MDICREATESTRUCT`, the `WM_MDI*` messages used, `WM_CHILDACTIVATE`,
+    `WM_SYSKEYDOWN`, `WM_SYSCHAR`, `MDITILE_*`, `MDIS_ALLCHILDSTYLES`,
+    `SW_MINIMIZE`, `SC_MINIMIZE`, `IsWindow` and `GetActiveWindow`.
+  - Accessibility: the children are real MDI children, so the system
+    gives them their title as accessible name and raises the focus and
+    name change events; only the MDI client gets a name. Whether NVDA says the title
+    on every switch is for the manual test.
+  - Not done: per-child menus merged into the frame's menu bar
+    (`WM_MDISETMENU` per child), a declarative or built-in standard window
+    menu (the program builds it), `ToolTipErrorPresenter` and the
+    deprecated `WebView` accelerators inside children (they look at the
+    frame's own widgets), widgets beside the MDI client in the frame,
+    persistence of the set of open children, tabbed documents.
 - Step 14, part 1: pull request lpintes/walk#28, merged. Task 19 of
   `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/hotkeys` with a
   `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
@@ -1133,8 +1254,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `OpenClipboard` too (a behavior change), and whether `SetText`
     should empty the clipboard first (today it adds the text to what
     another program put there without becoming the owner).
-- Steps 9 and 11: not started; step 8 can continue (generic
-  event types are step 9).
+- Step 9: not started; step 8 can continue (generic event types are
+  step 9).
 
 ## Candidate next steps (analysis for steps 4 to 11)
 

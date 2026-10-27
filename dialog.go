@@ -175,6 +175,14 @@ func (dlg *Dialog) Show() {
 
 		if dlg.owner != nil {
 			ob := dlg.owner.BoundsPixels()
+			if dlg.owner.AsFormBase().mdiChild {
+				// The bounds of an MDI child are relative to the MDI
+				// client; center on its screen bounds.
+				var r win.RECT
+				if win.GetWindowRect(dlg.owner.Handle(), &r) {
+					ob = rectangleFromRECT(r)
+				}
+			}
 
 			if dlg.centerInOwnerWhenRun {
 				dlg.SetBoundsPixels(fitRectToScreen(dlg.hWnd, Rectangle{

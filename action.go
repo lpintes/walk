@@ -51,15 +51,32 @@ type Action struct {
 func NewAction() *Action {
 	a := &Action{
 		enabled: true,
-		id:      nextActionId,
+		id:      allocActionId(),
 		visible: true,
 	}
 
 	actionsById[a.id] = a
 
-	nextActionId++
-
 	return a
+}
+
+// allocActionId returns the next free action ID. The IDs count up from 3
+// and skip the command IDs from mdiFirstChildID on, which the MDI client
+// gives the items of the window menu; after the last ID they start at 3
+// again, skipping the IDs still in use.
+func allocActionId() uint16 {
+	for {
+		id := nextActionId
+
+		nextActionId++
+		if nextActionId >= mdiFirstChildID || nextActionId < 3 {
+			nextActionId = 3
+		}
+
+		if _, used := actionsById[id]; !used && id >= 3 && id < mdiFirstChildID {
+			return id
+		}
+	}
 }
 
 func NewMenuAction(menu *Menu) *Action {

@@ -64,6 +64,8 @@ var (
 	procCreatePopupMenu                    = libuser32.NewProc("CreatePopupMenu")
 	procCreateRectRgn                      = libgdi32.NewProc("CreateRectRgn")
 	procCreateWindowExW                    = libuser32.NewProc("CreateWindowExW")
+	procDefFrameProcW                      = libuser32.NewProc("DefFrameProcW")
+	procDefMDIChildProcW                   = libuser32.NewProc("DefMDIChildProcW")
 	procDefWindowProcW                     = libuser32.NewProc("DefWindowProcW")
 	procDeferWindowPos                     = libuser32.NewProc("DeferWindowPos")
 	procDeleteDC                           = libgdi32.NewProc("DeleteDC")
@@ -97,6 +99,7 @@ var (
 	procGdipCreateBitmapFromFile           = libgdiplus.NewProc("GdipCreateBitmapFromFile")
 	procGdipCreateHBITMAPFromBitmap        = libgdiplus.NewProc("GdipCreateHBITMAPFromBitmap")
 	procGdipDisposeImage                   = libgdiplus.NewProc("GdipDisposeImage")
+	procGetActiveWindow                    = libuser32.NewProc("GetActiveWindow")
 	procGetAncestor                        = libuser32.NewProc("GetAncestor")
 	procGetCaretPos                        = libuser32.NewProc("GetCaretPos")
 	procGetClientRect                      = libuser32.NewProc("GetClientRect")
@@ -162,6 +165,7 @@ var (
 	procIsWindow                           = libuser32.NewProc("IsWindow")
 	procIsWindowEnabled                    = libuser32.NewProc("IsWindowEnabled")
 	procIsWindowVisible                    = libuser32.NewProc("IsWindowVisible")
+	procIsZoomed                           = libuser32.NewProc("IsZoomed")
 	procKillTimer                          = libuser32.NewProc("KillTimer")
 	procLineTo                             = libgdi32.NewProc("LineTo")
 	procLoadCursorW                        = libuser32.NewProc("LoadCursorW")
@@ -250,6 +254,7 @@ var (
 	procSystemParametersInfoW              = libuser32.NewProc("SystemParametersInfoW")
 	procTrackMouseEvent                    = libuser32.NewProc("TrackMouseEvent")
 	procTrackPopupMenuEx                   = libuser32.NewProc("TrackPopupMenuEx")
+	procTranslateMDISysAccel               = libuser32.NewProc("TranslateMDISysAccel")
 	procTranslateMessage                   = libuser32.NewProc("TranslateMessage")
 	procTransparentBlt                     = libmsimg32.NewProc("TransparentBlt")
 	procUiaClientsAreListening             = libuiautomationcore.NewProc("UiaClientsAreListening")
@@ -444,6 +449,16 @@ func CreateWindowEx(dwExStyle uint32, lpClassName *uint16, lpWindowName *uint16,
 	return HWND(r1)
 }
 
+func DefFrameProc(hWnd HWND, hWndMDIClient HWND, uMsg uint32, wParam uintptr, lParam uintptr) uintptr {
+	r1, _, _ := syscall.SyscallN(procDefFrameProcW.Addr(), uintptr(hWnd), uintptr(hWndMDIClient), uintptr(uMsg), wParam, lParam)
+	return r1
+}
+
+func DefMDIChildProc(hWnd HWND, uMsg uint32, wParam uintptr, lParam uintptr) uintptr {
+	r1, _, _ := syscall.SyscallN(procDefMDIChildProcW.Addr(), uintptr(hWnd), uintptr(uMsg), wParam, lParam)
+	return r1
+}
+
 func DefWindowProc(hWnd HWND, Msg uint32, wParam uintptr, lParam uintptr) uintptr {
 	r1, _, _ := syscall.SyscallN(procDefWindowProcW.Addr(), uintptr(hWnd), uintptr(Msg), wParam, lParam)
 	return r1
@@ -606,6 +621,11 @@ func GdipCreateHBITMAPFromBitmap(bitmap *GpBitmap, hbmReturn *HBITMAP, backgroun
 func GdipDisposeImage(image *GpImage) GpStatus {
 	r1, _, _ := syscall.SyscallN(procGdipDisposeImage.Addr(), uintptr(unsafe.Pointer(image)))
 	return GpStatus(r1)
+}
+
+func GetActiveWindow() HWND {
+	r1, _, _ := syscall.SyscallN(procGetActiveWindow.Addr())
+	return HWND(r1)
 }
 
 func GetAncestor(hwnd HWND, gaFlags uint32) HWND {
@@ -935,6 +955,11 @@ func IsWindowEnabled(hWnd HWND) bool {
 
 func IsWindowVisible(hWnd HWND) bool {
 	r1, _, _ := syscall.SyscallN(procIsWindowVisible.Addr(), uintptr(hWnd))
+	return r1 != 0
+}
+
+func IsZoomed(hWnd HWND) bool {
+	r1, _, _ := syscall.SyscallN(procIsZoomed.Addr(), uintptr(hWnd))
 	return r1 != 0
 }
 
@@ -1376,6 +1401,11 @@ func TrackMouseEvent(lpEventTrack *TRACKMOUSEEVENT) bool {
 func TrackPopupMenuEx(hMenu HMENU, uFlags uint32, x int32, y int32, hwnd HWND, lptpm *TPMPARAMS) BOOL {
 	r1, _, _ := syscall.SyscallN(procTrackPopupMenuEx.Addr(), uintptr(hMenu), uintptr(uFlags), uintptr(x), uintptr(y), uintptr(hwnd), uintptr(unsafe.Pointer(lptpm)))
 	return BOOL(r1)
+}
+
+func TranslateMDISysAccel(hWndClient HWND, lpMsg *MSG) bool {
+	r1, _, _ := syscall.SyscallN(procTranslateMDISysAccel.Addr(), uintptr(hWndClient), uintptr(unsafe.Pointer(lpMsg)))
+	return r1 != 0
 }
 
 func TranslateMessage(lpMsg *MSG) bool {

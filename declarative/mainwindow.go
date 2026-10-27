@@ -75,6 +75,13 @@ func (mw MainWindow) Create() error {
 		*mw.AssignTo = w
 	}
 
+	return mw.init(w, w, nil)
+}
+
+// init builds what mw declares into w. window is w or the window that
+// embeds it (an *walk.MdiMainWindow); custom, if not nil, is called at the
+// end of the initialization with the builder.
+func (mw MainWindow) init(w *walk.MainWindow, window walk.Form, custom func(builder *Builder) error) error {
 	fi := formInfo{
 		// Window
 		Background:         mw.Background,
@@ -123,7 +130,7 @@ func (mw MainWindow) Create() error {
 		return err
 	}
 
-	return builder.InitWidget(fi, w, func() error {
+	return builder.InitWidget(fi, window, func() error {
 		if len(mw.ToolBar.Items) > 0 {
 			var tb *walk.ToolBar
 			if mw.ToolBar.AssignTo == nil {
@@ -194,6 +201,10 @@ func (mw MainWindow) Create() error {
 
 			return nil
 		})
+
+		if custom != nil {
+			return custom(builder)
+		}
 
 		return nil
 	})

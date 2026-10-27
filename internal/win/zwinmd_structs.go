@@ -513,6 +513,11 @@ type TRACKMOUSEEVENT struct {
 
 // Windows.Win32.UI.WindowsAndMessaging
 
+type CLIENTCREATESTRUCT struct {
+	HWindowMenu  HANDLE
+	IdFirstChild uint32
+}
+
 type FLASHWINFO struct {
 	CbSize    uint32
 	Hwnd      HWND
@@ -527,6 +532,18 @@ type ICONINFO struct {
 	YHotspot uint32
 	HbmMask  HBITMAP
 	HbmColor HBITMAP
+}
+
+type MDICREATESTRUCT struct {
+	SzClass *uint16
+	SzTitle *uint16
+	HOwner  HANDLE
+	X       int32
+	Y       int32
+	Cx      int32
+	Cy      int32
+	Style   uint32
+	LParam  uintptr
 }
 
 type MENUINFO struct {
