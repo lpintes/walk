@@ -916,9 +916,30 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 11: draft pull request lpintes/walk#30, not yet tested on
-  Windows (task 18 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/mdi` with a `manual` mode, example `examples/mdi`).
+- Step 11: pull request lpintes/walk#30. Task 18 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/mdi` with a
+  `manual` mode, example `examples/mdi`) passed on Windows 11
+  (2026-10-27) after the fixes below: `run.ps1` and `examples.ps1` in
+  Windows Sandbox on 386 and amd64 (`mdi` every check PASS), and a
+  short manual test with NVDA on amd64: on opening NVDA says the frame
+  title, the document title and the focused field; Ctrl+F6 says the
+  document title and returns the focus to the last focused field;
+  Alt+Hyphen opens the system menu; after the last document closes
+  NVDA says "Documents". Not tested: Narrator, JAWS, 150 % scaling.
+  Fixed during the test:
+  - `DefFrameProc` (with an MDI client) and `DefMDIChildProc` set the
+    title but return 0 for `WM_SETTEXT`, so `SetTitle` failed and a
+    frame with children could not be created; both `defWindowProc`
+    methods return TRUE.
+  - With no child open the focus is in the MDI client, and
+    `IsDialogMessage` moved it to the status bar on an arrow key;
+    `translateMDISysAccel` dispatches arrow keys for the MDI client
+    without `IsDialogMessage`.
+  - Test: while the child is maximized its system menu is the first
+    item of the frame's menu bar, so Windows reports `GUI_INMENUMODE`
+    with the frame as owner, not `GUI_SYSTEMMENUMODE`.
+  - A walk program started from PowerShell in Windows Terminal does not
+    get the foreground (any program, not only MDI); not a walk problem.
   - Decision: a separate type `MdiMainWindow` that embeds `MainWindow`
     (menu bar, tool bar and status bar stay), not an option of
     `MainWindow`: the frame needs another default window procedure
