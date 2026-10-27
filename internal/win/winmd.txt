@@ -1429,7 +1429,7 @@ func CreateEnhMetaFile
 func CreateFontIndirect
 func CreateIconIndirect
 func CreateMenu
-func CreateMutex lpMutexAttributes:uintptr
+func CreateMutex lpMutexAttributes:uintptr lasterror
 func CreatePatternBrush
 func CreatePopupMenu
 func CreateRectRgn
@@ -1556,7 +1556,7 @@ func RegOpenKeyEx result=int32 samDesired:REGSAM
 func RegQueryValueEx result=int32
 func RegisterClassEx result=ATOM
 func RegisterClipboardFormat
-func RegisterHotKey
+func RegisterHotKey lasterror
 func RegisterWindowMessage
 func ReleaseCapture
 func ReleaseDC result=bool
@@ -1575,7 +1575,7 @@ func SHStrDup
 func ScreenToClient
 func SelectObject
 func SendMessage
-func SendMessageTimeout
+func SendMessageTimeout lasterror
 func SetActiveWindow
 func SetBkColor
 func SetBkMode
@@ -1612,7 +1612,7 @@ func StretchBlt
 func SysFreeString
 func SystemParametersInfo
 func UnregisterHotKey
-func WaitForSingleObject
+func WaitForSingleObject lasterror
 func taskDialogIndirect entry=TaskDialogIndirect pTaskConfig:unsafe.Pointer
 func TrackMouseEvent
 func TrackPopupMenuEx rawbool

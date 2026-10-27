@@ -1228,6 +1228,17 @@ and real dialogs all need new Win32/COM declarations.
 
 ## Known issues
 
+- `win.GetLastError()` always returns 0: the Go runtime clears the last
+  error of the thread before every call into Windows, including the call
+  of `GetLastError` itself (checked on Windows 11, 386 and amd64, with
+  `RegisterHotKey`, which sets 1409). So `lastError` in `error.go` (about
+  100 call sites) never carries a code, contrary to the notes of step 8
+  part 3, and `ShellOpen` reports error 0. The code is only available as
+  the error returned by `syscall.SyscallN`; the generator option
+  `lasterror` (step 14 part 1) returns it from the wrapper, and
+  `errnoError` turns it into a walk error. Used so far by `RegisterHotKey`,
+  `CreateMutex`, `WaitForSingleObject` and `SendMessageTimeout`; moving the
+  remaining `lastError` callers to it is a separate pull request.
 - `go vet` reports 3 "possible misuse of unsafe.Pointer" warnings, all in
   `internal/win` (`GlobalLock`, `SysAllocString`, `MAKEINTRESOURCE`).
   They were reviewed in step 3: they convert memory allocated by Windows

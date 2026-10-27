@@ -114,8 +114,23 @@ func newErrorNoPanic(message string) error {
 	return processErrorNoPanic(newErr(message))
 }
 
+// errnoError returns an error for a failed Win32 function whose wrapper
+// returned the error code (the lasterror option of tools/winmdgen). A
+// non-zero code is wrapped as a syscall.Errno.
+func errnoError(win32FuncName string, errno syscall.Errno) error {
+	if errno != 0 {
+		return processError(newErrWithCode(fmt.Sprintf("%s: Error %d", win32FuncName, uint32(errno)), errno))
+	}
+
+	return newError(win32FuncName)
+}
+
 // lastError returns an error for a failed Win32 function. If GetLastError
 // reports an error, the error wraps it as a syscall.Errno.
+//
+// The Go runtime clears the last error before every call into Windows, so
+// win.GetLastError always returns 0 and the error never carries a code.
+// Prefer a wrapper generated with the lasterror option and errnoError.
 func lastError(win32FuncName string) error {
 	if errno := win.GetLastError(); errno != win.ERROR_SUCCESS {
 		return processError(newErrWithCode(fmt.Sprintf("%s: Error %d", win32FuncName, errno), syscall.Errno(errno)))

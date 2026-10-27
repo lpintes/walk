@@ -206,16 +206,16 @@ func NewSingleInstance(appID string) (*SingleInstance, error) {
 		// An elevated first instance creates the mutex with a security
 		// descriptor that does not let a normal process open it.
 		elevated := false
-		if h := win.CreateMutex(0, false, mutexName); h == 0 {
-			if win.GetLastError() != win.ERROR_ACCESS_DENIED {
-				return fail(lastError("NewSingleInstance: CreateMutex"))
+		if h, errno := win.CreateMutex(0, false, mutexName); h == 0 {
+			if errno != win.ERROR_ACCESS_DENIED {
+				return fail(errnoError("NewSingleInstance: CreateMutex", errno))
 			}
 			elevated = true
 		} else {
 			// Owning the mutex makes the first instance;
 			// WAIT_ABANDONED means that the previous first instance
 			// ended without releasing it.
-			switch win.WaitForSingleObject(h, 0) {
+			switch r, errno := win.WaitForSingleObject(h, 0); r {
 			case win.WAIT_OBJECT_0, win.WAIT_ABANDONED:
 				si.first = true
 				si.mutex = h
@@ -225,7 +225,7 @@ func NewSingleInstance(appID string) (*SingleInstance, error) {
 				win.CloseHandle(h)
 
 			default:
-				err := lastError("NewSingleInstance: WaitForSingleObject")
+				err := errnoError("NewSingleInstance: WaitForSingleObject", errno)
 				win.CloseHandle(h)
 				return fail(err)
 			}
@@ -291,7 +291,7 @@ func (si *SingleInstance) findFirst() (win.HWND, error) {
 // sendToFirst sends the arguments and the working directory of this
 // process to the message window of the first instance. On failure it also
 // returns the error code of SendMessageTimeout, if any.
-func (si *SingleInstance) sendToFirst(hwnd win.HWND, deadline time.Time) (uint32, error) {
+func (si *SingleInstance) sendToFirst(hwnd win.HWND, deadline time.Time) (syscall.Errno, error) {
 	dir, _ := os.Getwd()
 	data, err := json.Marshal(singleInstanceMessage{Args: os.Args[1:], WorkingDir: dir})
 	if err != nil {
@@ -323,12 +323,11 @@ func (si *SingleInstance) sendToFirst(hwnd win.HWND, deadline time.Time) (uint32
 		timeout = time.Second
 	}
 	var result uintptr
-	r := win.SendMessageTimeout(hwnd, win.WM_COPYDATA, 0, uintptr(unsafe.Pointer(cds)), win.SMTO_ABORTIFHUNG, uint32(timeout/time.Millisecond), &result)
-	errno := win.GetLastError()
+	r, errno := win.SendMessageTimeout(hwnd, win.WM_COPYDATA, 0, uintptr(unsafe.Pointer(cds)), win.SMTO_ABORTIFHUNG, uint32(timeout/time.Millisecond), &result)
 	runtime.KeepAlive(cds)
 	runtime.KeepAlive(data)
 	if r == 0 {
-		return errno, newErrorNoPanic(fmt.Sprintf("NewSingleInstance: SendMessageTimeout: %v", syscall.Errno(errno)))
+		return errno, newErrorNoPanic(fmt.Sprintf("NewSingleInstance: SendMessageTimeout: %v", errno))
 	}
 	if result != 1 {
 		return 0, newErrorNoPanic("NewSingleInstance: the first instance did not accept the arguments")
