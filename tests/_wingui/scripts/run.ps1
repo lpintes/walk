@@ -91,7 +91,7 @@ if (Want "part3") {
 	Report "part3" $p (Stop-Test $p 5) $extra
 }
 
-foreach ($n in "dragfinish", "hdn", "ods", "upstream", "shell", "uia", "richedit", "system") {
+foreach ($n in "dragfinish", "hdn", "ods", "upstream", "shell", "uia", "richedit", "system", "clipboard") {
 	if (-not (Want $n)) { continue }
 	$p = Start-Test (Join-Path $root $n) $n
 	Report $n $p (Stop-Test $p 30)

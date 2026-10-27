@@ -83,6 +83,7 @@ var (
 	procEndDeferWindowPos                  = libuser32.NewProc("EndDeferWindowPos")
 	procEndPaint                           = libuser32.NewProc("EndPaint")
 	procEnumChildWindows                   = libuser32.NewProc("EnumChildWindows")
+	procEnumClipboardFormats               = libuser32.NewProc("EnumClipboardFormats")
 	procExcludeClipRect                    = libgdi32.NewProc("ExcludeClipRect")
 	procExtCreatePen                       = libgdi32.NewProc("ExtCreatePen")
 	procFillRgn                            = libgdi32.NewProc("FillRgn")
@@ -97,6 +98,7 @@ var (
 	procGetCaretPos                        = libuser32.NewProc("GetCaretPos")
 	procGetClientRect                      = libuser32.NewProc("GetClientRect")
 	procGetClipboardData                   = libuser32.NewProc("GetClipboardData")
+	procGetClipboardFormatNameW            = libuser32.NewProc("GetClipboardFormatNameW")
 	procGetCurrentThreadId                 = libkernel32.NewProc("GetCurrentThreadId")
 	procGetCursorPos                       = libuser32.NewProc("GetCursorPos")
 	procGetDC                              = libuser32.NewProc("GetDC")
@@ -136,6 +138,7 @@ var (
 	procGetWindowThreadProcessId           = libuser32.NewProc("GetWindowThreadProcessId")
 	procGlobalAlloc                        = libkernel32.NewProc("GlobalAlloc")
 	procGlobalFree                         = libkernel32.NewProc("GlobalFree")
+	procGlobalSize                         = libkernel32.NewProc("GlobalSize")
 	procGlobalUnlock                       = libkernel32.NewProc("GlobalUnlock")
 	procGradientFill                       = libmsimg32.NewProc("GradientFill")
 	procImageList_Add                      = libcomctl32.NewProc("ImageList_Add")
@@ -182,6 +185,7 @@ var (
 	procRegOpenKeyExW                      = libadvapi32.NewProc("RegOpenKeyExW")
 	procRegQueryValueExW                   = libadvapi32.NewProc("RegQueryValueExW")
 	procRegisterClassExW                   = libuser32.NewProc("RegisterClassExW")
+	procRegisterClipboardFormatW           = libuser32.NewProc("RegisterClipboardFormatW")
 	procRegisterPowerSettingNotification   = libuser32.NewProc("RegisterPowerSettingNotification")
 	procRegisterWindowMessageW             = libuser32.NewProc("RegisterWindowMessageW")
 	procReleaseCapture                     = libuser32.NewProc("ReleaseCapture")
@@ -524,6 +528,11 @@ func EnumChildWindows(hWndParent HWND, lpEnumFunc uintptr, lParam uintptr) bool 
 	return r1 != 0
 }
 
+func EnumClipboardFormats(format uint32) uint32 {
+	r1, _, _ := syscall.SyscallN(procEnumClipboardFormats.Addr(), uintptr(format))
+	return uint32(r1)
+}
+
 func ExcludeClipRect(hdc HDC, left int32, top int32, right int32, bottom int32) int32 {
 	r1, _, _ := syscall.SyscallN(procExcludeClipRect.Addr(), uintptr(hdc), uintptr(left), uintptr(top), uintptr(right), uintptr(bottom))
 	return int32(r1)
@@ -592,6 +601,11 @@ func GetClientRect(hWnd HWND, lpRect *RECT) bool {
 func GetClipboardData(uFormat uint32) HANDLE {
 	r1, _, _ := syscall.SyscallN(procGetClipboardData.Addr(), uintptr(uFormat))
 	return HANDLE(r1)
+}
+
+func GetClipboardFormatName(format uint32, lpszFormatName *uint16, cchMaxCount int32) int32 {
+	r1, _, _ := syscall.SyscallN(procGetClipboardFormatNameW.Addr(), uintptr(format), uintptr(unsafe.Pointer(lpszFormatName)), uintptr(cchMaxCount))
+	return int32(r1)
 }
 
 func GetCurrentThreadId() uint32 {
@@ -792,6 +806,11 @@ func GlobalAlloc(uFlags uint32, dwBytes uintptr) HGLOBAL {
 func GlobalFree(hMem HGLOBAL) HGLOBAL {
 	r1, _, _ := syscall.SyscallN(procGlobalFree.Addr(), uintptr(hMem))
 	return HGLOBAL(r1)
+}
+
+func GlobalSize(hMem HGLOBAL) uintptr {
+	r1, _, _ := syscall.SyscallN(procGlobalSize.Addr(), uintptr(hMem))
+	return r1
 }
 
 func GlobalUnlock(hMem HGLOBAL) bool {
@@ -1019,6 +1038,11 @@ func RegQueryValueEx(hKey HKEY, lpValueName *uint16, lpReserved *uint32, lpType 
 func RegisterClassEx(param0 *WNDCLASSEX) ATOM {
 	r1, _, _ := syscall.SyscallN(procRegisterClassExW.Addr(), uintptr(unsafe.Pointer(param0)))
 	return ATOM(r1)
+}
+
+func RegisterClipboardFormat(lpszFormat *uint16) uint32 {
+	r1, _, _ := syscall.SyscallN(procRegisterClipboardFormatW.Addr(), uintptr(unsafe.Pointer(lpszFormat)))
+	return uint32(r1)
 }
 
 func RegisterPowerSettingNotification(hRecipient HANDLE, PowerSettingGuid *syscall.GUID, Flags uint32) uintptr {
