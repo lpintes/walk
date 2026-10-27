@@ -59,7 +59,23 @@ const (
 
 // CLIPBOARD_FORMAT
 const (
-	CF_UNICODETEXT = 0xd
+	CF_BITMAP       = 2
+	CF_DIB          = 8
+	CF_DIBV5        = 0x11
+	CF_DIF          = 5
+	CF_ENHMETAFILE  = 0xe
+	CF_HDROP        = 0xf
+	CF_LOCALE       = 0x10
+	CF_METAFILEPICT = 3
+	CF_OEMTEXT      = 7
+	CF_PALETTE      = 9
+	CF_PENDATA      = 0xa
+	CF_RIFF         = 0xb
+	CF_SYLK         = 4
+	CF_TEXT         = 1
+	CF_TIFF         = 6
+	CF_UNICODETEXT  = 0xd
+	CF_WAVE         = 0xc
 )
 
 // CLSCTX
@@ -143,6 +159,14 @@ const (
 	DT_VCENTER              = 4
 	DT_WORDBREAK            = 0x10
 	DT_WORD_ELLIPSIS        = 0x40000
+)
+
+// DROPEFFECT
+const (
+	DROPEFFECT_COPY = 1
+	DROPEFFECT_LINK = 4
+	DROPEFFECT_MOVE = 2
+	DROPEFFECT_NONE = 0
 )
 
 // DTTOPTS_FLAGS
@@ -326,6 +350,11 @@ const (
 	ICC_PROGRESS_CLASS   = 0x20
 	ICC_TAB_CLASSES      = 8
 	ICC_TREEVIEW_CLASSES = 2
+)
+
+// LCSCSTYPE
+const (
+	LCS_sRGB = 0x73524742
 )
 
 // LISTITEMSTATES
@@ -1331,8 +1360,9 @@ const (
 
 // Windows.Win32.Graphics.Gdi
 const (
-	AC_SRC_ALPHA = 1
-	CLR_INVALID  = 0xffffffff
+	AC_SRC_ALPHA  = 1
+	CLR_INVALID   = 0xffffffff
+	LCS_GM_IMAGES = 4
 )
 
 // Windows.Win32.UI.Accessibility

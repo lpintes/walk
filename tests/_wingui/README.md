@@ -229,6 +229,23 @@ feature `Containers-DisposableClientVM` and reboot once):
   icons, `CloseAllMdiChildren` and closing the frame. `mdi.exe manual`
   shows a frame with three documents for a test with a screen reader;
   events go to standard output and the status bar.
+- `clipboard`: the clipboard formats of `ClipboardService` (step 14 part
+  3), read back both through walk and with the test's own Win32 calls:
+  text, HTML (the header offsets checked byte by byte, the fragment, the
+  document, the source URL and the plain text alternative), Rich Text
+  Format (also from one `RichEdit` into another), a file list (read with
+  `DragQueryFileW` as the shell does, with the preferred drop effect for
+  cut and copy), an image as PNG, `CF_DIBV5` and `CF_DIB` (size and every
+  pixel) and as a walk `Bitmap`, several formats at once with
+  `ClipboardData` (all formats listed by `Formats` in the order they were
+  set), sensitive text, a failed conversion that leaves the clipboard
+  unchanged, missing formats, `Clear` and `ContentsChanged`. It replaces
+  the contents of the clipboard: the text is saved and put back, other
+  formats are lost (an INFO line names them). `clipboard.exe manual`
+  shows buttons that copy HTML, RTF, files (copy and cut), an image and
+  a sensitive password for pasting into other programs, and a button
+  that reads the clipboard; results go to a polite live region and
+  standard output.
 - `dragfinish`: builds an `HDROP` with two paths, one of them non-ASCII,
   posts `WM_DROPFILES` to a `MainWindow`, checks that `DropFiles` gets the
   paths and that `GlobalFlags` reports the handle freed afterwards. With

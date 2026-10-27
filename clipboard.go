@@ -7,6 +7,7 @@
 package walk
 
 import (
+	"runtime"
 	"syscall"
 	"unsafe"
 
@@ -58,6 +59,10 @@ func clipboardWndProc(hwnd win.HWND, msg uint32, wp, lp uintptr) uintptr {
 var clipboard ClipboardService
 
 // Clipboard returns an object that provides access to the system clipboard.
+//
+// The methods of ClipboardService need a walk window: the hidden window
+// that owns the clipboard data is created together with the first window
+// of the program, on the UI thread. Before that, setting data may fail.
 func Clipboard() *ClipboardService {
 	return &clipboard
 }
@@ -154,6 +159,12 @@ func (c *ClipboardService) SetText(s string) error {
 }
 
 func (c *ClipboardService) withOpenClipboard(f func() error) error {
+	// The clipboard is open for a thread: without the lock, a goroutine
+	// could move to another thread before CloseClipboard and leave the
+	// clipboard open for every program.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	if !win.OpenClipboard(c.hwnd) {
 		return lastError("OpenClipboard")
 	}

@@ -303,12 +303,23 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     all texts are unchanged.
   - Kept on purpose: the exact type assertions in `error.go`
     (`wrapErr` must not unwrap an `*Error` wrapped by someone else).
-    `lastError` and `errorFromHRESULT` could carry the `syscall.Errno`
-    or `HRESULT` as the inner error so callers can test it with
-    `errors.Is`; that changes what the public `Inner` returns, so it
-    needs a decision first.
+    `lastError` and `errorFromHRESULT` now carry the Windows code
+    (step 8, part 3).
   - Cloud checks only; no Windows test needed beyond a smoke run, as
     the only runtime change is the `errors.As` in the presenter.
+- Step 8, part 3: pull request lpintes/walk#26, merged; `go test .`
+  passed on Windows 11 (386 and amd64). Windows error codes in walk
+  errors (the user approved
+  the change of `Inner` on 2026-10-26). `lastError` and
+  `errorFromHRESULT` return an `*Error` whose inner error is the code as
+  a `syscall.Errno` (`newErrWithCode`): the `GetLastError` value, or the
+  32-bit value of the HRESULT (`hresultErrno`, for example
+  `syscall.Errno(0x80070005)`). The same for the `WebView2` HRESULT
+  errors (the loader uses the unexported `codeError`) and `ShellOpen`.
+  Message texts are unchanged; `Inner` returns the code instead of nil,
+  and a code of 0 is not wrapped. `CommDlgExtendedError` codes are not
+  Win32 codes and stay text only. Unit tests in `error_test.go` (run
+  `go test .` on Windows).
 - Step 10: draft pull request lpintes/walk#11. Task 6 of
   `TESTING_ON_WINDOWS.md` passed on Windows 11 with NVDA 2026.2:
   `run.ps1 -Only part3,liveregion` on 386 and amd64, and the manual
@@ -997,6 +1008,80 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     deprecated `WebView` accelerators inside children (they look at the
     frame's own widgets), widgets beside the MDI client in the frame,
     persistence of the set of open children, tabbed documents.
+- Step 14, part 3: pull request lpintes/walk#27, merged. Task 21 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/clipboard` with a
+  `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
+  `run.ps1 -Only clipboard,richedit` on 386 and amd64 with every check
+  PASS, and the manual test with NVDA on amd64 (pasting into other
+  programs; the sensitive password can be pasted and is not in the
+  Windows+V history). INFO: Windows adds `CF_BITMAP` to an image and
+  `CF_LOCALE`, `CF_TEXT` and `CF_OEMTEXT` to text. More formats in
+  `ClipboardService`; `Text`, `SetText`, `ContainsText`, `Clear` and
+  `ContentsChanged` are unchanged.
+  - Fixed during the test: msftedit ends the output of `EM_STREAMOUT`
+    with `SF_RTF` with a NUL, which `RichEdit.RTF` and `SelectedRTF`
+    returned as part of the string, so `SetRTF` of the clipboard
+    rejected it. `streamOut` trims trailing NULs; the `richedit` test
+    checks that.
+  - `ClipboardFormat` with `Name`, the constants `ClipboardFormatText`,
+    `DIB`, `DIBV5` and `Files` (CF_HDROP), the registered formats as
+    package variables (`ClipboardFormatHTML`, `RTF`, `PNG`,
+    `PreferredDropEffect` and the three history and cloud exclusion
+    formats), `RegisterClipboardFormat`, `DropEffect` and
+    `ErrClipboardFormatNotAvailable`.
+  - `ClipboardData` collects several formats (`SetText`, `SetHTML`,
+    `SetRTF`, `SetFiles`, `SetImage`, `SetFormat` for raw bytes,
+    `SetSensitive`); `ClipboardService.SetData` converts everything
+    first (a failed conversion leaves the clipboard unchanged), then
+    empties the clipboard and sets all formats in one `OpenClipboard`
+    session, in the order given. Each format is copied into its own
+    `GlobalAlloc(GMEM_MOVEABLE)` memory, freed if `SetClipboardData`
+    fails (the clipboard is then emptied); Windows never gets a Go
+    pointer.
+  - Getters: `Data` (raw bytes), `Formats`, `ContainsFormat`,
+    `ContainsHTML`, `ContainsRTF`, `ContainsFiles`, `ContainsImage`,
+    `IsSensitive`, `HTML` (`ClipboardHTML`: fragment, document, source
+    URL), `RTF`, `Files` (`DragQueryFileW`), `PreferredDropEffect`,
+    `Image`, `ImageOfFormat`, `Bitmap(dpi)`. Setters: `SetHTML` and
+    `SetRTF` with an optional plain text alternative, `SetFiles` with
+    copy or move (cut), `SetImage`, `SetBitmap`, `SetSensitiveText`.
+    The new methods retry `OpenClipboard` for about 100 ms, because
+    clipboard monitors open the clipboard after every change.
+  - The byte formats are in the new package `internal/clipfmt`, which
+    calls no Windows function and has unit tests that run in the
+    container (`go test ./internal/clipfmt`): CF_HTML with 10-digit
+    UTF-8 byte offsets, version 0.9 and a terminating NUL (decoding
+    also accepts other offsets, -1 and LF line ends, and falls back to
+    the fragment comments), DROPFILES with wide paths, and DIBs without
+    GDI (so the `BITMAPINFO` problem under "Known issues" does not
+    matter): `SetImage` writes PNG, CF_DIBV5 (32 bits, bit fields with
+    an alpha mask, sRGB, straight alpha) and CF_DIB (24 bits, blended
+    onto white); decoding reads 1, 4, 8, 16, 24 and 32 bits per pixel,
+    bit fields and color tables, bottom-up and top-down, and treats a
+    32-bit bitmap whose alpha values are all zero as opaque. It also
+    skips the 12 mask bytes some programs write after a V4 or V5 header
+    (only when the data is exactly that much longer). Sizes are limited
+    to 2^26 pixels and checked without multiplying, so they cannot
+    overflow on 386 (the unit tests run with `GOARCH=386` too). RTF must
+    be 7-bit ASCII; `SetRTF` rejects other bytes.
+  - Fixed on the way: `OpenClipboard` and `CloseClipboard` work per
+    thread, so both the old `withOpenClipboard` and the new helper lock
+    the goroutine to its thread for the session; before, a goroutine
+    could move between them and leave the clipboard open.
+  - Windows Sandbox shares the clipboard with the host (`rdpclip`), so
+    the test overwrites the host clipboard too and retries the old
+    methods while another program has the clipboard open.
+  - Sensitive data: `ExcludeClipboardContentFromMonitorProcessing`,
+    and 0 for `CanIncludeInClipboardHistory` and
+    `CanUploadToCloudClipboard`.
+  - New in `internal/win` (generated): the `CF_*` constants,
+    `DROPEFFECT_*`, `LCS_sRGB`, `LCS_GM_IMAGES`, `GlobalSize`,
+    `RegisterClipboardFormatW`, `GetClipboardFormatNameW` and
+    `EnumClipboardFormats`.
+  - Open questions: whether `Text` and `SetText` should retry
+    `OpenClipboard` too (a behavior change), and whether `SetText`
+    should empty the clipboard first (today it adds the text to what
+    another program put there without becoming the owner).
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 

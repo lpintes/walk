@@ -274,7 +274,9 @@ func (re *RichEdit) streamOut(format uintptr) ([]byte, error) {
 	if e := es.Error(); e != 0 {
 		return nil, newError("EM_STREAMOUT failed")
 	}
-	return s.out.Bytes(), nil
+	// msftedit ends Rich Text Format with a NUL, which is not part of the
+	// text and must not get into a Go string.
+	return bytes.TrimRight(s.out.Bytes(), "\x00"), nil
 }
 
 // TextSelection returns the selection. end is the position after the
