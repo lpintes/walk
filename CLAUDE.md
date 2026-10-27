@@ -911,7 +911,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 14, part 3: pull request lpintes/walk#27. Task 21 of
+- Step 14, part 3: pull request lpintes/walk#27, merged. Task 21 of
   `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/clipboard` with a
   `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
   `run.ps1 -Only clipboard,richedit` on 386 and amd64 with every check
