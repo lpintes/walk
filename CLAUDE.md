@@ -911,11 +911,21 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 14, part 3: draft pull request lpintes/walk#27, not yet tested
-  on Windows (task 21 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/clipboard` with a `manual` mode). More formats in
+- Step 14, part 3: pull request lpintes/walk#27. Task 21 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/clipboard` with a
+  `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
+  `run.ps1 -Only clipboard,richedit` on 386 and amd64 with every check
+  PASS, and the manual test with NVDA on amd64 (pasting into other
+  programs; the sensitive password can be pasted and is not in the
+  Windows+V history). INFO: Windows adds `CF_BITMAP` to an image and
+  `CF_LOCALE`, `CF_TEXT` and `CF_OEMTEXT` to text. More formats in
   `ClipboardService`; `Text`, `SetText`, `ContainsText`, `Clear` and
   `ContentsChanged` are unchanged.
+  - Fixed during the test: msftedit ends the output of `EM_STREAMOUT`
+    with `SF_RTF` with a NUL, which `RichEdit.RTF` and `SelectedRTF`
+    returned as part of the string, so `SetRTF` of the clipboard
+    rejected it. `streamOut` trims trailing NULs; the `richedit` test
+    checks that.
   - `ClipboardFormat` with `Name`, the constants `ClipboardFormatText`,
     `DIB`, `DIBV5` and `Files` (CF_HDROP), the registered formats as
     package variables (`ClipboardFormatHTML`, `RTF`, `PNG`,
