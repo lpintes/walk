@@ -96,6 +96,7 @@ const (
 	wmCancelMode       = 0x1F
 	guiInMenuMode      = 0x4
 	guiSystemMenuMode  = 0x8
+	objidMenu          = 0xFFFFFFFD // OBJID_MENU, -3
 	gwOwner            = 4
 )
 
@@ -113,6 +114,7 @@ var (
 	procGetWindowText       = user32.NewProc("GetWindowTextW")
 	procSetWinEventHook     = user32.NewProc("SetWinEventHook")
 	procGetGUIThreadInfo    = user32.NewProc("GetGUIThreadInfo")
+	procGetMenuBarInfo      = user32.NewProc("GetMenuBarInfo")
 	procGetWindowThreadPID  = user32.NewProc("GetWindowThreadProcessId")
 	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
 	procGetForegroundWindow = user32.NewProc("GetForegroundWindow")
@@ -797,7 +799,22 @@ func checkMaximize(fg bool) {
 		// state from here.
 		pause()
 		procGetGUIThreadInfo.Call(tid, uintptr(unsafe.Pointer(&gti)))
-		check("Alt+Hyphen opens the system menu of the child", gti.flags&guiSystemMenuMode != 0, "GUI thread flags %#x, menu owner %#x", gti.flags, gti.menuOwner)
+		// The child is maximized, so its system menu is the first item of
+		// the frame's menu bar: Windows tracks it as a menu bar popup of
+		// the frame (GUI_INMENUMODE, not GUI_SYSTEMMENUMODE), with that
+		// item focused.
+		var mbi struct {
+			cbSize          uint32
+			rcBar           win.RECT
+			hMenu, hwndMenu uintptr
+			flags           uint32 // fBarFocused:1, fFocused:1
+		}
+		mbi.cbSize = uint32(unsafe.Sizeof(mbi))
+		procGetMenuBarInfo.Call(uintptr(frame.Handle()), objidMenu, 1, uintptr(unsafe.Pointer(&mbi)))
+		sysMenuItemFocused := mbi.flags&2 != 0
+		check("Alt+Hyphen opens the system menu of the child",
+			gti.flags&guiSystemMenuMode != 0 || gti.flags&guiInMenuMode != 0 && win.HWND(gti.menuOwner) == frame.Handle() && sysMenuItemFocused,
+			"GUI thread flags %#x, menu owner %#x (frame %#x), first menu bar item focused %v", gti.flags, gti.menuOwner, frame.Handle(), sysMenuItemFocused)
 		if gti.flags&guiInMenuMode != 0 {
 			info("menu owner %#x (child %#x, frame %#x)", gti.menuOwner, d.child.Handle(), frame.Handle())
 			closeMenu(tid, win.HWND(gti.menuOwner))
