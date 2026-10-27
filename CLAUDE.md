@@ -938,8 +938,11 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - Test: while the child is maximized its system menu is the first
     item of the frame's menu bar, so Windows reports `GUI_INMENUMODE`
     with the frame as owner, not `GUI_SYSTEMMENUMODE`.
-  - A walk program started from PowerShell in Windows Terminal does not
-    get the foreground (any program, not only MDI); not a walk problem.
+  - Found, not fixed here: no walk form gets the foreground when it
+    opens (any walk program started from PowerShell, while `winver`,
+    `charmap` and Notepad do), because `setWindowVisible` shows every
+    window with `SW_SHOWNA` (upstream commit 508b8cb, 2018, no reason
+    given). To be fixed separately: forms shown with activation.
   - Decision: a separate type `MdiMainWindow` that embeds `MainWindow`
     (menu bar, tool bar and status bar stay), not an option of
     `MainWindow`: the frame needs another default window procedure
