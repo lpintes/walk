@@ -441,6 +441,7 @@ type WindowBase struct {
 	visible                   bool
 	enabled                   bool
 	acc                       *Accessibility
+	globalHotkeys             []*GlobalHotkey
 }
 
 var (
@@ -880,6 +881,8 @@ func (wb *WindowBase) Dispose() {
 	hWnd := wb.hWnd
 	if hWnd != 0 {
 		wb.disposingPublisher.Publish()
+
+		wb.disposeGlobalHotkeys()
 
 		wb.hWnd = 0
 		if _, ok := hwnd2WindowBase[hWnd]; ok {
@@ -2467,6 +2470,11 @@ func (wb *WindowBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 
 	case win.WM_DROPFILES:
 		wb.dropFilesPublisher.Publish(win.HDROP(wParam))
+
+	case win.WM_HOTKEY:
+		if wb.handleHotkey(wParam) {
+			return 0
+		}
 
 	case win.WM_WINDOWPOSCHANGED:
 		wp := ptrFromUintptr[win.WINDOWPOS](lParam)

@@ -821,6 +821,60 @@ How to test, on 386 and amd64 (after `build.ps1`):
   tree of `WinTest.cs`, the bounds of the `Chrome_WidgetWin` child must
   match the client area of the widget.
 
+## Task 19: step 14 part 1, global hotkeys and single instance
+
+(Task 18 belongs to another branch.)
+
+Step 14 part 1 adds `walk.GlobalHotkey` (`RegisterHotKey` for a walk
+window; `WM_HOTKEY` publishes `Activated` on the window's thread; the
+hotkey is unregistered by `Dispose` or when the window is disposed; an
+occupied combination gives an error wrapping
+`ErrHotkeyAlreadyRegistered`), the modifier `walk.ModWin`,
+`FormBase.BringToForeground`, and `walk.SingleInstance`: a named mutex
+in the `Local\` namespace decides which instance is the first, and later
+instances send their arguments and working directory with `WM_COPYDATA`
+to a hidden message-only window of the first one, which brings its main
+window to the foreground and publishes `OtherInstanceStarted`. Nothing of
+it has run yet: it was written in a Linux container.
+
+How to test, on 386 and amd64 (after `build.ps1`), also in Windows
+Sandbox:
+
+- `tests/_wingui/scripts/run.ps1 -Only hotkeys`. Report every FAIL line
+  with its details and all INFO and SKIP lines: which hotkey was
+  registered, the text of the "already registered" error, whether the
+  Win combination was allowed, and whether the window was the
+  foreground window after each handover (Windows decides that; the test
+  has no foreground right of its own, so it is only INFO). Also report a
+  hang (the script kills the test after 180 seconds) and how long the
+  test took: each started copy may wait up to 30 seconds for the first
+  instance.
+- `tests/_wingui/scripts/run.ps1` and `examples.ps1` as a regression
+  test: every window now handles `WM_HOTKEY`, and `Modifiers.String`
+  knows `ModWin`.
+- Manually with NVDA on amd64, from a command prompt in
+  `%TEMP%\walk-wingui\amd64\tests\hotkeys`:
+  - `hotkeys.exe manual`. NVDA should read the title and the status
+    "Alt+Ctrl+Shift+W is registered..." (walk writes the modifiers in
+    that order). Switch to another program (for example Notepad) and press Ctrl+Alt+Shift+W: the test window must
+    come to the foreground and NVDA must say "Alt+Ctrl+Shift+W pressed,
+    1 times so far." (the live region). Repeat from a minimized test
+    window: it must be restored. Hold the keys down: one press only (no
+    autorepeat).
+  - Activate "Unregister the hotkey": pressing the keys in another
+    program does nothing any more; "Register the hotkey" makes it work
+    again.
+  - With the test window in the background, run `hotkeys.exe manual one
+    "two words"` from the command prompt (or from the Run dialog with
+    the full path): the second start must exit at once, the first window
+    must come to the foreground, and NVDA must announce "Another instance
+    started in ... with 2 arguments: one, two words". Report whether the
+    window really got the foreground or only flashed on the taskbar.
+  - Close the window with Alt+F4 and start `hotkeys.exe manual` again: it
+    must be the first instance again (the hotkey registers, no "Handed
+    the arguments" line).
+  - Optional: the same with Narrator or JAWS.
+
 ## Task 20: step 14 part 2, power, session and settings events
 
 (Tasks 18 and 19 belong to other branches.)

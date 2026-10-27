@@ -73,6 +73,9 @@ The `LICENSE` and `AUTHORS` files must be preserved.
     system file dialog first, then known folders, Recycle Bin, shortcuts
     and the taskbar. Needs COM client methods from the generator.
 13. UI Automation client as a public package `uia` (started 2026-10-18).
+14. Small system features (queued 2026-10-26): global hotkeys, single
+    instance, power and session events, system settings (high contrast,
+    screen reader flag, dark mode), more clipboard formats.
 
 Steps 12 and 13 come from the review of Windows API areas outside the
 GUI, `windows-api-oblasti.md` in the project files (in Slovak).
@@ -911,6 +914,69 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
+- Step 14, part 1: draft pull request lpintes/walk#28, not yet tested
+  on Windows (task 19 of `TESTING_ON_WINDOWS.md`, test program
+  `tests/_wingui/hotkeys` with a `manual` mode). Global hotkeys and
+  single instance; upstream lxn/walk #228 was only the model (rewritten,
+  see `opened-prs.md`).
+  - `GlobalHotkey` (`globalhotkey.go`): `NewGlobalHotkey(owner,
+    shortcut)` and `NewGlobalHotkeyWithOptions` (`GlobalHotkeyOptions`
+    with `Repeat`; by default `MOD_NOREPEAT`), `Activated`, `Shortcut`,
+    `Owner`, `ID`, `Repeat`, `IsDisposed`, `Dispose`. `RegisterHotKey`
+    for the owner window (usually a form) on its thread (another thread
+    is an error); IDs are the smallest unused per window, from 1.
+    `WindowBase.WndProc` publishes `Activated` for `WM_HOTKEY` with the
+    ID; `WindowBase.Dispose` unregisters the window's hotkeys before
+    `DestroyWindow`; `Dispose` from another goroutine goes through
+    `Synchronize`. A taken combination returns an error wrapping
+    `ErrHotkeyAlreadyRegistered` (`ERROR_HOTKEY_ALREADY_REGISTERED`, read
+    with `GetLastError` right after the call, as `lastError` does);
+    other failures wrap the `syscall.Errno`. New modifier `ModWin`
+    (value 8, `Modifiers.String` prefixes "Win+"); `ModifiersDown` does
+    not report it, so action shortcuts with it never match. No
+    declarative counterpart: registration can fail for reasons outside
+    the program, and the program should handle the error.
+  - `FormBase.BringToForeground`: restores a minimized form and calls
+    `SetForegroundWindow` (a hidden form stays hidden); an error when
+    Windows refuses. Allowed right after the program's hotkey or a
+    handover from another instance.
+  - `SingleInstance` (`singleinstance.go`): `NewSingleInstance(appID)`
+    on the UI goroutine (locks it to its OS thread); the first instance
+    owns the mutex `Local\walk.SingleInstance.<appID>` (backslashes
+    become underscores, a hash for long IDs) through
+    `WaitForSingleObject(h, 0)`, so `WAIT_ABANDONED` after a crash makes
+    the next start the first one and no `GetLastError` is needed. Later
+    instances look for the message-only window of class
+    `\o/ Walk_SingleInstance_Class \o/` with that name (`FindWindowEx`
+    with `HWND_MESSAGE`), polling every 50 ms and trying the mutex again
+    in between, up to `SingleInstanceTimeout` (30 seconds), which covers
+    a first instance that is still starting or just exiting; then
+    `AllowSetForegroundWindow` for its process and `SendMessageTimeout`
+    with `WM_COPYDATA` (JSON with `os.Args[1:]` and the working
+    directory). `IsFirst`, `AppID`, `Listen(form)` (creates the window,
+    titled only after it is in the map), `OtherInstanceStarted`
+    (`SingleInstanceEvent`, handler `func(args []string, workingDir
+    string)`), `Close`. The window procedure activates the form with
+    `BringToForeground` during `WM_COPYDATA` and posts itself a message
+    to publish the event, so the second instance does not wait for the
+    handlers. A failed send (`SMTO_ABORTIFHUNG`, a refused message, a
+    first instance that is ending) is retried until the deadline. The
+    message window is destroyed when the form given to `Listen` is
+    disposed, and it rejects data of 0 bytes or above 1 MiB. An elevated
+    first instance: the mutex cannot be opened (`ERROR_ACCESS_DENIED`,
+    taken as "another instance exists") and UIPI blocks `WM_COPYDATA`,
+    so the second instance gets an error at once saying so. `Close`
+    must run on the thread of `NewSingleInstance` (error otherwise).
+    `GlobalHotkey.Dispose` from another goroutine only queues the
+    unregistration; `IsDisposed` is an atomic flag.
+  - New in `internal/win` (generated): `RegisterHotKey`,
+    `UnregisterHotKey`, `CreateMutex` (`uintptr` for the security
+    attributes), `ReleaseMutex`, `WaitForSingleObject`, `CloseHandle`,
+    `FindWindowEx`, `SendMessageTimeout`, `AllowSetForegroundWindow`,
+    `GetWindowThreadProcessId`, `IsIconic`,
+    `SetWindowText`, `COPYDATASTRUCT`, `WM_HOTKEY`, `WM_COPYDATA`,
+    `MOD_*`, `ERROR_HOTKEY_ALREADY_REGISTERED`, `ERROR_ACCESS_DENIED`,
+    `WAIT_*`, `SMTO_ABORTIFHUNG` and `SW_RESTORE`.
 - Step 14, part 2: draft pull request lpintes/walk#29, not yet tested
   on Windows (task 20 of `TESTING_ON_WINDOWS.md`, test program
   `tests/_wingui/system` with a `manual` mode). Power, session and
