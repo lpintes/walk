@@ -16,12 +16,14 @@
 //     ActiveMdiChildChanged, Activating and Deactivating).
 //   - Layout and bounds: the edit fields of a child have a size, and
 //     BoundsPixels returns what SetBoundsPixels set, relative to the MDI
-//     client.
+//     client. The MDI client fits between the tool bar and the status bar
+//     after a WM_SIZE and after an action is added to the tool bar.
 //   - Window menu: it lists the three children after the walk items;
 //     WM_COMMAND with the ID of an item activates that child.
 //   - Keyboard: Ctrl+F6 activates another child and Ctrl+Shift+F6 the
 //     first one again (TranslateMDISysAccel in the message loop);
-//     Ctrl+F4 and Close publish Closing, which here cancels.
+//     Ctrl+F4 and Close publish Closing, which here cancels. Ctrl+F6 and
+//     Ctrl+F4 posted to another (hidden) form of the thread do nothing.
 //   - Focus (needs the frame in the foreground, FAIL without it): the
 //     focus moves to the first field of a newly activated child and back to
 //     the last focused field of a child activated again; Tab moves among
@@ -41,10 +43,16 @@
 //     in the foreground; the menu is closed with WM_CANCELMODE).
 //   - Cascade, TileHorizontally and TileVertically change the bounds; the
 //     tiled children do not overlap. Minimize and ArrangeIcons.
+//   - Modal dialog owned by a child: its owner is the frame, which is
+//     disabled while it runs and enabled after it; the child is active
+//     again.
 //   - Closing: CloseAllMdiChildren stops at a child whose Closing cancels
 //     and closes all children once none cancels; then no child, no active
-//     child and no child item in the window menu remain. Closing the frame
-//     with a child that cancels keeps both open; the final close of the
+//     child and no child item in the window menu remain; the MDI client
+//     has the accessible name "Documents" and (in the foreground) the
+//     focus. The frame's Closing comes first, and canceling it keeps the
+//     child without asking it. Closing the frame with a child that cancels
+//     keeps both open; the final close of the
 //     frame publishes Closing of the child.
 //
 // It prints PASS, FAIL and INFO lines and exits with code 1 if a check
@@ -88,6 +96,7 @@ const (
 	wmCancelMode       = 0x1F
 	guiInMenuMode      = 0x4
 	guiSystemMenuMode  = 0x8
+	gwOwner            = 4
 )
 
 var (
@@ -433,7 +442,8 @@ func run(lastDoc *doc) {
 	checkTitle()
 	checkMaximize(fg)
 	checkArrange()
-	checkClosing(lastDoc)
+	checkModalDialog()
+	checkClosing(lastDoc, fg)
 }
 
 func checkStructure() {
@@ -506,6 +516,37 @@ func checkLayoutAndBounds() {
 	onUI(func() { got = docs[0].child.BoundsPixels() })
 	check("layout of the child", w > 50 && h > 5, "first field %dx%d", w, h)
 	check("BoundsPixels relative to the MDI client", got == want, "got %v, want %v", got, want)
+
+	// The MDI client fills the client area between the tool bar and the
+	// status bar, also after a WM_SIZE (which DefFrameProc would answer by
+	// sizing it over the bars) and after an action is added to the tool
+	// bar.
+	clientFits := func() (walk.Rectangle, walk.Rectangle) {
+		var r win.RECT
+		win.GetWindowRect(mdiClient(), &r)
+		p := win.POINT{X: r.Left, Y: r.Top}
+		win.ScreenToClient(frame.Handle(), &p)
+		return walk.Rectangle{X: int(p.X), Y: int(p.Y), Width: int(r.Right - r.Left), Height: int(r.Bottom - r.Top)}, frame.ClientBoundsPixels()
+	}
+	var gotClient, wantClient walk.Rectangle
+	onUI(func() {
+		frame.SendMessage(win.WM_SIZE, 0, 0)
+		gotClient, wantClient = clientFits()
+	})
+	check("MDI client fits between the bars after WM_SIZE", gotClient == wantClient, "MDI client %v, want %v", gotClient, wantClient)
+
+	var toolBarHeight int
+	onUI(func() {
+		a := walk.NewAction()
+		a.SetText("Tool")
+		frame.ToolBar().Actions().Add(a)
+	})
+	pause()
+	onUI(func() {
+		gotClient, wantClient = clientFits()
+		toolBarHeight = frame.ToolBar().HeightPixels()
+	})
+	check("MDI client below a tool bar that got an action", gotClient == wantClient && toolBarHeight > 0 && gotClient.Y >= toolBarHeight, "MDI client %v, want %v, tool bar height %d", gotClient, wantClient, toolBarHeight)
 }
 
 func checkWindowMenu() {
@@ -540,6 +581,32 @@ func checkKeyboard() {
 	check("Ctrl+F6 activates another child", next != 0 && next != docs[1].child.Handle(), "active %#x, was %#x", next, docs[1].child.Handle())
 	postKey(vkF6, true, true)
 	check("Ctrl+Shift+F6 activates the previous child", activeHWnd() == docs[1].child.Handle(), "active %#x, want %#x", activeHWnd(), docs[1].child.Handle())
+
+	// Ctrl+F6 and Ctrl+F4 for another form of the thread (hidden, so that
+	// the frame keeps the foreground) must not reach the MDI client.
+	var other *walk.MainWindow
+	var otherEdit *walk.LineEdit
+	onUI(func() {
+		var err error
+		if other, err = walk.NewMainWindow(); err == nil {
+			otherEdit, err = walk.NewLineEdit(other)
+		}
+		checkErr("create another form", err)
+	})
+	if otherEdit != nil {
+		for _, vk := range []uintptr{vkF6, vkF4} {
+			onUI(func() {
+				setModifiers(true, false)
+				win.PostMessage(otherEdit.Handle(), win.WM_KEYDOWN, vk, 1)
+			})
+			pause()
+			onUI(func() { setModifiers(false, false) })
+		}
+		check("Ctrl+F6 and Ctrl+F4 in another form leave the children alone", activeHWnd() == docs[1].child.Handle() && isWindow(docs[1].child.Handle()), "active %#x, want %#x", activeHWnd(), docs[1].child.Handle())
+	}
+	if other != nil {
+		onUI(func() { other.Dispose() })
+	}
 
 	d := docs[2]
 	onUI(func() {
@@ -842,7 +909,40 @@ func checkArrange() {
 	check("Restore a minimized child", !minimized, "still minimized")
 }
 
-func checkClosing(lastDoc *doc) {
+// checkModalDialog runs a modal dialog owned by a child: the frame, the
+// real owner, is disabled while it runs and enabled again after it, and
+// the child is the active child again.
+func checkModalDialog() {
+	var owner win.HWND
+	var frameEnabled, frameEnabledAfter bool
+	var activeAfter win.HWND
+	onUI(func() {
+		d := docs[0]
+		dlg, err := walk.NewDialog(d.child)
+		if !checkErr("create a dialog owned by a child", err) {
+			return
+		}
+		dlg.SetTitle("Modal dialog")
+		dlg.Starting().Attach(func() {
+			owner = win.GetWindow(dlg.Handle(), gwOwner)
+			frameEnabled = win.IsWindowEnabled(frame.Handle())
+			win.PostMessage(dlg.Handle(), win.WM_CLOSE, 0, 0)
+		})
+		docs[1].child.Activate()
+		d.child.Activate()
+		dlg.Run()
+		dlg.Dispose()
+		frameEnabledAfter = win.IsWindowEnabled(frame.Handle())
+		activeAfter = win.HWND(win.SendMessage(mdiClient(), win.WM_MDIGETACTIVE, 0, 0))
+	})
+	pause()
+	check("dialog owned by a child is owned by the frame", owner == frame.Handle(), "owner %#x, frame %#x", owner, frame.Handle())
+	check("modal dialog of a child disables the frame", !frameEnabled, "the frame was enabled while the dialog ran")
+	check("frame enabled after the dialog", frameEnabledAfter, "the frame is still disabled")
+	check("owner child active after the dialog", activeAfter == docs[0].child.Handle(), "active %#x, want %#x", activeAfter, docs[0].child.Handle())
+}
+
+func checkClosing(lastDoc *doc, fg bool) {
 	var ok bool
 	var left int
 	onUI(func() {
@@ -870,6 +970,20 @@ func checkClosing(lastDoc *doc) {
 	check("window menu without children", len(items) == 4, "items %q", menuTexts(items))
 	check("no MDI child windows left", win.GetWindow(mdiClient(), win.GW_CHILD) == 0, "the MDI client still has a child window")
 
+	if a, err := uia.New(); checkErr("uia New", err) {
+		if e, err := a.ElementFromHandle(uintptr(mdiClient())); checkErr("uia ElementFromHandle(MDI client)", err) {
+			name, _ := e.Name()
+			check("accessible name of the MDI client", name == "Documents", "name %q", name)
+			e.Release()
+		}
+		a.Close()
+	}
+	if fg {
+		var focus win.HWND
+		onUI(func() { focus = win.GetFocus() })
+		check("focus in the MDI client after the last child", focus == mdiClient(), "focus %#x (class %q), MDI client %#x", focus, className(focus), mdiClient())
+	}
+
 	lastDoc.name = "Last child"
 	lastDoc.cancel = true
 	var err error
@@ -878,6 +992,28 @@ func checkClosing(lastDoc *doc) {
 		return
 	}
 	pause()
+
+	// The Closing event of the frame comes first; canceling it keeps the
+	// children without asking them.
+	frameCancel := true
+	frameClosing := 0
+	var handle int
+	onUI(func() {
+		handle = frame.Closing().Attach(func(canceled *bool, reason walk.CloseReason) {
+			frameClosing++
+			*canceled = frameCancel
+		})
+		frame.Close()
+	})
+	pause()
+	var childClosing int
+	onUI(func() { childClosing = lastDoc.closing })
+	check("frame Closing comes first and its cancel keeps the children", frameClosing == 1 && childClosing == 0 && isWindow(lastDoc.child.Handle()), "frame Closing %d times, child Closing %d times, child exists %v", frameClosing, childClosing, isWindow(lastDoc.child.Handle()))
+	onUI(func() {
+		frameCancel = false
+		frame.Closing().Detach(handle)
+	})
+
 	onUI(func() { frame.Close() })
 	pause()
 	check("frame close canceled by a child", isWindow(frame.Handle()) && isWindow(lastDoc.child.Handle()) && lastDoc.closing == 1, "frame exists %v, child exists %v, Closing %d times", isWindow(frame.Handle()), isWindow(lastDoc.child.Handle()), lastDoc.closing)

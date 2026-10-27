@@ -915,22 +915,35 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `TileHorizontally`, `TileVertically`, `ArrangeIcons`,
     `ActivateNextMdiChild`, `ActivatePreviousMdiChild`,
     `CloseAllMdiChildren` (stops at a child whose `Closing` cancels;
-    `WM_CLOSE` of the frame calls it before the frame's own `Closing`).
+    `WM_CLOSE` of the frame publishes the frame's own `Closing` first and
+    calls it only if that did not cancel, through the `FormBase` hook
+    `closeChildren`; a child that cancels cancels the frame close),
+    `SetMdiClientName` (accessible name of the `MDICLIENT` through
+    Dynamic Annotation, default "Documents").
     The `MDICLIENT` (`WS_EX_CLIENTEDGE`, `MDIS_ALLCHILDSTYLES`, first
     child ID 0xFF00) is a direct child of the frame, sized to
     `ClientBoundsPixels` (between tool bar and status bar); the client
     composite of the frame is hidden. `WM_COMMAND` with an ID that is not
     a walk action goes to `DefFrameProc` (window menu items, the system
     menu of a maximized child). `WM_DPICHANGED` also applies the DPI to
-    the children and lays them out.
+    the children and lays them out. `WM_SIZE` does not reach
+    `DefFrameProc` (which would size the MDI client over the bars):
+    `MainWindow` places the bars, then the MDI client is fitted. The tool
+    bar's `BoundsChanged` and `VisibleChanged` (also of a tool bar set
+    later with `SetToolBar`, through the hook `MainWindow.toolBarSet`) fit
+    the bars and the MDI client again.
   - `MdiChildWindow` (a `Form` on `FormBase`): `NewMdiChildWindow(frame)`
     sends `WM_MDICREATE` for walk's class `\o/ Walk_MdiChild_Class \o/`,
     whose window procedure calls `DefMDIChildProc` until the window is
     registered; the child is created hidden and `Show` activates it.
     `Frame`, `Activate`, `IsActive`, `Maximize`, `Minimize`, `Restore`,
     `IsMaximized`, `IsMinimized`; `Run` only shows it; `SetOwner` returns
-    an error; `Bounds` and `BoundsPixels` are relative to the MDI client;
-    `Dispose` uses `WM_MDIDESTROY`. `Closing`, `Activating` and
+    an error; a form owned by a child (a modal `Dialog`) is really owned
+    by the frame (`formOwnerHWnd` in `SetOwner`, `Run` and `WM_CLOSE`), so
+    the frame is disabled while it runs, and the child is activated again
+    when it closes; `Dialog` centers on the child's screen bounds; `Bounds` and `BoundsPixels` are relative to the MDI client;
+    `Dispose` uses `WM_MDIDESTROY` (also when `NewMdiChildWindow` fails
+    after creating the window). `Closing`, `Activating` and
     `Deactivating` come from `FormBase` (`WM_CLOSE`, `WM_MDIACTIVATE`).
     `NeedsWmSize` is true, because `DefMDIChildProc` needs `WM_SIZE` and
     `WM_MOVE`; `WM_GETMINMAXINFO` goes to it before the layout minimum is
@@ -941,19 +954,28 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     control, `WM_SETFOCUS` of the child (the MDI client sets the focus to
     an activated child) restores it or focuses the first control;
     `WM_ACTIVATE` of the frame sends the focus to the active child unless
-    it was outside the MDI client.
+    it was outside the MDI client (a saved window that no longer exists
+    counts as inside). When the last child is destroyed while the frame is
+    active, the focus goes to the MDI client: the frame cannot keep it
+    (`DefFrameProc` passes `WM_SETFOCUS` on to the MDI client), and the
+    named MDI client gives a screen reader something to say instead of an
+    unnamed pane.
   - Message loop (`mainloop_default.go` and `mainloop_cgo.go`, the latter
     not compiled here, no MinGW in the container): after `handleKeyDown`,
     `FormBase.translateMDISysAccel` calls `TranslateMDISysAccel` for
-    `WM_KEYDOWN` and `WM_SYSKEYDOWN` and passes `WM_SYSCHAR` '-' for a
+    `WM_KEYDOWN` and `WM_SYSKEYDOWN` of the frame and its descendants only
+    (other forms of the thread share the loop, and the function ignores
+    the target window) and passes `WM_SYSCHAR` '-' for a
     control inside the active child to the child (Alt+Hyphen);
     `IsDialogMessage` gets the active child instead of the frame for
     messages to it or its descendants (`dialogMessageHWnd`), so Tab stays
-    inside it.
+    inside it; for a minimized active child the frame.
   - `WindowBase.WndProc` calls an unexported `defWindowProc` method of
     the window, when it has one, instead of `DefWindowProc`.
   - Menus: `Menu` has an optional `positionOffset`; the frame's menu bar
     skips the system menu item a maximized child puts at position 0.
+    Action IDs skip 0xFF00 to 0xFFFF (the window menu items) and, after
+    the last ID, start at 3 again skipping IDs in use (`allocActionId`).
   - Declarative `MdiMainWindow` (the fields of `MainWindow` without the
     widgets, plus `WindowMenu **walk.Menu`, `MdiChildren` and
     `OnActiveMdiChildChanged`) and `MdiChildWindow` (with `Bounds`,
@@ -964,10 +986,10 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `TranslateMDISysAccel`, `IsIconic`, `IsZoomed`, `CLIENTCREATESTRUCT`,
     `MDICREATESTRUCT`, the `WM_MDI*` messages used, `WM_CHILDACTIVATE`,
     `WM_SYSKEYDOWN`, `WM_SYSCHAR`, `MDITILE_*`, `MDIS_ALLCHILDSTYLES`,
-    `SW_MINIMIZE` and `SC_MINIMIZE`.
+    `SW_MINIMIZE`, `SC_MINIMIZE`, `IsWindow` and `GetActiveWindow`.
   - Accessibility: the children are real MDI children, so the system
     gives them their title as accessible name and raises the focus and
-    name change events; nothing is annotated. Whether NVDA says the title
+    name change events; only the MDI client gets a name. Whether NVDA says the title
     on every switch is for the manual test.
   - Not done: per-child menus merged into the frame's menu bar
     (`WM_MDISETMENU` per child), a declarative or built-in standard window

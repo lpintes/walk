@@ -117,6 +117,15 @@ func NewMdiMainWindowWithCfg(cfg *MainWindowCfg) (*MdiMainWindow, error) {
 
 	mw.statusBar.VisibleChanged().Attach(mw.layoutMDIClient)
 
+	mw.toolBarSet = mw.watchToolBar
+	mw.watchToolBar(mw.toolBar)
+
+	mw.closeChildren = mw.CloseAllMdiChildren
+
+	// Without a name, a screen reader says nothing useful when the focus
+	// is in the MDI client, which happens when no child is open.
+	mw.SetMdiClientName("Documents")
+
 	mw.layoutMDIClient()
 
 	succeeded = true
@@ -125,7 +134,52 @@ func NewMdiMainWindowWithCfg(cfg *MainWindowCfg) (*MdiMainWindow, error) {
 }
 
 func (mw *MdiMainWindow) defWindowProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
+	if msg == win.WM_SIZE {
+		// DefFrameProc would size the MDI client to the whole client area,
+		// over the tool bar and the status bar; layoutMDIClient sizes it.
+		return win.DefWindowProc(hwnd, msg, wParam, lParam)
+	}
+
 	return win.DefFrameProc(hwnd, mw.mdiClient, msg, wParam, lParam)
+}
+
+// SetMdiClientName sets the accessible name of the MDI client, the area
+// that holds the MDI children. Screen readers say it when the focus is in
+// the area itself, which happens when no child is open. The default is
+// "Documents"; set a translated name for other languages.
+func (mw *MdiMainWindow) SetMdiClientName(name string) error {
+	if mw.mdiClient == 0 {
+		return newError("the frame is closed")
+	}
+
+	return mw.Accessibility().accSetPropertyStr(mw.mdiClient, &win.PROPID_ACC_NAME, win.EVENT_OBJECT_NAMECHANGE, name)
+}
+
+// watchToolBar fits the bars and the MDI client again when the tool bar
+// changes its size or visibility, for example when actions are added.
+func (mw *MdiMainWindow) watchToolBar(tb *ToolBar) {
+	if tb == nil {
+		mw.layoutBars()
+		return
+	}
+
+	relayout := func() {
+		if mw.toolBar == tb {
+			mw.layoutBars()
+		}
+	}
+	tb.BoundsChanged().Attach(relayout)
+	tb.VisibleChanged().Attach(relayout)
+
+	mw.layoutBars()
+}
+
+// layoutBars places the tool bar, the status bar and the MDI client, as a
+// resize of the frame does.
+func (mw *MdiMainWindow) layoutBars() {
+	if mw.hWnd != 0 && mw.mdiClient != 0 {
+		mw.SendMessage(win.WM_SIZE, 0, 0)
+	}
 }
 
 // MdiChildren returns the MDI children of the frame in the order they were
@@ -207,7 +261,8 @@ func (mw *MdiMainWindow) ActivatePreviousMdiChild() {
 // CloseAllMdiChildren asks every MDI child to close, as Close does, and
 // stops at the first one whose Closing event cancels. It reports whether
 // all children are closed. The frame calls it when it is closed itself,
-// before its own Closing event.
+// after its own Closing event, if that did not cancel; a child that
+// cancels its Closing cancels the close of the frame.
 func (mw *MdiMainWindow) CloseAllMdiChildren() bool {
 	for _, cw := range slices.Clone(mw.children) {
 		if cw.hWnd == 0 {
@@ -275,6 +330,21 @@ func (mw *MdiMainWindow) removeChild(cw *MdiChildWindow) {
 	}
 }
 
+// focusEmptyClient gives the focus to the MDI client when the last visible
+// child is gone while the frame is active, so that it is not lost: the
+// focus was in the destroyed child. The MDI client has an accessible name
+// (SetMdiClientName), which screen readers say. The frame itself cannot
+// keep the focus: DefFrameProc passes it on to the MDI client.
+func (mw *MdiMainWindow) focusEmptyClient() {
+	if mw.mdiClient == 0 || mw.activeChildHWnd() != 0 || win.GetActiveWindow() != mw.hWnd {
+		return
+	}
+
+	if focus := win.GetFocus(); focus == 0 || focus != mw.mdiClient && !win.IsChild(mw.hWnd, focus) {
+		win.SetFocus(mw.mdiClient)
+	}
+}
+
 // menuBarOffset returns 1 while the active child is maximized: then the MDI
 // client has inserted the system menu of the child as the first item of
 // the menu bar.
@@ -335,7 +405,7 @@ func (mw *MdiMainWindow) prepareFocusRestore() {
 	}
 
 	p := mw.prevFocusHWnd
-	if p == 0 || p == mw.mdiClient || win.IsChild(mw.mdiClient, p) && p != active && !win.IsChild(active, p) {
+	if p == 0 || !win.IsWindow(p) || p == mw.mdiClient || win.IsChild(mw.mdiClient, p) && p != active && !win.IsChild(active, p) {
 		mw.prevFocusHWnd = active
 	}
 }
@@ -376,11 +446,6 @@ func (mw *MdiMainWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintp
 			mw.prepareFocusRestore()
 		}
 
-	case win.WM_CLOSE:
-		if !mw.CloseAllMdiChildren() {
-			return 0
-		}
-
 	case win.WM_COMMAND:
 		// Commands that are not walk actions come from the window menu
 		// (activate a child, More Windows...) or from the system menu of
@@ -390,6 +455,15 @@ func (mw *MdiMainWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintp
 				return win.DefFrameProc(hwnd, mw.mdiClient, msg, wParam, lParam)
 			}
 		}
+
+	case win.WM_SIZE:
+		// MainWindow places the tool bar and the status bar, then the
+		// MDI client fills the rest; DefFrameProc does not get it.
+		result := mw.MainWindow.WndProc(hwnd, msg, wParam, lParam)
+
+		mw.layoutMDIClient()
+
+		return result
 
 	case win.WM_WINDOWPOSCHANGED:
 		result := mw.MainWindow.WndProc(hwnd, msg, wParam, lParam)
@@ -412,6 +486,9 @@ func (mw *MdiMainWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintp
 
 		// The MDI client and the children are destroyed after the frame;
 		// from now on the frame calls DefWindowProc.
+		if mw.group != nil {
+			mw.group.accClearHwndProps(mw.mdiClient)
+		}
 		mw.mdiClient = 0
 
 		return result
@@ -486,6 +563,11 @@ func NewMdiChildWindow(frame *MdiMainWindow) (*MdiChildWindow, error) {
 		ClassName: mdiChildWindowClass,
 		Style:     style,
 	}); err != nil {
+		if win.IsWindow(hwnd) {
+			// Destroy the window through the MDI client, which keeps its
+			// list of children and the window menu right.
+			win.SendMessage(frame.mdiClient, win.WM_MDIDESTROY, uintptr(hwnd), 0)
+		}
 		return nil, err
 	}
 
@@ -626,6 +708,7 @@ func (cw *MdiChildWindow) Dispose() {
 
 		if cw.hWnd == 0 {
 			cw.frame.updateActiveChild()
+			cw.frame.focusEmptyClient()
 			return
 		}
 	}

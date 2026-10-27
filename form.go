@@ -95,6 +95,9 @@ type FormBase struct {
 	started                     bool
 	layoutScheduled             bool
 	mdiChild                    bool // the form is an MdiChildWindow
+	// closeChildren closes the MDI children of a frame after its Closing
+	// event; false cancels the close.
+	closeChildren func() bool
 }
 
 func (fb *FormBase) init(form Form) error {
@@ -355,7 +358,7 @@ func (fb *FormBase) SetRightToLeftLayout(rtl bool) error {
 
 func (fb *FormBase) Run() int {
 	if fb.owner != nil {
-		win.EnableWindow(fb.owner.Handle(), false)
+		win.EnableWindow(formOwnerHWnd(fb.owner), false)
 
 		invalidateDescendentBorders := func() {
 			walkDescendants(fb.owner, func(wnd Window) bool {
@@ -397,8 +400,13 @@ func (fb *FormBase) Run() int {
 // Alt+Hyphen opens the system menu of the active child. DefMDIChildProc
 // does that for WM_SYSCHAR '-' sent to the child, but the message goes to
 // the focused control inside it, so it is passed to the child here.
+//
+// Only messages for the frame or its descendants are translated: other
+// forms on the same thread (a second MainWindow, a modeless Dialog) share
+// the message loop, and TranslateMDISysAccel does not look at the target
+// window.
 func (fb *FormBase) translateMDISysAccel(msg *win.MSG) bool {
-	if fb.mdiClient == 0 {
+	if fb.mdiClient == 0 || msg.HWnd != fb.hWnd && !win.IsChild(fb.hWnd, msg.HWnd) {
 		return false
 	}
 
@@ -422,15 +430,31 @@ func (fb *FormBase) translateMDISysAccel(msg *win.MSG) bool {
 // dialogMessageHWnd returns the window the message loop passes to
 // IsDialogMessage: the form itself, or for an MDI frame the active MDI
 // child when the message is for it or one of its descendants, so that Tab
-// moves the focus among the controls of the active child.
+// moves the focus among the controls of the active child. A minimized
+// child has the focus itself and no control to move to, so the frame is
+// returned for it.
 func (fb *FormBase) dialogMessageHWnd(msg *win.MSG) win.HWND {
 	if fb.mdiClient != 0 {
-		if active := win.HWND(win.SendMessage(fb.mdiClient, win.WM_MDIGETACTIVE, 0, 0)); active != 0 && (msg.HWnd == active || win.IsChild(active, msg.HWnd)) {
+		if active := win.HWND(win.SendMessage(fb.mdiClient, win.WM_MDIGETACTIVE, 0, 0)); active != 0 && !win.IsIconic(active) && (msg.HWnd == active || win.IsChild(active, msg.HWnd)) {
 			return active
 		}
 	}
 
 	return fb.hWnd
+}
+
+// formOwnerHWnd returns the window that a form owned by owner is really
+// owned by and that a modal form disables: owner itself, or for an MDI
+// child its frame, because only top-level windows can own windows.
+func formOwnerHWnd(owner Form) win.HWND {
+	hwnd := owner.Handle()
+	if owner.AsFormBase().mdiChild {
+		if root := win.GetAncestor(hwnd, win.GA_ROOT); root != 0 {
+			return root
+		}
+	}
+
+	return hwnd
 }
 
 func (fb *FormBase) handleKeyDown(msg *win.MSG) bool {
@@ -555,7 +579,7 @@ func (fb *FormBase) SetOwner(value Form) error {
 
 	var ownerHWnd win.HWND
 	if value != nil {
-		ownerHWnd = value.Handle()
+		ownerHWnd = formOwnerHWnd(value)
 	}
 
 	win.SetLastError(0)
@@ -798,11 +822,23 @@ func (fb *FormBase) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 		fb.closeReason = CloseReasonUnknown
 		var canceled bool
 		fb.closingPublisher.Publish(&canceled, fb.closeReason)
+		if !canceled && fb.closeChildren != nil && !fb.closeChildren() {
+			// An MDI child canceled its Closing; the frame stays open.
+			canceled = true
+		}
 		if !canceled {
 			if fb.owner != nil {
-				win.EnableWindow(fb.owner.Handle(), true)
-				if !win.SetWindowPos(fb.owner.Handle(), win.HWND_NOTOPMOST, 0, 0, 0, 0, win.SWP_NOMOVE|win.SWP_NOSIZE|win.SWP_SHOWWINDOW) {
+				ownerHWnd := formOwnerHWnd(fb.owner)
+				win.EnableWindow(ownerHWnd, true)
+				if !win.SetWindowPos(ownerHWnd, win.HWND_NOTOPMOST, 0, 0, 0, 0, win.SWP_NOMOVE|win.SWP_NOSIZE|win.SWP_SHOWWINDOW) {
 					lastError("SetWindowPos")
+				}
+				if ownerHWnd != fb.owner.Handle() {
+					// The owner is an MDI child: make it the active child
+					// again, so that it gets the focus back when the frame
+					// is activated.
+					child := fb.owner.Handle()
+					win.SendMessage(win.GetParent(child), win.WM_MDIACTIVATE, uintptr(child), 0)
 				}
 			}
 

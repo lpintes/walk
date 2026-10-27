@@ -851,6 +851,13 @@ yet: it was written in a Linux container. Points to watch:
 - walk's menu bar code inserts and removes items by position; while a
   child is maximized it skips the system menu item of the child at
   position 0.
+- Closing the frame publishes the frame's `Closing` first; only if it
+  does not cancel are the children asked, and the first child that
+  cancels keeps the frame open.
+- A modal dialog owned by a child is owned by the frame and disables
+  it; afterwards the child is the active child again.
+- When the last child closes, the focus goes to the MDI client, which
+  has the accessible name "Documents".
 
 How to test, on 386 and amd64 (after `build.ps1`):
 
@@ -896,6 +903,9 @@ How to test, on 386 and amd64 (after `build.ps1`):
     the Window menu shows it.
   - Ctrl+N creates a new document, which becomes active with the focus
     in its Name field.
+  - Close every document with Ctrl+F4: NVDA should say "Documents"
+    (the MDI client), not an unnamed pane; Ctrl+N creates a document
+    again.
   - Close the frame with Alt+F4 while a document has notes: the message
     box appears; No keeps the frame open, Yes closes the program with exit
     code 0.

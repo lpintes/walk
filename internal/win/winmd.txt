@@ -1449,6 +1449,7 @@ func GdiFlush
 func GdipCreateBitmapFromFile result=GpStatus
 func GdipCreateHBITMAPFromBitmap result=GpStatus background:ARGB
 func GdipDisposeImage result=GpStatus
+func GetActiveWindow
 func GetAncestor
 func GetCaretPos
 func GetClientRect
@@ -1508,6 +1509,7 @@ func IsChild
 func IsClipboardFormatAvailable
 func IsDialogMessage
 func IsIconic
+func IsWindow
 func IsWindowEnabled
 func IsWindowVisible
 func IsZoomed

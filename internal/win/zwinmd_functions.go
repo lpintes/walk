@@ -93,6 +93,7 @@ var (
 	procGdipCreateBitmapFromFile    = libgdiplus.NewProc("GdipCreateBitmapFromFile")
 	procGdipCreateHBITMAPFromBitmap = libgdiplus.NewProc("GdipCreateHBITMAPFromBitmap")
 	procGdipDisposeImage            = libgdiplus.NewProc("GdipDisposeImage")
+	procGetActiveWindow             = libuser32.NewProc("GetActiveWindow")
 	procGetAncestor                 = libuser32.NewProc("GetAncestor")
 	procGetCaretPos                 = libuser32.NewProc("GetCaretPos")
 	procGetClientRect               = libuser32.NewProc("GetClientRect")
@@ -151,6 +152,7 @@ var (
 	procIsClipboardFormatAvailable  = libuser32.NewProc("IsClipboardFormatAvailable")
 	procIsDialogMessageW            = libuser32.NewProc("IsDialogMessageW")
 	procIsIconic                    = libuser32.NewProc("IsIconic")
+	procIsWindow                    = libuser32.NewProc("IsWindow")
 	procIsWindowEnabled             = libuser32.NewProc("IsWindowEnabled")
 	procIsWindowVisible             = libuser32.NewProc("IsWindowVisible")
 	procIsZoomed                    = libuser32.NewProc("IsZoomed")
@@ -569,6 +571,11 @@ func GdipDisposeImage(image *GpImage) GpStatus {
 	return GpStatus(r1)
 }
 
+func GetActiveWindow() HWND {
+	r1, _, _ := syscall.SyscallN(procGetActiveWindow.Addr())
+	return HWND(r1)
+}
+
 func GetAncestor(hwnd HWND, gaFlags uint32) HWND {
 	r1, _, _ := syscall.SyscallN(procGetAncestor.Addr(), uintptr(hwnd), uintptr(gaFlags))
 	return HWND(r1)
@@ -861,6 +868,11 @@ func IsDialogMessage(hDlg HWND, lpMsg *MSG) bool {
 
 func IsIconic(hWnd HWND) bool {
 	r1, _, _ := syscall.SyscallN(procIsIconic.Addr(), uintptr(hWnd))
+	return r1 != 0
+}
+
+func IsWindow(hWnd HWND) bool {
+	r1, _, _ := syscall.SyscallN(procIsWindow.Addr(), uintptr(hWnd))
 	return r1 != 0
 }
 

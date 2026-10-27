@@ -31,6 +31,7 @@ type MainWindow struct {
 	menu            *Menu
 	toolBar         *ToolBar
 	statusBar       *StatusBar
+	toolBarSet      func(tb *ToolBar) // called by SetToolBar; set by MdiMainWindow
 }
 
 func NewMainWindow() (*MainWindow, error) {
@@ -128,6 +129,10 @@ func (mw *MainWindow) SetToolBar(tb *ToolBar) {
 	}
 
 	mw.toolBar = tb
+
+	if mw.toolBarSet != nil {
+		mw.toolBarSet(tb)
+	}
 }
 
 func (mw *MainWindow) StatusBar() *StatusBar {
