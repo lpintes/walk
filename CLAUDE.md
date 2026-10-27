@@ -307,7 +307,9 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     (step 8, part 3).
   - Cloud checks only; no Windows test needed beyond a smoke run, as
     the only runtime change is the `errors.As` in the presenter.
-- Step 8, part 3: Windows error codes in walk errors (the user approved
+- Step 8, part 3: pull request lpintes/walk#26, merged; `go test .`
+  passed on Windows 11 (386 and amd64). Windows error codes in walk
+  errors (the user approved
   the change of `Inner` on 2026-10-26). `lastError` and
   `errorFromHRESULT` return an `*Error` whose inner error is the code as
   a `syscall.Errno` (`newErrWithCode`): the `GetLastError` value, or the
