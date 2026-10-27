@@ -421,7 +421,7 @@ func (fb *FormBase) Run() int {
 // of the window menu of its children (Ctrl+F4 closes the active child,
 // Ctrl+F6 and Ctrl+Tab activate the next one, with Shift the previous one)
 // into WM_SYSCOMMAND messages. It reports whether the message was
-// translated and must not be processed further.
+// translated or dispatched and must not be processed further.
 //
 // Alt+Hyphen opens the system menu of the active child. DefMDIChildProc
 // does that for WM_SYSCHAR '-' sent to the child, but the message goes to
@@ -438,7 +438,20 @@ func (fb *FormBase) translateMDISysAccel(msg *win.MSG) bool {
 
 	switch msg.Message {
 	case win.WM_KEYDOWN, win.WM_SYSKEYDOWN:
-		return win.TranslateMDISysAccel(fb.mdiClient, msg)
+		if win.TranslateMDISysAccel(fb.mdiClient, msg) {
+			return true
+		}
+		if msg.HWnd == fb.mdiClient && msg.Message == win.WM_KEYDOWN {
+			switch msg.WParam {
+			case win.VK_LEFT, win.VK_RIGHT, win.VK_UP, win.VK_DOWN:
+				// The MDI client has the focus when no child is open.
+				// IsDialogMessage would move it to the next window of the
+				// group, the status bar.
+				win.TranslateMessage(msg)
+				win.DispatchMessage(msg)
+				return true
+			}
+		}
 
 	case win.WM_SYSCHAR:
 		if msg.WParam != '-' {
