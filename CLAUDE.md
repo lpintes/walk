@@ -211,7 +211,9 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   PowerShell scripts that build and run them and smoke test every example
   (see its `README.md`); rerun them on Windows after changes to
   `internal/win`, `internal/com` or the affected widgets. The leading underscore keeps
-  them out of `./...`.
+  them out of `./...`. Run the automated tests in Windows Sandbox with
+  `tests/_wingui/sandbox/sandbox.ps1 -Minimize` (they steal the focus of
+  the host desktop); only the manual screen reader tests run on the host.
 - Step 6: done, pull request lpintes/walk#7. Done before steps 4 and 5
   because it needs no live testing while it is written.
   - Task 5 of `TESTING_ON_WINDOWS.md` passed on Windows 11 (386 and
@@ -914,9 +916,17 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 14, part 1: draft pull request lpintes/walk#28, not yet tested
-  on Windows (task 19 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/hotkeys` with a `manual` mode). Global hotkeys and
+- Step 14, part 1: pull request lpintes/walk#28. Task 19 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/hotkeys` with a
+  `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
+  `run.ps1` and `examples.ps1` in Windows Sandbox on 386 and amd64, and
+  the manual test with NVDA on amd64 (the hotkey brings the form to the
+  foreground, also from minimized, no autorepeat, unregister and
+  register again, a second instance hands over its arguments and the
+  first window gets the foreground, a restart after Alt+F4 is the first
+  instance again). The test first failed: a taken combination reported
+  error 0, because `GetLastError` always returns 0 (see "Known issues");
+  fixed with the generator option `lasterror`. Global hotkeys and
   single instance; upstream lxn/walk #228 was only the model (rewritten,
   see `opened-prs.md`).
   - `GlobalHotkey` (`globalhotkey.go`): `NewGlobalHotkey(owner,
