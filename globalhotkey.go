@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"slices"
 	"sync/atomic"
-	"syscall"
 
 	"github.com/lpintes/walk/internal/win"
 )
@@ -97,12 +96,11 @@ func NewGlobalHotkeyWithOptions(owner Window, shortcut Shortcut, opts GlobalHotk
 		mods |= win.MOD_NOREPEAT
 	}
 
-	if !win.RegisterHotKey(hwnd, id, mods, uint32(shortcut.Key)) {
-		errno := win.GetLastError()
+	if ok, errno := win.RegisterHotKey(hwnd, id, mods, uint32(shortcut.Key)); !ok {
 		if errno == win.ERROR_HOTKEY_ALREADY_REGISTERED {
 			return nil, wrapErrorNoPanic(fmt.Errorf("NewGlobalHotkey %s: %w", shortcut, ErrHotkeyAlreadyRegistered))
 		}
-		return nil, wrapErrorNoPanic(fmt.Errorf("NewGlobalHotkey %s: RegisterHotKey: %w", shortcut, syscall.Errno(errno)))
+		return nil, wrapErrorNoPanic(fmt.Errorf("NewGlobalHotkey %s: RegisterHotKey: %w", shortcut, errno))
 	}
 
 	h := &GlobalHotkey{

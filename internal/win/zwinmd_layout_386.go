@@ -546,6 +546,14 @@ func _() {
 }
 
 func _() {
+	_ = layoutCheck[unsafe.Sizeof(POWERBROADCAST_SETTING{})-24]
+	_ = layoutCheck[unsafe.Alignof(POWERBROADCAST_SETTING{})-4]
+	_ = layoutCheck[unsafe.Offsetof(POWERBROADCAST_SETTING{}.PowerSetting)-0]
+	_ = layoutCheck[unsafe.Offsetof(POWERBROADCAST_SETTING{}.DataLength)-16]
+	_ = layoutCheck[unsafe.Offsetof(POWERBROADCAST_SETTING{}.Data)-20]
+}
+
+func _() {
 	_ = layoutCheck[unsafe.Sizeof(RECT{})-16]
 	_ = layoutCheck[unsafe.Alignof(RECT{})-4]
 	_ = layoutCheck[unsafe.Offsetof(RECT{}.Left)-0]
@@ -584,6 +592,17 @@ func _() {
 	_ = layoutCheck[unsafe.Offsetof(SYSTEMTIME{}.WMinute)-10]
 	_ = layoutCheck[unsafe.Offsetof(SYSTEMTIME{}.WSecond)-12]
 	_ = layoutCheck[unsafe.Offsetof(SYSTEMTIME{}.WMilliseconds)-14]
+}
+
+func _() {
+	_ = layoutCheck[unsafe.Sizeof(SYSTEM_POWER_STATUS{})-12]
+	_ = layoutCheck[unsafe.Alignof(SYSTEM_POWER_STATUS{})-4]
+	_ = layoutCheck[unsafe.Offsetof(SYSTEM_POWER_STATUS{}.ACLineStatus)-0]
+	_ = layoutCheck[unsafe.Offsetof(SYSTEM_POWER_STATUS{}.BatteryFlag)-1]
+	_ = layoutCheck[unsafe.Offsetof(SYSTEM_POWER_STATUS{}.BatteryLifePercent)-2]
+	_ = layoutCheck[unsafe.Offsetof(SYSTEM_POWER_STATUS{}.SystemStatusFlag)-3]
+	_ = layoutCheck[unsafe.Offsetof(SYSTEM_POWER_STATUS{}.BatteryLifeTime)-4]
+	_ = layoutCheck[unsafe.Offsetof(SYSTEM_POWER_STATUS{}.BatteryFullLifeTime)-8]
 }
 
 func _() {

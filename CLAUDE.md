@@ -211,7 +211,9 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   PowerShell scripts that build and run them and smoke test every example
   (see its `README.md`); rerun them on Windows after changes to
   `internal/win`, `internal/com` or the affected widgets. The leading underscore keeps
-  them out of `./...`.
+  them out of `./...`. Run the automated tests in Windows Sandbox with
+  `tests/_wingui/sandbox/sandbox.ps1 -Minimize` (they steal the focus of
+  the host desktop); only the manual screen reader tests run on the host.
 - Step 6: done, pull request lpintes/walk#7. Done before steps 4 and 5
   because it needs no live testing while it is written.
   - Task 5 of `TESTING_ON_WINDOWS.md` passed on Windows 11 (386 and
@@ -1011,9 +1013,17 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     deprecated `WebView` accelerators inside children (they look at the
     frame's own widgets), widgets beside the MDI client in the frame,
     persistence of the set of open children, tabbed documents.
-- Step 14, part 1: draft pull request lpintes/walk#28, not yet tested
-  on Windows (task 19 of `TESTING_ON_WINDOWS.md`, test program
-  `tests/_wingui/hotkeys` with a `manual` mode). Global hotkeys and
+- Step 14, part 1: pull request lpintes/walk#28, merged. Task 19 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/hotkeys` with a
+  `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
+  `run.ps1` and `examples.ps1` in Windows Sandbox on 386 and amd64, and
+  the manual test with NVDA on amd64 (the hotkey brings the form to the
+  foreground, also from minimized, no autorepeat, unregister and
+  register again, a second instance hands over its arguments and the
+  first window gets the foreground, a restart after Alt+F4 is the first
+  instance again). The test first failed: a taken combination reported
+  error 0, because `GetLastError` always returns 0 (see "Known issues");
+  fixed with the generator option `lasterror`. Global hotkeys and
   single instance; upstream lxn/walk #228 was only the model (rewritten,
   see `opened-prs.md`).
   - `GlobalHotkey` (`globalhotkey.go`): `NewGlobalHotkey(owner,
@@ -1074,8 +1084,78 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `SetWindowText`, `COPYDATASTRUCT`, `WM_HOTKEY`, `WM_COPYDATA`,
     `MOD_*`, `ERROR_HOTKEY_ALREADY_REGISTERED`, `ERROR_ACCESS_DENIED`,
     `WAIT_*`, `SMTO_ABORTIFHUNG` and `SW_RESTORE`.
-  - Not done (next part of step 14): power and session events and
-    system settings.
+- Step 14, part 2: pull request lpintes/walk#29. Task 20 of
+  `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/system` with a
+  `manual` mode) passed on Windows 11 (2026-10-27): `run.ps1 -Only
+  system` in Windows Sandbox on 386 and amd64 with every check PASS,
+  and a partial manual test on amd64 with NVDA (initial status, keep
+  awake and shutdown block reason toggled, "High contrast changed" once
+  per change, "Locked" and a real "Display state changed"). Not tested
+  by hand: unlock, dark mode, NVDA restart, power source, energy saver,
+  sleep, `powercfg /requests` and the shutdown blocking screen. Windows
+  11 reports an empty high contrast scheme name for its contrast
+  themes. Power, session and settings events and system settings.
+  - `walk.System()` returns the `SystemService` of the calling thread,
+    or an error on a thread without a walk window group (a hidden
+    top-level window nobody pumps would make broadcasts and the
+    shutdown wait). It owns a hidden top-level
+    window (class `\o/ Walk_System_Class \o/`, `WS_POPUP`,
+    `WS_EX_TOOLWINDOW`), created on the first call per thread, because
+    broadcasts reach top-level windows only, not message-only ones; the
+    events are published on that thread; `systemWndProc` publishes
+    panics to `App().Panicking` like `defaultWndProc`. `Dispose`
+    destroys it and unregisters everything; a later `System` creates a
+    new one. A stored service whose window is gone or belongs to
+    another thread (reused thread ID) is replaced.
+  - Power: `Suspending` (`PBT_APMSUSPEND`), `Resumed`
+    (`PBT_APMRESUMEAUTOMATIC`), `ResumedByUser` (`PBT_APMRESUMESUSPEND`),
+    `PowerStatusChanged`, and with `RegisterPowerSettingNotification`
+    (unregistered on destroy) `PowerSourceChanged`
+    (`GUID_ACDC_POWER_SOURCE`), `EnergySaverChanged`
+    (`GUID_ENERGY_SAVER_STATUS` on Windows 11, `GUID_POWER_SAVING_STATUS`
+    before) and `DisplayStateChanged` (`GUID_CONSOLE_DISPLAY_STATE` and
+    `GUID_SESSION_DISPLAY_STATUS`, which also works in Remote Desktop).
+    Windows sends each setting right after the registration; that first
+    value is cached without an event, later ones publish only on a
+    change. `PowerSource`, `EnergySaver` and `DisplayState` return the
+    cached values (the first two fall back to `GetSystemPowerStatus`);
+    the package function `Battery` returns the battery status.
+  - `KeepAwake(reason, display)` returns a release function. It uses
+    `PowerCreateRequest` and `PowerSetRequest` (system, optionally
+    display required), not `SetThreadExecutionState`: every call has its
+    own request, the state does not belong to an OS thread, and the
+    reason shows in `powercfg /requests`. A release function never
+    called keeps the request until the process exits. `REASON_CONTEXT` is
+    hand-written in `internal/win/power.go` (anonymous union).
+  - Shutdown: `SessionEnding` (`WM_QUERYENDSESSION`, handler
+    `func(canceled *bool, reason EndSessionReason)`) and `SessionEnded`
+    (`WM_ENDSESSION`, `func(ending bool, reason)`);
+    `FormBase.SetShutdownBlockReason` (empty removes it) and
+    `ShutdownBlockReason`. Every top-level window gets
+    `WM_QUERYENDSESSION`; the handlers run once per round (until
+    `WM_ENDSESSION`, at most ten seconds). When they cancel, a visible
+    form with a block reason refuses (`FormBase.WndProc`) and the hidden
+    window agrees, so Windows lists the form with its reason; without
+    such a form the hidden window refuses. Session: `SessionChanged` (`SessionChange`
+    and session ID), `SessionLocked` and `SessionUnlocked`
+    (`WTSRegisterSessionNotification` for this session, unregistered on
+    destroy), the package function `IsRemoteSession`.
+  - Settings: `SettingsChanged` with `SettingsChange` (kind
+    `WM_SETTINGCHANGE`, `WM_THEMECHANGED` or `WM_SYSCOLORCHANGE`, the
+    SPI action and the area string such as `ImmersiveColorSet`), and
+    after it `HighContrastChanged`, `DarkModeChanged` and
+    `ScreenReaderChanged`, published only when the value really changed.
+    Package functions for any goroutine: `HighContrast` (on and
+    scheme), `ScreenReaderRunning`,
+    `AppsUseDarkTheme` (registry `AppsUseLightTheme`, the documented
+    way), `TextScaleFactor` (registry `TextScaleFactor`, no event),
+    `ClientAreaAnimation`.
+  - New event types in `systemevent.go`: `SessionEndingEvent`,
+    `SessionEndedEvent`, `SessionChangedEvent`, `SettingsChangedEvent`.
+  - New in `internal/win` (generated): `wtsapi32.dll`, the power,
+    session, shutdown and settings functions, constants and GUIDs,
+    `SYSTEM_POWER_STATUS`, `POWERBROADCAST_SETTING`, `IsWindow` and
+    `GetWindowThreadProcessId`.
 - Step 14, part 3: pull request lpintes/walk#27, merged. Task 21 of
   `TESTING_ON_WINDOWS.md` (test program `tests/_wingui/clipboard` with a
   `manual` mode) passed on Windows 11 (2026-10-27) after the fix below:
@@ -1325,6 +1405,17 @@ and real dialogs all need new Win32/COM declarations.
 
 ## Known issues
 
+- `win.GetLastError()` always returns 0: the Go runtime clears the last
+  error of the thread before every call into Windows, including the call
+  of `GetLastError` itself (checked on Windows 11, 386 and amd64, with
+  `RegisterHotKey`, which sets 1409). So `lastError` in `error.go` (about
+  100 call sites) never carries a code, contrary to the notes of step 8
+  part 3, and `ShellOpen` reports error 0. The code is only available as
+  the error returned by `syscall.SyscallN`; the generator option
+  `lasterror` (step 14 part 1) returns it from the wrapper, and
+  `errnoError` turns it into a walk error. Used so far by `RegisterHotKey`,
+  `CreateMutex`, `WaitForSingleObject` and `SendMessageTimeout`; moving the
+  remaining `lastError` callers to it is a separate pull request.
 - `go vet` reports 3 "possible misuse of unsafe.Pointer" warnings, all in
   `internal/win` (`GlobalLock`, `SysAllocString`, `MAKEINTRESOURCE`).
   They were reviewed in step 3: they convert memory allocated by Windows

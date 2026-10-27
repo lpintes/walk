@@ -27,6 +27,7 @@ dll shlwapi.dll libshlwapi
 dll uiautomationcore.dll libuiautomationcore
 dll user32.dll libuser32
 dll uxtheme.dll libuxtheme
+dll wtsapi32.dll libwtsapi32
 
 # Constants
 
@@ -178,6 +179,7 @@ const CSIDL_PERSONAL
 const CSIDL_SYSTEM
 const CW_USEDEFAULT
 const DEFAULT_CHARSET
+const DEVICE_NOTIFY_WINDOW_HANDLE
 const DIB_RGB_COLORS
 const DISPID_BEFORENAVIGATE2 DISPID
 const DISPID_COMMANDSTATECHANGE DISPID
@@ -289,6 +291,9 @@ const EM_SETWORDBREAKPROC
 const EM_STREAMIN
 const EM_STREAMOUT
 const EM_UNDO
+const ENDSESSION_CLOSEAPP
+const ENDSESSION_CRITICAL
+const ENDSESSION_LOGOFF
 const ENM_CHANGE
 const ENM_LINK
 const ENM_SELCHANGE
@@ -633,6 +638,7 @@ const NM_CUSTOMDRAW uint32
 const NM_DBLCLK uint32
 const NM_RETURN uint32
 const NOTIFYICON_VERSION
+const NOTIFY_FOR_THIS_SESSION
 const NotificationKind_ActionAborted
 const NotificationKind_ActionCompleted
 const NotificationKind_ItemAdded
@@ -663,6 +669,11 @@ const PBM_SETPOS
 const PBM_SETRANGE32
 const PBS_MARQUEE
 const PBS_NORMAL
+const PBT_APMPOWERSTATUSCHANGE
+const PBT_APMRESUMEAUTOMATIC
+const PBT_APMRESUMESUSPEND
+const PBT_APMSUSPEND
+const PBT_POWERSETTINGCHANGE
 const PFA_CENTER
 const PFA_JUSTIFY
 const PFA_LEFT
@@ -683,6 +694,8 @@ const PFN_LCLETTER
 const PFN_LCROMAN
 const PFN_UCLETTER
 const PFN_UCROMAN
+const POWER_REQUEST_CONTEXT_SIMPLE_STRING
+const POWER_REQUEST_CONTEXT_VERSION
 const PRF_CHILDREN
 const PRF_CLIENT
 const PRF_ERASEBKGND
@@ -705,6 +718,8 @@ const PS_JOIN_ROUND
 const PS_NULL
 const PS_SOLID
 const PS_USERSTYLE
+const PowerRequestDisplayRequired
+const PowerRequestSystemRequired
 const PropertyConditionFlags_IgnoreCase
 const PropertyConditionFlags_MatchSubstring
 const PropertyConditionFlags_None
@@ -824,7 +839,12 @@ const SM_CYCAPTION
 const SM_CYHSCROLL
 const SM_CYICON
 const SM_CYSMICON
+const SM_REMOTESESSION
+const SPI_GETCLIENTAREAANIMATION
 const SPI_GETHIGHCONTRAST
+const SPI_GETSCREENREADER
+const SPI_SETHIGHCONTRAST
+const SPI_SETSCREENREADER
 const SRCCOPY
 const SS_CENTER
 const SS_ENDELLIPSIS
@@ -1328,6 +1348,7 @@ const WM_DESTROY
 const WM_DPICHANGED
 const WM_DRAWITEM
 const WM_DROPFILES
+const WM_ENDSESSION
 const WM_ENTERSIZEMOVE
 const WM_ERASEBKGND
 const WM_EXITSIZEMOVE
@@ -1369,8 +1390,10 @@ const WM_NOTIFY
 const WM_NULL
 const WM_PAINT
 const WM_PASTE
+const WM_POWERBROADCAST
 const WM_PRINT
 const WM_PRINTCLIENT
+const WM_QUERYENDSESSION
 const WM_RBUTTONDBLCLK
 const WM_RBUTTONDOWN
 const WM_RBUTTONUP
@@ -1380,6 +1403,7 @@ const WM_SETFONT
 const WM_SETICON
 const WM_SETREDRAW
 const WM_SETTEXT
+const WM_SETTINGCHANGE
 const WM_SHOWWINDOW
 const WM_SIZE
 const WM_SYSCHAR
@@ -1393,6 +1417,7 @@ const WM_UPDATEUISTATE
 const WM_USER
 const WM_VSCROLL
 const WM_WINDOWPOSCHANGED
+const WM_WTSSESSION_CHANGE
 const WS_BORDER
 const WS_CAPTION
 const WS_CHILD
@@ -1404,6 +1429,7 @@ const WS_EX_COMPOSITED
 const WS_EX_CONTROLPARENT
 const WS_EX_LAYOUTRTL
 const WS_EX_RTLREADING
+const WS_EX_TOOLWINDOW
 const WS_GROUP
 const WS_HSCROLL
 const WS_OVERLAPPEDWINDOW
@@ -1413,6 +1439,17 @@ const WS_TABSTOP
 const WS_THICKFRAME
 const WS_VISIBLE
 const WS_VSCROLL
+const WTS_CONSOLE_CONNECT
+const WTS_CONSOLE_DISCONNECT
+const WTS_REMOTE_CONNECT
+const WTS_REMOTE_DISCONNECT
+const WTS_SESSION_CREATE
+const WTS_SESSION_LOCK
+const WTS_SESSION_LOGOFF
+const WTS_SESSION_LOGON
+const WTS_SESSION_REMOTE_CONTROL
+const WTS_SESSION_TERMINATE
+const WTS_SESSION_UNLOCK
 const WindowVisualState_Maximized
 const WindowVisualState_Minimized
 const WindowVisualState_Normal
@@ -1450,7 +1487,7 @@ func CreateEnhMetaFile
 func CreateFontIndirect
 func CreateIconIndirect
 func CreateMenu
-func CreateMutex lpMutexAttributes:uintptr
+func CreateMutex lpMutexAttributes:uintptr lasterror
 func CreatePatternBrush
 func CreatePopupMenu
 func CreateRectRgn
@@ -1523,6 +1560,7 @@ func GetSaveFileName
 func GetScrollInfo
 func GetSysColor nIndex:int
 func GetSysColorBrush nIndex:int
+func GetSystemPowerStatus
 func GetTextExtentPoint32
 func GetTextMetrics
 func GetThemeColor
@@ -1577,12 +1615,16 @@ func PlayEnhMetaFile
 func Polyline apt:unsafe.Pointer
 func PostMessage result=uintptr
 func PostQuitMessage
+func PowerClearRequest
+func PowerCreateRequest
+func PowerSetRequest
 func RegCloseKey result=int32
 func RegOpenKeyEx result=int32 samDesired:REGSAM
 func RegQueryValueEx result=int32
 func RegisterClassEx result=ATOM
 func RegisterClipboardFormat
-func RegisterHotKey
+func RegisterHotKey lasterror
+func RegisterPowerSettingNotification
 func RegisterWindowMessage
 func ReleaseCapture
 func ReleaseDC result=bool
@@ -1601,7 +1643,7 @@ func SHStrDup
 func ScreenToClient
 func SelectObject
 func SendMessage
-func SendMessageTimeout
+func SendMessageTimeout lasterror
 func SetActiveWindow
 func SetBkColor
 func SetBkMode
@@ -1633,13 +1675,19 @@ func ShellExecuteEx
 func Shell_NotifyIcon
 func Shell_NotifyIconGetRect
 func ShowWindow
+func ShutdownBlockReasonCreate
+func ShutdownBlockReasonDestroy
+func ShutdownBlockReasonQuery
 func SizeofResource
 func StretchBlt
 func SysFreeString
 func SystemParametersInfo
 func TranslateMDISysAccel
 func UnregisterHotKey
-func WaitForSingleObject
+func UnregisterPowerSettingNotification
+func WTSRegisterSessionNotification
+func WTSUnRegisterSessionNotification
+func WaitForSingleObject lasterror
 func taskDialogIndirect entry=TaskDialogIndirect pTaskConfig:unsafe.Pointer
 func TrackMouseEvent
 func TrackPopupMenuEx rawbool
@@ -1707,10 +1755,12 @@ struct NMUPDOWN
 struct OLEINPLACEFRAMEINFO
 struct PAINTSTRUCT
 struct POINT
+struct POWERBROADCAST_SETTING
 struct RECT
 struct SCROLLINFO
 struct SIZE cx=CX cy=CY
 struct SYSTEMTIME
+struct SYSTEM_POWER_STATUS
 struct TBBUTTONINFO pszText:uintptr
 struct TCITEM
 struct TEXTMETRIC
@@ -1749,6 +1799,11 @@ guid FOLDERID_Startup
 guid FOLDERID_System
 guid FOLDERID_Videos
 guid FOLDERID_Windows
+guid GUID_ACDC_POWER_SOURCE
+guid GUID_CONSOLE_DISPLAY_STATE
+guid GUID_ENERGY_SAVER_STATUS
+guid GUID_POWER_SAVING_STATUS
+guid GUID_SESSION_DISPLAY_STATUS
 guid IID_IAccPropServices
 guid IID_IClassFactory
 guid IID_IConnectionPointContainer

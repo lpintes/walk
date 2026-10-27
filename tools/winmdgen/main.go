@@ -46,6 +46,11 @@
 //	result=TYPE   use TYPE as the result type
 //	PARAM:TYPE    use TYPE for the parameter named PARAM in the metadata
 //	rawbool       keep BOOL instead of translating it to bool
+//	lasterror     also return the error code the function sets, as a
+//	              syscall.Errno; only for functions with SetLastError in
+//	              the metadata. win.GetLastError cannot be used for it,
+//	              because the Go runtime clears the last error before
+//	              every call, so it always returns 0
 //	fallback=NAME call the metadata function NAME (or NAME+"W") on the
 //	              architectures where the function does not exist, for
 //	              example GetWindowLong for GetWindowLongPtr on 386
@@ -122,7 +127,8 @@
 // did not change.
 //
 // The generated wrappers ignore the error returned by syscall.SyscallN,
-// like the hand-written ones in the package. A struct parameter passed by
+// like the hand-written ones in the package, unless the lasterror option
+// is given. A struct parameter passed by
 // value must be a generated struct of 1, 2 or 4 bytes without
 // floating-point fields; the calling conventions of all architectures pass
 // it like an integer of that size. Functions taking or returning other

@@ -147,6 +147,10 @@ type genFunc struct {
 	result  string
 	rshape  shape
 
+	// lastError adds the error code returned by syscall.SyscallN as a
+	// syscall.Errno result.
+	lastError bool
+
 	// methods holds the method of each architecture if the function
 	// uses a fallback on some of them, nil otherwise.
 	methods map[arch]*method
@@ -228,7 +232,18 @@ func (f *genFunc) goSignature() string {
 	for _, p := range f.params {
 		types = append(types, p.typ.name)
 	}
-	return "(" + strings.Join(types, ", ") + ") " + f.result
+	return "(" + strings.Join(types, ", ") + ") " + f.results()
+}
+
+// results returns the Go result list of the function.
+func (f *genFunc) results() string {
+	switch {
+	case !f.lastError:
+		return f.result
+	case f.result == "":
+		return "syscall.Errno"
+	}
+	return "(" + f.result + ", syscall.Errno)"
 }
 
 // lookupMethod finds the metadata function NAME+"W", or NAME if there is
@@ -309,6 +324,14 @@ func (g *generator) function(fs *funcSpec) (*genFunc, error) {
 		if af.goSignature() != f.goSignature() || fmt.Sprint(af.byValue) != fmt.Sprint(f.byValue) {
 			return nil, fmt.Errorf("signature differs between architectures")
 		}
+	}
+	if fs.lastError {
+		for _, amd := range methods {
+			if !amd.lastError {
+				return nil, fmt.Errorf("lasterror: %s does not set the last error", amd.entry)
+			}
+		}
+		f.lastError = true
 	}
 	f.proc = "proc" + f.method.entry
 	if fs.fallback != "" {
@@ -463,7 +486,7 @@ func (g *generator) writeFunc(b *bytes.Buffer, f *genFunc) {
 	for _, p := range f.params {
 		params = append(params, p.name+" "+p.typ.name)
 	}
-	fmt.Fprintf(b, "func %s(%s) %s {\n", f.spec.name, strings.Join(params, ", "), f.result)
+	fmt.Fprintf(b, "func %s(%s) %s {\n", f.spec.name, strings.Join(params, ", "), f.results())
 	writeCall(b, f, append([]string{f.proc + ".Addr()"}, callArgs(f)...))
 }
 
@@ -505,15 +528,24 @@ func callArgs(f *genFunc) []string {
 // and the end of the function.
 func writeCall(b *bytes.Buffer, f *genFunc, args []string) {
 	call := "syscall.SyscallN(" + strings.Join(args, ", ") + ")"
+	// The error code must come from syscall.SyscallN: the Go runtime
+	// clears the last error before every call, so a later GetLastError
+	// always returns 0.
+	errVar, errResult := "_", ""
+	if f.lastError {
+		errVar, errResult = "e1", ", e1"
+	}
 	switch {
+	case f.result == "" && f.lastError:
+		fmt.Fprintf(b, "\t_, _, e1 := %s\n\treturn e1\n", call)
 	case f.result == "":
 		fmt.Fprintf(b, "\t%s\n", call)
 	case f.rshape == shapeBool:
-		fmt.Fprintf(b, "\tr1, _, _ := %s\n\treturn r1 != 0\n", call)
+		fmt.Fprintf(b, "\tr1, _, %s := %s\n\treturn r1 != 0%s\n", errVar, call, errResult)
 	case f.result == "uintptr":
-		fmt.Fprintf(b, "\tr1, _, _ := %s\n\treturn r1\n", call)
+		fmt.Fprintf(b, "\tr1, _, %s := %s\n\treturn r1%s\n", errVar, call, errResult)
 	default:
-		fmt.Fprintf(b, "\tr1, _, _ := %s\n\treturn %s(r1)\n", call, f.result)
+		fmt.Fprintf(b, "\tr1, _, %s := %s\n\treturn %s(r1)%s\n", errVar, call, f.result, errResult)
 	}
 	b.WriteString("}\n\n")
 }
