@@ -5,6 +5,7 @@
 package win
 
 import (
+	"syscall"
 	"unsafe"
 )
 
@@ -221,6 +222,23 @@ type OLEINPLACEFRAMEINFO struct {
 	HwndFrame     HWND
 	Haccel        HACCEL
 	CAccelEntries uint32
+}
+
+// Windows.Win32.System.Power
+
+type POWERBROADCAST_SETTING struct {
+	PowerSetting syscall.GUID
+	DataLength   uint32
+	Data         [1]byte
+}
+
+type SYSTEM_POWER_STATUS struct {
+	ACLineStatus        byte
+	BatteryFlag         byte
+	BatteryLifePercent  byte
+	SystemStatusFlag    byte
+	BatteryLifeTime     uint32
+	BatteryFullLifeTime uint32
 }
 
 // Windows.Win32.UI.Accessibility

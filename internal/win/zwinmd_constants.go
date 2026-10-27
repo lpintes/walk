@@ -680,6 +680,17 @@ const (
 	PS_USERSTYLE     = 7
 )
 
+// POWER_REQUEST_CONTEXT_FLAGS
+const (
+	POWER_REQUEST_CONTEXT_SIMPLE_STRING = 1
+)
+
+// POWER_REQUEST_TYPE
+const (
+	PowerRequestDisplayRequired = 0
+	PowerRequestSystemRequired  = 1
+)
+
 // PUSHBUTTONSTATES
 const (
 	PBS_NORMAL = 1
@@ -696,6 +707,11 @@ const (
 const (
 	ProviderOptions_ServerSideProvider = 2
 	ProviderOptions_UseComThreading    = 0x20
+)
+
+// REGISTER_NOTIFICATION_FLAGS
+const (
+	DEVICE_NOTIFY_WINDOW_HANDLE = 0
 )
 
 // REG_SAM_FLAGS
@@ -816,17 +832,22 @@ const (
 
 // SYSTEM_METRICS_INDEX
 const (
-	SM_CXSMICON  = 0x31
-	SM_CXVSCROLL = 2
-	SM_CYCAPTION = 4
-	SM_CYHSCROLL = 3
-	SM_CYICON    = 0xc
-	SM_CYSMICON  = 0x32
+	SM_CXSMICON      = 0x31
+	SM_CXVSCROLL     = 2
+	SM_CYCAPTION     = 4
+	SM_CYHSCROLL     = 3
+	SM_CYICON        = 0xc
+	SM_CYSMICON      = 0x32
+	SM_REMOTESESSION = 0x1000
 )
 
 // SYSTEM_PARAMETERS_INFO_ACTION
 const (
-	SPI_GETHIGHCONTRAST = 0x42
+	SPI_GETCLIENTAREAANIMATION = 0x1042
+	SPI_GETHIGHCONTRAST        = 0x42
+	SPI_GETSCREENREADER        = 0x46
+	SPI_SETHIGHCONTRAST        = 0x43
+	SPI_SETSCREENREADER        = 0x47
 )
 
 // SYS_COLOR_INDEX
@@ -1302,6 +1323,7 @@ const (
 	WS_EX_CONTROLPARENT = 0x10000
 	WS_EX_LAYOUTRTL     = 0x400000
 	WS_EX_RTLREADING    = 0x2000
+	WS_EX_TOOLWINDOW    = 0x80
 )
 
 // WINDOW_LONG_PTR_INDEX
@@ -1375,6 +1397,16 @@ const (
 	AC_SRC_ALPHA  = 1
 	CLR_INVALID   = 0xffffffff
 	LCS_GM_IMAGES = 4
+)
+
+// Windows.Win32.System.RemoteDesktop
+const (
+	NOTIFY_FOR_THIS_SESSION = 0
+)
+
+// Windows.Win32.System.SystemServices
+const (
+	POWER_REQUEST_CONTEXT_VERSION = 0
 )
 
 // Windows.Win32.UI.Accessibility
@@ -1775,6 +1807,9 @@ const (
 	DLGC_WANTALLKEYS                    = 4
 	DLGC_WANTARROWS                     = 1
 	DLGC_WANTCHARS                      = 0x80
+	ENDSESSION_CLOSEAPP                 = 1
+	ENDSESSION_CRITICAL                 = 0x40000000
+	ENDSESSION_LOGOFF                   = 0x80000000
 	EN_CHANGE                           = 0x300
 	ES_AUTOHSCROLL                      = 0x80
 	ES_AUTOVSCROLL                      = 0x40
@@ -1847,6 +1882,11 @@ const (
 	LB_SETITEMHEIGHT                    = 0x1a0
 	LB_SETSEL                           = 0x185
 	LB_SETTOPINDEX                      = 0x197
+	PBT_APMPOWERSTATUSCHANGE            = 0xa
+	PBT_APMRESUMEAUTOMATIC              = 0x12
+	PBT_APMRESUMESUSPEND                = 7
+	PBT_APMSUSPEND                      = 4
+	PBT_POWERSETTINGCHANGE              = 0x8013
 	PRF_CHILDREN                        = 0x10
 	PRF_CLIENT                          = 4
 	PRF_ERASEBKGND                      = 8
@@ -1904,6 +1944,7 @@ const (
 	WM_DPICHANGED                       = 0x2e0
 	WM_DRAWITEM                         = 0x2b
 	WM_DROPFILES                        = 0x233
+	WM_ENDSESSION                       = 0x16
 	WM_ENTERSIZEMOVE                    = 0x231
 	WM_ERASEBKGND                       = 0x14
 	WM_EXITSIZEMOVE                     = 0x232
@@ -1932,8 +1973,10 @@ const (
 	WM_NULL                             = 0
 	WM_PAINT                            = 0xf
 	WM_PASTE                            = 0x302
+	WM_POWERBROADCAST                   = 0x218
 	WM_PRINT                            = 0x317
 	WM_PRINTCLIENT                      = 0x318
+	WM_QUERYENDSESSION                  = 0x11
 	WM_RBUTTONDBLCLK                    = 0x206
 	WM_RBUTTONDOWN                      = 0x204
 	WM_RBUTTONUP                        = 0x205
@@ -1943,6 +1986,7 @@ const (
 	WM_SETICON                          = 0x80
 	WM_SETREDRAW                        = 0xb
 	WM_SETTEXT                          = 0xc
+	WM_SETTINGCHANGE                    = 0x1a
 	WM_SHOWWINDOW                       = 0x18
 	WM_SIZE                             = 5
 	WM_SYSCOLORCHANGE                   = 0x15
@@ -1954,6 +1998,18 @@ const (
 	WM_USER                             = 0x400
 	WM_VSCROLL                          = 0x115
 	WM_WINDOWPOSCHANGED                 = 0x47
+	WM_WTSSESSION_CHANGE                = 0x2b1
+	WTS_CONSOLE_CONNECT                 = 1
+	WTS_CONSOLE_DISCONNECT              = 2
+	WTS_REMOTE_CONNECT                  = 3
+	WTS_REMOTE_DISCONNECT               = 4
+	WTS_SESSION_CREATE                  = 0xa
+	WTS_SESSION_LOCK                    = 7
+	WTS_SESSION_LOGOFF                  = 6
+	WTS_SESSION_LOGON                   = 5
+	WTS_SESSION_REMOTE_CONTROL          = 9
+	WTS_SESSION_TERMINATE               = 0xb
+	WTS_SESSION_UNLOCK                  = 8
 )
 
 // Windows.Win32.Web.InternetExplorer

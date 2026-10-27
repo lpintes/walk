@@ -228,6 +228,25 @@ feature `Containers-DisposableClientVM` and reboot once):
   region after bringing its window to the foreground; starting
   `hotkeys.exe manual` again with arguments hands them to the running
   window, which announces them.
+- `system`: the power, session and settings events of step 14 part 2
+  (`walk.System`, `KeepAwake`, `SetShutdownBlockReason`). Checks that
+  `System` fails on a thread without a walk window, the
+  hidden top-level window of the service (class, thread, not visible,
+  found by `EnumWindows`), the queries (high contrast, screen reader,
+  dark mode against the registry, text size, battery, power source,
+  energy saver, display state, which Windows reports right after the
+  registration; only INFO in a remote session or Windows Sandbox), and the events by sending `WM_POWERBROADCAST`,
+  `WM_QUERYENDSESSION`, `WM_ENDSESSION`, `WM_WTSSESSION_CHANGE`,
+  `WM_SETTINGCHANGE`, `WM_THEMECHANGED` and `WM_SYSCOLORCHANGE` to that
+  window (a power setting publishes only when its value changes; the
+  derived settings events stay quiet because nothing really changes;
+  with a shutdown block reason the main window refuses the end of the
+  session instead of the hidden window),
+  then `KeepAwake`, the shutdown block reason of the main window and
+  `Dispose`. It changes no setting. `system.exe manual` shows an event
+  log for a test by hand (Windows+L, unplugging the power, high
+  contrast); events go to a polite live region, the log and standard
+  output.
 - `clipboard`: the clipboard formats of `ClipboardService` (step 14 part
   3), read back both through walk and with the test's own Win32 calls:
   text, HTML (the header offsets checked byte by byte, the fragment, the
