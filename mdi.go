@@ -140,6 +140,13 @@ func (mw *MdiMainWindow) defWindowProc(hwnd win.HWND, msg uint32, wParam, lParam
 		return win.DefWindowProc(hwnd, msg, wParam, lParam)
 	}
 
+	if msg == win.WM_SETTEXT && mw.mdiClient != 0 {
+		// DefFrameProc sets the title (adding the title of a maximized
+		// child) but returns 0, which setWindowText takes for a failure.
+		win.DefFrameProc(hwnd, mw.mdiClient, msg, wParam, lParam)
+		return win.TRUE
+	}
+
 	return win.DefFrameProc(hwnd, mw.mdiClient, msg, wParam, lParam)
 }
 
@@ -592,6 +599,14 @@ func NewMdiChildWindow(frame *MdiMainWindow) (*MdiChildWindow, error) {
 }
 
 func (cw *MdiChildWindow) defWindowProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) uintptr {
+	if msg == win.WM_SETTEXT {
+		// Like DefFrameProc, DefMDIChildProc sets the title (and updates
+		// the frame title and the window menu) but returns 0, which
+		// setWindowText takes for a failure.
+		win.DefMDIChildProc(hwnd, msg, wParam, lParam)
+		return win.TRUE
+	}
+
 	return win.DefMDIChildProc(hwnd, msg, wParam, lParam)
 }
 
