@@ -289,7 +289,7 @@ func (wv *WebView2) failCreation(err error) {
 }
 
 func webView2Error(funcName string, hr win.HRESULT) error {
-	return newErrorNoPanic(fmt.Sprintf("%s: HRESULT %#08x", funcName, uint32(hr)))
+	return processErrorNoPanic(newErrWithCode(fmt.Sprintf("%s: HRESULT %#08x", funcName, uint32(hr)), hresultErrno(hr)))
 }
 
 // webView2CreationError is webView2Error for the asynchronous creation of

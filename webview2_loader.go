@@ -194,7 +194,7 @@ func createWebView2Environment(browserExecutableFolder, userDataFolder string, e
 			uintptr(envOptions.Interface(0)),
 			uintptr(handler.Interface(0)))
 		if win.FAILED(win.HRESULT(int32(hr))) {
-			return fmt.Errorf("CreateWebViewEnvironmentWithOptionsInternal: HRESULT %#08x", uint32(hr))
+			return &codeError{message: fmt.Sprintf("CreateWebViewEnvironmentWithOptionsInternal: HRESULT %#08x", uint32(hr)), code: syscall.Errno(uint32(hr))}
 		}
 		return nil
 	}
@@ -231,7 +231,7 @@ func createWebView2Environment(browserExecutableFolder, userDataFolder string, e
 		if uint32(hr)&0xFFFF == uint32(win.ERROR_FILE_NOT_FOUND) {
 			return fmt.Errorf("CreateCoreWebView2EnvironmentWithOptions: %w", ErrWebView2RuntimeNotFound)
 		}
-		return fmt.Errorf("CreateCoreWebView2EnvironmentWithOptions: HRESULT %#08x", uint32(hr))
+		return &codeError{message: fmt.Sprintf("CreateCoreWebView2EnvironmentWithOptions: HRESULT %#08x", uint32(hr)), code: syscall.Errno(uint32(hr))}
 	}
 	return nil
 }

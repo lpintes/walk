@@ -111,7 +111,23 @@ const CFM_LINK
 const CFM_SIZE
 const CFM_STRIKEOUT
 const CFM_UNDERLINE
+const CF_BITMAP
+const CF_DIB
+const CF_DIBV5
+const CF_DIF
+const CF_ENHMETAFILE
+const CF_HDROP
+const CF_LOCALE
+const CF_METAFILEPICT
+const CF_OEMTEXT
+const CF_PALETTE
+const CF_PENDATA
+const CF_RIFF
+const CF_SYLK
+const CF_TEXT
+const CF_TIFF
 const CF_UNICODETEXT
+const CF_WAVE
 const CHILDID_SELF
 const CLEARTYPE_QUALITY
 const CLIP_DEFAULT_PRECIS
@@ -189,6 +205,10 @@ const DLGC_WANTARROWS
 const DLGC_WANTCHARS
 const DOCHOSTUIDBLCLK_DEFAULT
 const DOCHOSTUIFLAG_NO3DBORDER
+const DROPEFFECT_COPY
+const DROPEFFECT_LINK
+const DROPEFFECT_MOVE
+const DROPEFFECT_NONE
 const DTM_GETRANGE
 const DTM_GETSYSTEMTIME
 const DTM_SETFORMAT
@@ -442,6 +462,8 @@ const LB_SETHORIZONTALEXTENT
 const LB_SETITEMHEIGHT
 const LB_SETSEL
 const LB_SETTOPINDEX
+const LCS_GM_IMAGES
+const LCS_sRGB
 const LIF_ITEMINDEX
 const LIF_STATE
 const LISS_HOT
@@ -1433,6 +1455,7 @@ func EnableWindow
 func EndDeferWindowPos
 func EndPaint
 func EnumChildWindows
+func EnumClipboardFormats
 func ExcludeClipRect
 func ExtCreatePen
 func FillRgn
@@ -1448,6 +1471,7 @@ func GetAncestor
 func GetCaretPos
 func GetClientRect
 func GetClipboardData
+func GetClipboardFormatName
 func GetCurrentThreadId
 func GetCursorPos
 func GetDC
@@ -1487,6 +1511,7 @@ func GetWindowRect
 func GetWindowThreadProcessId
 func GlobalAlloc
 func GlobalFree
+func GlobalSize
 func GlobalUnlock
 func GradientFill
 func ImageList_Add
@@ -1530,6 +1555,7 @@ func RegCloseKey result=int32
 func RegOpenKeyEx result=int32 samDesired:REGSAM
 func RegQueryValueEx result=int32
 func RegisterClassEx result=ATOM
+func RegisterClipboardFormat
 func RegisterHotKey
 func RegisterWindowMessage
 func ReleaseCapture

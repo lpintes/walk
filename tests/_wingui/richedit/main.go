@@ -394,6 +394,7 @@ func checkRTF() {
 
 	rtf, err := re.RTF()
 	check("RTF", err == nil && strings.HasPrefix(rtf, `{\rtf`) && strings.Contains(rtf, `\b`), "%v, %.200q", err, rtf)
+	check("RTF has no NUL", !strings.Contains(rtf, "\x00"), "%q", rtf)
 
 	re.SetText("")
 	before := textChanged
