@@ -18,12 +18,15 @@ $failed = @()
 $oldGOOS, $oldGOARCH = $env:GOOS, $env:GOARCH
 $env:GOOS = "windows"
 $env:GOARCH = $Arch
+# GUI subsystem: no console window, and cmd does not wait for the program.
+# Start-Process with redirected output still captures stdout and stderr.
+$ldflags = "-ldflags=-H=windowsgui"
 
 function Build([string]$pkg, [string]$dir, [string]$name) {
 	New-Item -ItemType Directory -Force $dir | Out-Null
 	$exe = Join-Path $dir "$name.exe"
 	Write-Host "build $Arch $pkg"
-	& go build -o $exe $pkg
+	& go build $ldflags -o $exe $pkg
 	if ($LASTEXITCODE -ne 0) {
 		$script:failed += $pkg
 		return
@@ -46,7 +49,7 @@ function BuildGroup([object[]]$progs) {
 	Write-Host "build $Arch $($pkgs -join ' ')"
 	# The trailing slash makes -o a directory; a backslash before the
 	# closing quote would escape it.
-	& go build -o "$tmp/" @pkgs
+	& go build $ldflags -o "$tmp/" @pkgs
 	foreach ($p in $progs) {
 		$pkg, $dir = $p
 		$name = Split-Path -Leaf $pkg
@@ -94,7 +97,7 @@ try {
 	Copy-Item -Recurse -Force (Join-Path $repo "examples\img") (Join-Path $dest "examples")
 
 	$tests = @()
-	foreach ($n in "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "hotkeys", "system", "clipboard") {
+	foreach ($n in "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system") {
 		$tests += , @("./tests/_wingui/$n", (Join-Path $dest "tests\$n"))
 	}
 	foreach ($n in "source", "target") {

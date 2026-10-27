@@ -419,9 +419,9 @@ func CreateMenu() HMENU {
 	return HMENU(r1)
 }
 
-func CreateMutex(lpMutexAttributes uintptr, bInitialOwner bool, lpName *uint16) HANDLE {
-	r1, _, _ := syscall.SyscallN(procCreateMutexW.Addr(), lpMutexAttributes, uintptr(BoolToBOOL(bInitialOwner)), uintptr(unsafe.Pointer(lpName)))
-	return HANDLE(r1)
+func CreateMutex(lpMutexAttributes uintptr, bInitialOwner bool, lpName *uint16) (HANDLE, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procCreateMutexW.Addr(), lpMutexAttributes, uintptr(BoolToBOOL(bInitialOwner)), uintptr(unsafe.Pointer(lpName)))
+	return HANDLE(r1), e1
 }
 
 func CreatePatternBrush(hbm HBITMAP) HBRUSH {
@@ -1075,9 +1075,9 @@ func RegisterClipboardFormat(lpszFormat *uint16) uint32 {
 	return uint32(r1)
 }
 
-func RegisterHotKey(hWnd HWND, id int32, fsModifiers uint32, vk uint32) bool {
-	r1, _, _ := syscall.SyscallN(procRegisterHotKey.Addr(), uintptr(hWnd), uintptr(id), uintptr(fsModifiers), uintptr(vk))
-	return r1 != 0
+func RegisterHotKey(hWnd HWND, id int32, fsModifiers uint32, vk uint32) (bool, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procRegisterHotKey.Addr(), uintptr(hWnd), uintptr(id), uintptr(fsModifiers), uintptr(vk))
+	return r1 != 0, e1
 }
 
 func RegisterPowerSettingNotification(hRecipient HANDLE, PowerSettingGuid *syscall.GUID, Flags uint32) uintptr {
@@ -1175,9 +1175,9 @@ func SendMessage(hWnd HWND, Msg uint32, wParam uintptr, lParam uintptr) uintptr 
 	return r1
 }
 
-func SendMessageTimeout(hWnd HWND, Msg uint32, wParam uintptr, lParam uintptr, fuFlags uint32, uTimeout uint32, lpdwResult *uintptr) uintptr {
-	r1, _, _ := syscall.SyscallN(procSendMessageTimeoutW.Addr(), uintptr(hWnd), uintptr(Msg), wParam, lParam, uintptr(fuFlags), uintptr(uTimeout), uintptr(unsafe.Pointer(lpdwResult)))
-	return r1
+func SendMessageTimeout(hWnd HWND, Msg uint32, wParam uintptr, lParam uintptr, fuFlags uint32, uTimeout uint32, lpdwResult *uintptr) (uintptr, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procSendMessageTimeoutW.Addr(), uintptr(hWnd), uintptr(Msg), wParam, lParam, uintptr(fuFlags), uintptr(uTimeout), uintptr(unsafe.Pointer(lpdwResult)))
+	return r1, e1
 }
 
 func SetActiveWindow(hWnd HWND) HWND {
@@ -1433,9 +1433,9 @@ func WTSUnRegisterSessionNotification(hWnd HWND) bool {
 	return r1 != 0
 }
 
-func WaitForSingleObject(hHandle HANDLE, dwMilliseconds uint32) uint32 {
-	r1, _, _ := syscall.SyscallN(procWaitForSingleObject.Addr(), uintptr(hHandle), uintptr(dwMilliseconds))
-	return uint32(r1)
+func WaitForSingleObject(hHandle HANDLE, dwMilliseconds uint32) (uint32, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procWaitForSingleObject.Addr(), uintptr(hHandle), uintptr(dwMilliseconds))
+	return uint32(r1), e1
 }
 
 func WindowFromDC(hDC HDC) HWND {
