@@ -900,7 +900,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     does not handle), settings (`ICoreWebView2Settings`), new
     window requests, permissions, the cancel of `NavigationStarting`,
     and an example.
-- Step 11: draft pull request (number pending), not yet tested on
+- Step 11: draft pull request lpintes/walk#30, not yet tested on
   Windows (task 18 of `TESTING_ON_WINDOWS.md`, test program
   `tests/_wingui/mdi` with a `manual` mode, example `examples/mdi`).
   - Decision: a separate type `MdiMainWindow` that embeds `MainWindow`
