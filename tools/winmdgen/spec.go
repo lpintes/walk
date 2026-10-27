@@ -44,6 +44,10 @@ type funcSpec struct {
 	params  map[string]string // metadata parameter name -> Go type
 	rawBool bool              // keep BOOL instead of translating it to bool
 
+	// lastError adds the error code set by the function (SetLastError)
+	// as a syscall.Errno result.
+	lastError bool
+
 	// fallback is the metadata function to call on the architectures
 	// where the function does not exist, empty for none.
 	fallback string
@@ -149,6 +153,8 @@ func parseSpec(path string) (*spec, error) {
 				switch {
 				case opt == "rawbool":
 					fs.rawBool = true
+				case opt == "lasterror":
+					fs.lastError = true
 				case strings.HasPrefix(opt, "entry="):
 					fs.entry = strings.TrimPrefix(opt, "entry=")
 				case strings.HasPrefix(opt, "result="):

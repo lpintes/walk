@@ -32,7 +32,7 @@ dll USER32.dll libuser32
 const WS_CHILD
 const LOCALE_USER_DEFAULT LCID # typed
 func GetMessage rawbool
-func GetLocaleInfo Locale:LCID result=int32 entry=GetLocaleInfoW fallback=GetLocaleInfoA
+func GetLocaleInfo Locale:LCID result=int32 entry=GetLocaleInfoW fallback=GetLocaleInfoA lasterror
 struct MSG hwnd=HWnd lParam:LPARAM
 struct NMHDR2 entry=NMHDR
 guid IID_IUnknown
@@ -59,7 +59,7 @@ interface IFoo entry=IBar get_Name=GetName
 	if f := s.functions[0]; !f.rawBool {
 		t.Errorf("GetMessage = %+v", f)
 	}
-	if f := s.functions[1]; f.params["Locale"] != "LCID" || f.result != "int32" || f.entry != "GetLocaleInfoW" || f.fallback != "GetLocaleInfoA" {
+	if f := s.functions[1]; f.params["Locale"] != "LCID" || f.result != "int32" || f.entry != "GetLocaleInfoW" || f.fallback != "GetLocaleInfoA" || !f.lastError {
 		t.Errorf("GetLocaleInfo = %+v", f)
 	}
 	if len(s.structs) != 2 {
@@ -273,6 +273,50 @@ func TestWriteFunc(t *testing.T) {
 `
 	if got := b.String(); got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestWriteFuncLastError(t *testing.T) {
+	param := []param{{name: "h", typ: goType{name: "HANDLE"}}}
+	for _, tc := range []struct {
+		result string
+		rshape shape
+		want   string
+	}{
+		{"bool", shapeBool, `func F(h HANDLE) (bool, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procF.Addr(), uintptr(h))
+	return r1 != 0, e1
+}
+
+`},
+		{"HANDLE", shapeScalar, `func F(h HANDLE) (HANDLE, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procF.Addr(), uintptr(h))
+	return HANDLE(r1), e1
+}
+
+`},
+		{"", shapeScalar, `func F(h HANDLE) syscall.Errno {
+	_, _, e1 := syscall.SyscallN(procF.Addr(), uintptr(h))
+	return e1
+}
+
+`},
+	} {
+		f := &genFunc{
+			spec:      &funcSpec{name: "F"},
+			proc:      "procF",
+			params:    param,
+			shapes:    []shape{shapeScalar},
+			byValue:   []int{0},
+			result:    tc.result,
+			rshape:    tc.rshape,
+			lastError: true,
+		}
+		var b bytes.Buffer
+		(&generator{}).writeFunc(&b, f)
+		if got := b.String(); got != tc.want {
+			t.Errorf("got:\n%s\nwant:\n%s", got, tc.want)
+		}
 	}
 }
 
