@@ -303,12 +303,21 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     all texts are unchanged.
   - Kept on purpose: the exact type assertions in `error.go`
     (`wrapErr` must not unwrap an `*Error` wrapped by someone else).
-    `lastError` and `errorFromHRESULT` could carry the `syscall.Errno`
-    or `HRESULT` as the inner error so callers can test it with
-    `errors.Is`; that changes what the public `Inner` returns, so it
-    needs a decision first.
+    `lastError` and `errorFromHRESULT` now carry the Windows code
+    (step 8, part 3).
   - Cloud checks only; no Windows test needed beyond a smoke run, as
     the only runtime change is the `errors.As` in the presenter.
+- Step 8, part 3: Windows error codes in walk errors (the user approved
+  the change of `Inner` on 2026-10-26). `lastError` and
+  `errorFromHRESULT` return an `*Error` whose inner error is the code as
+  a `syscall.Errno` (`newErrWithCode`): the `GetLastError` value, or the
+  32-bit value of the HRESULT (`hresultErrno`, for example
+  `syscall.Errno(0x80070005)`). The same for the `WebView2` HRESULT
+  errors (the loader uses the unexported `codeError`) and `ShellOpen`.
+  Message texts are unchanged; `Inner` returns the code instead of nil,
+  and a code of 0 is not wrapped. `CommDlgExtendedError` codes are not
+  Win32 codes and stay text only. Unit tests in `error_test.go` (run
+  `go test .` on Windows).
 - Step 10: draft pull request lpintes/walk#11. Task 6 of
   `TESTING_ON_WINDOWS.md` passed on Windows 11 with NVDA 2026.2:
   `run.ps1 -Only part3,liveregion` on 386 and amd64, and the manual
