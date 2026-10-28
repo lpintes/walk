@@ -925,7 +925,11 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   title, the document title and the focused field; Ctrl+F6 says the
   document title and returns the focus to the last focused field;
   Alt+Hyphen opens the system menu; after the last document closes
-  NVDA says "Documents". Not tested: Narrator, JAWS, 150 % scaling.
+  NVDA says "Documents" (the default name then; removed 2026-10-28:
+  the system already names every MDI client "Workspace" in the language
+  of Windows, Slovak "Pracovný priestor", which NVDA says in other MDI
+  programs). Not tested: Narrator, JAWS, 150 %
+  scaling.
   Fixed during the test:
   - `DefFrameProc` (with an MDI client) and `DefMDIChildProc` set the
     title but return 0 for `WM_SETTEXT`, so `SetTitle` failed and a
@@ -966,7 +970,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     calls it only if that did not cancel, through the `FormBase` hook
     `closeChildren`; a child that cancels cancels the frame close),
     `SetMdiClientName` (accessible name of the `MDICLIENT` through
-    Dynamic Annotation, default "Documents").
+    Dynamic Annotation; no name by default since 2026-10-28, see below).
     The `MDICLIENT` (`WS_EX_CLIENTEDGE`, `MDIS_ALLCHILDSTYLES`, first
     child ID 0xFF00) is a direct child of the frame, sized to
     `ClientBoundsPixels` (between tool bar and status bar); the client
@@ -1004,9 +1008,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     it was outside the MDI client (a saved window that no longer exists
     counts as inside). When the last child is destroyed while the frame is
     active, the focus goes to the MDI client: the frame cannot keep it
-    (`DefFrameProc` passes `WM_SETFOCUS` on to the MDI client), and the
-    named MDI client gives a screen reader something to say instead of an
-    unnamed pane.
+    (`DefFrameProc` passes `WM_SETFOCUS` on to the MDI client), and
+    screen readers say its system name "Workspace".
   - Message loop (`mainloop_default.go` and `mainloop_cgo.go`, the latter
     not compiled here, no MinGW in the container): after `handleKeyDown`,
     `FormBase.translateMDISysAccel` calls `TranslateMDISysAccel` for

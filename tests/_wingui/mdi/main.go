@@ -49,9 +49,9 @@
 //   - Closing: CloseAllMdiChildren stops at a child whose Closing cancels
 //     and closes all children once none cancels; then no child, no active
 //     child and no child item in the window menu remain; the MDI client
-//     has the accessible name "Documents" and (in the foreground) the
-//     focus. The frame's Closing comes first, and canceling it keeps the
-//     child without asking it. Closing the frame with a child that cancels
+//     keeps the system name ("Workspace") until SetMdiClientName sets
+//     one, and (in the foreground) the focus. The frame's Closing comes
+//     first, and canceling it keeps the child without asking it. Closing the frame with a child that cancels
 //     keeps both open; the final close of the
 //     frame publishes Closing of the child.
 //
@@ -991,7 +991,15 @@ func checkClosing(lastDoc *doc, fg bool) {
 	if a, err := uia.New(); checkErr("uia New", err) {
 		if e, err := a.ElementFromHandle(uintptr(mdiClient())); checkErr("uia ElementFromHandle(MDI client)", err) {
 			name, _ := e.Name()
-			check("accessible name of the MDI client", name == "Documents", "name %q", name)
+			// The system names the MDI client "Workspace" in the language
+			// of Windows; walk must not replace it.
+			check("MDI client keeps the system name by default", name != "" && name != "Documents", "name %q", name)
+			var err error
+			onUI(func() { err = frame.SetMdiClientName("Documents") })
+			if checkErr("SetMdiClientName", err) {
+				name, _ = e.Name()
+				check("accessible name of the MDI client after SetMdiClientName", name == "Documents", "name %q", name)
+			}
 			e.Release()
 		}
 		a.Close()

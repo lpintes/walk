@@ -122,10 +122,6 @@ func NewMdiMainWindowWithCfg(cfg *MainWindowCfg) (*MdiMainWindow, error) {
 
 	mw.closeChildren = mw.CloseAllMdiChildren
 
-	// Without a name, a screen reader says nothing useful when the focus
-	// is in the MDI client, which happens when no child is open.
-	mw.SetMdiClientName("Documents")
-
 	mw.layoutMDIClient()
 
 	succeeded = true
@@ -152,8 +148,9 @@ func (mw *MdiMainWindow) defWindowProc(hwnd win.HWND, msg uint32, wParam, lParam
 
 // SetMdiClientName sets the accessible name of the MDI client, the area
 // that holds the MDI children. Screen readers say it when the focus is in
-// the area itself, which happens when no child is open. The default is
-// "Documents"; set a translated name for other languages.
+// the area itself, which happens when no child is open. By default it keeps
+// the name the system gives the MDI client of every program, "Workspace"
+// in the language of Windows.
 func (mw *MdiMainWindow) SetMdiClientName(name string) error {
 	if mw.mdiClient == 0 {
 		return newError("the frame is closed")
@@ -339,9 +336,10 @@ func (mw *MdiMainWindow) removeChild(cw *MdiChildWindow) {
 
 // focusEmptyClient gives the focus to the MDI client when the last visible
 // child is gone while the frame is active, so that it is not lost: the
-// focus was in the destroyed child. The MDI client has an accessible name
-// (SetMdiClientName), which screen readers say. The frame itself cannot
-// keep the focus: DefFrameProc passes it on to the MDI client.
+// focus was in the destroyed child. Screen readers say the name of the MDI
+// client ("Workspace" unless SetMdiClientName set another). The frame
+// itself cannot keep the focus: DefFrameProc passes it on to the MDI
+// client.
 func (mw *MdiMainWindow) focusEmptyClient() {
 	if mw.mdiClient == 0 || mw.activeChildHWnd() != 0 || win.GetActiveWindow() != mw.hWnd {
 		return

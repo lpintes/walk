@@ -857,7 +857,8 @@ yet: it was written in a Linux container. Points to watch:
 - A modal dialog owned by a child is owned by the frame and disables
   it; afterwards the child is the active child again.
 - When the last child closes, the focus goes to the MDI client, which
-  has the accessible name "Documents".
+  keeps the name the system gives every MDI client ("Workspace" in the
+  language of Windows) until `SetMdiClientName` sets another.
 
 How to test, on 386 and amd64 (after `build.ps1`):
 
@@ -903,8 +904,8 @@ How to test, on 386 and amd64 (after `build.ps1`):
     the Window menu shows it.
   - Ctrl+N creates a new document, which becomes active with the focus
     in its Name field.
-  - Close every document with Ctrl+F4: NVDA should say "Documents"
-    (the MDI client), not an unnamed pane; Ctrl+N creates a document
+  - Close every document with Ctrl+F4: NVDA should say "Workspace"
+    (the system name of the MDI client), as in other MDI programs; Ctrl+N creates a document
     again.
   - Close the frame with Alt+F4 while a document has notes: the message
     box appears; No keeps the frame open, Yes closes the program with exit
