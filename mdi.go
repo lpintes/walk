@@ -437,10 +437,22 @@ func (mw *MdiMainWindow) applyDPIToChildren(dpi int) {
 
 // SetVisible shows or hides the frame.
 func (mw *MdiMainWindow) SetVisible(visible bool) {
+	wasVisible := win.IsWindowVisible(mw.hWnd)
+
 	mw.MainWindow.SetVisible(visible)
 
 	if visible {
 		mw.layoutMDIClient()
+
+		if !wasVisible {
+			// Other forms are activated by the focus their first layout
+			// gives to their first control (applyLayoutResults). The
+			// widgets of the frame are hidden and those of the children
+			// are not its own, so the frame takes the focus itself;
+			// DefFrameProc passes it on to the MDI client, which gives it
+			// to the active child.
+			win.SetFocus(mw.hWnd)
+		}
 	}
 }
 

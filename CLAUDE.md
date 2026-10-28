@@ -938,11 +938,18 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   - Test: while the child is maximized its system menu is the first
     item of the frame's menu bar, so Windows reports `GUI_INMENUMODE`
     with the frame as owner, not `GUI_SYSTEMMENUMODE`.
-  - Found, not fixed here: no walk form gets the foreground when it
-    opens (any walk program started from PowerShell, while `winver`,
-    `charmap` and Notepad do), because `setWindowVisible` shows every
-    window with `SW_SHOWNA` (upstream commit 508b8cb, 2018, no reason
-    given). To be fixed separately: forms shown with activation.
+  - Fixed later (2026-10-28, committed to `master`): the frame did not
+    get the foreground when its program started (`examples/mdi` and
+    `mdi.exe manual` from cmd stayed behind the console). walk shows
+    every window with `SW_SHOWNA`, which does not activate; other forms
+    are activated by the `SetFocus` of their first layout
+    (`applyLayoutResults` focuses the first control), and the process
+    still has the foreground right of its launch. The frame has no
+    focusable widget of its own, so `MdiMainWindow.SetVisible` calls
+    `SetFocus` on the frame when it becomes visible (`DefFrameProc`
+    passes the focus on to the MDI client and the active child). The
+    first note here, that no walk form gets the foreground, was wrong:
+    the test program had failed before showing its window.
   - Decision: a separate type `MdiMainWindow` that embeds `MainWindow`
     (menu bar, tool bar and status bar stay), not an option of
     `MainWindow`: the frame needs another default window procedure
@@ -1440,6 +1447,11 @@ and real dialogs all need new Win32/COM declarations.
   `errnoError` turns it into a walk error. Used so far by `RegisterHotKey`,
   `CreateMutex`, `WaitForSingleObject` and `SendMessageTimeout`; moving the
   remaining `lastError` callers to it is a separate pull request.
+- In Windows Sandbox the `mdi` test fails "frame in the foreground" when
+  `hotkeys` or `examples.ps1` ran before it in the same sandbox (the
+  foreground stays on `Progman` or `Shell_TrayWnd`, also on a build
+  without the 2026-10-28 MDI fix); run alone (`-Only mdi`) it passes.
+  The `uia` focus check on 386 fails now and then the same way.
 - `go vet` reports 3 "possible misuse of unsafe.Pointer" warnings, all in
   `internal/win` (`GlobalLock`, `SysAllocString`, `MAKEINTRESOURCE`).
   They were reviewed in step 3: they convert memory allocated by Windows

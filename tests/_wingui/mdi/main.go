@@ -431,7 +431,8 @@ func main() {
 
 func run(lastDoc *doc) {
 	fg := foreground()
-	check("frame in the foreground", fg, "the frame did not get the foreground; the focus checks are skipped")
+	h, _, _ := procGetForegroundWindow.Call()
+	check("frame in the foreground", fg, "the frame did not get the foreground (foreground %#x, class %q); the focus checks are skipped", h, className(win.HWND(h)))
 
 	checkStructure()
 	checkActivation()
