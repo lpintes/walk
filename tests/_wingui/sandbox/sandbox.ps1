@@ -52,8 +52,14 @@ if ($Exec) {
 }
 
 if (-not $NoBuild) {
+	# Build only what runs: the tests of -Only (all without it) unless
+	# -NoRun, and the examples only with -Examples or -NoRun.
+	$b = @{ Out = $out }
+	if ($Only) { $b.Only = $Only }
+	if ($NoRun) { $b.NoTests = $true }
+	if (-not ($Examples -or $NoRun)) { $b.NoExamples = $true }
 	foreach ($a in $Arch) {
-		& (Join-Path $wingui "scripts\build.ps1") -Arch $a -Out $out
+		& (Join-Path $wingui "scripts\build.ps1") -Arch $a @b
 		if ($LASTEXITCODE -ne 0) { throw "build.ps1 -Arch $a failed" }
 	}
 }

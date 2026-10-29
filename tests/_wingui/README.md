@@ -41,7 +41,9 @@ From the repository root, for `amd64` or `386`:
   version 6, DPI awareness) next to it; the examples also have it
   embedded. `hdn` and `ods` are built with their `trace.patch` applied
   to the working tree; the patch is reverted right after the build, also
-  when the build fails.
+  when the build fails. `-Only mdi,hdn` builds only these tests (the
+  names of `run.ps1`; an unknown name is an error), `-NoTests` and
+  `-NoExamples` skip a group.
 - `run.ps1` runs the self-checking tests and prints their PASS, FAIL,
   KNOWN and SKIP lines and a summary; the full output stays in a file
   next to each exe, whose path is printed (`-Full` prints it all).
@@ -80,7 +82,11 @@ feature `Containers-DisposableClientVM` and reboot once):
 ```
 
 - It builds with `build.ps1` on the host into
-  `%LOCALAPPDATA%\walk-sandbox\out` (`-NoBuild` reuses the last build),
+  `%LOCALAPPDATA%\walk-sandbox\out` (`-NoBuild` reuses the last build).
+  It builds only what runs: the tests of `-Only` (all without it, none
+  with `-NoRun`) and the examples only with `-Examples` or `-NoRun`, so
+  `-NoBuild` after a run with `-Only` may find other programs missing
+  or out of date. Then it
   starts the sandbox with PowerShell 7 of the host, the `tests\_wingui`
   directory (read-only) and the build output mapped, and waits.
   `sandbox\inside.ps1`, the logon command of the sandbox, runs `run.ps1`

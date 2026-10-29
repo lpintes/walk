@@ -4,9 +4,16 @@
 #
 # hdn and ods are built with their trace.patch applied to the working tree;
 # the patch is reverted right after the build.
+#
+# -Only builds only the tests with these names (the names of run.ps1), and
+# -NoTests and -NoExamples skip a whole group; sandbox.ps1 uses them to
+# build only what it runs.
 param(
 	[ValidateSet("386", "amd64")] [string]$Arch = "amd64",
-	[string]$Out = (Join-Path $env:TEMP "walk-wingui")
+	[string]$Out = (Join-Path $env:TEMP "walk-wingui"),
+	[string[]]$Only,
+	[switch]$NoTests,
+	[switch]$NoExamples
 )
 $ErrorActionPreference = "Stop"
 $repo = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
@@ -42,10 +49,14 @@ function Build([string]$pkg, [string]$dir, [string]$name) {
 # keeps building the other packages when one fails, so a failed package is
 # the one whose exe is missing.
 function BuildGroup([object[]]$progs) {
+	# go build without packages would build the repository root.
+	if (-not $progs) { return }
 	$tmp = Join-Path $dest ".group"
 	if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
 	New-Item -ItemType Directory -Force $tmp | Out-Null
-	$pkgs = $progs | ForEach-Object { $_[0] }
+	# @() keeps a single package an array; splatting a string passes its
+	# characters.
+	$pkgs = @($progs | ForEach-Object { $_[0] })
 	Write-Host "build $Arch $($pkgs -join ' ')"
 	# The trailing slash makes -o a directory; a backslash before the
 	# closing quote would escape it.
@@ -65,6 +76,12 @@ function BuildGroup([object[]]$progs) {
 	}
 	Remove-Item -Recurse -Force $tmp
 }
+
+function Want([string]$name) { -not $NoTests -and (-not $Only -or $Only -contains $name) }
+
+$known = "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system", "mdi", "olednd", "liveregion", "com", "hdn", "ods"
+$unknown = @($Only | Where-Object { $known -notcontains $_ })
+if ($unknown) { throw "unknown test: $($unknown -join ', ')" }
 
 function BuildPatched([string]$name) {
 	$patch = Join-Path $repo "tests\_wingui\$name\trace.patch"
@@ -87,34 +104,42 @@ Push-Location $repo
 try {
 	# Examples and tests are separate groups, because examples/webview and
 	# tests/_wingui/webview both give webview.exe.
-	$examples = @()
-	foreach ($d in Get-ChildItem (Join-Path $repo "examples") -Directory) {
-		if (-not (Get-ChildItem $d.FullName -Filter *.go)) { continue }
-		$examples += , @("./examples/$($d.Name)", (Join-Path $dest "examples\$($d.Name)"))
+	if (-not $NoExamples) {
+		$examples = @()
+		foreach ($d in Get-ChildItem (Join-Path $repo "examples") -Directory) {
+			if (-not (Get-ChildItem $d.FullName -Filter *.go)) { continue }
+			$examples += , @("./examples/$($d.Name)", (Join-Path $dest "examples\$($d.Name)"))
+		}
+		BuildGroup $examples
+		# The examples load images from ../img.
+		Copy-Item -Recurse -Force (Join-Path $repo "examples\img") (Join-Path $dest "examples")
 	}
-	BuildGroup $examples
-	# The examples load images from ../img.
-	Copy-Item -Recurse -Force (Join-Path $repo "examples\img") (Join-Path $dest "examples")
 
 	$tests = @()
 	foreach ($n in "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system", "mdi") {
-		$tests += , @("./tests/_wingui/$n", (Join-Path $dest "tests\$n"))
+		if (Want $n) { $tests += , @("./tests/_wingui/$n", (Join-Path $dest "tests\$n")) }
 	}
-	foreach ($n in "source", "target") {
-		$tests += , @("./tests/_wingui/olednd/$n", (Join-Path $dest "tests\olednd"))
+	if (Want "olednd") {
+		foreach ($n in "source", "target") {
+			$tests += , @("./tests/_wingui/olednd/$n", (Join-Path $dest "tests\olednd"))
+		}
 	}
-	foreach ($n in "app", "client") {
-		$tests += , @("./tests/_wingui/liveregion/$n", (Join-Path $dest "tests\liveregion"))
+	if (Want "liveregion") {
+		foreach ($n in "app", "client") {
+			$tests += , @("./tests/_wingui/liveregion/$n", (Join-Path $dest "tests\liveregion"))
+		}
 	}
 	BuildGroup $tests
-	# The unit tests of internal/com need Windows; build them as an exe.
-	$comDir = Join-Path $dest "tests\com"
-	New-Item -ItemType Directory -Force $comDir | Out-Null
-	Write-Host "build $Arch test ./internal/com"
-	& go test -c -o (Join-Path $comDir "com.exe") ./internal/com
-	if ($LASTEXITCODE -ne 0) { $failed += "./internal/com" }
+	if (Want "com") {
+		# The unit tests of internal/com need Windows; build them as an exe.
+		$comDir = Join-Path $dest "tests\com"
+		New-Item -ItemType Directory -Force $comDir | Out-Null
+		Write-Host "build $Arch test ./internal/com"
+		& go test -c -o (Join-Path $comDir "com.exe") ./internal/com
+		if ($LASTEXITCODE -ne 0) { $failed += "./internal/com" }
+	}
 	foreach ($n in "hdn", "ods") {
-		BuildPatched $n
+		if (Want $n) { BuildPatched $n }
 	}
 } finally {
 	Pop-Location
