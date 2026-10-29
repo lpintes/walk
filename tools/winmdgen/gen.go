@@ -197,8 +197,12 @@ func (g *generator) functions() (common []byte, perArch map[arch][]byte) {
 		fmt.Fprintf(&b, "\t%s = windows.NewLazySystemDLL(%q)\n", d.goName, d.name)
 	}
 	b.WriteString("\n")
+	// Several functions may call the same entry point with different Go
+	// parameter types (LoadIcon and LoadIconID); they share the variable.
+	procs := make(map[string]bool)
 	for _, f := range funcs {
-		if f.methods == nil {
+		if f.methods == nil && !procs[f.proc] {
+			procs[f.proc] = true
 			fmt.Fprintf(&b, "\t%s = %s.NewProc(%q)\n", f.proc, dlls[f.method.dll].goName, f.method.entry)
 		}
 	}

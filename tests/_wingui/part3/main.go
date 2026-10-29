@@ -50,7 +50,7 @@ func testBitmaps() {
 	check("GetObject", bmp.Size() == walk.Size{Width: 3, Height: 1}, "bitmap size %v, want 3x1", bmp.Size())
 
 	// GetObject through sizeFromHICON.
-	hIcon := win.LoadIcon(0, win.MAKEINTRESOURCE(win.IDI_APPLICATION))
+	hIcon := win.LoadIconID(0, win.IDI_APPLICATION)
 	ic, err := walk.NewIconFromHICON(hIcon)
 	if err != nil {
 		check("GetObject icon", false, "NewIconFromHICON: %v", err)
@@ -102,7 +102,7 @@ func testTaskbar(mw *walk.MainWindow) {
 	err1 := pi.SetState(walk.PINormal)
 	pi.SetTotal(100)
 	err2 := pi.SetCompleted(40)
-	ic, _ := walk.NewIconFromHICON(win.LoadIcon(0, win.MAKEINTRESOURCE(win.IDI_WARNING)))
+	ic, _ := walk.NewIconFromHICON(win.LoadIconID(0, win.IDI_WARNING))
 	err3 := pi.SetOverlayIcon(ic, "warning")
 	check("ITaskbarList3", err1 == nil && err2 == nil && err3 == nil, "SetState %v, SetCompleted %v, SetOverlayIcon %v", err1, err2, err3)
 }

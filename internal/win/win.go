@@ -7,8 +7,6 @@
 package win
 
 import (
-	"unsafe"
-
 	"golang.org/x/sys/windows"
 )
 
@@ -81,9 +79,12 @@ func StringToUTF16Ptr(s string) *uint16 {
 	return &StringToUTF16(s)[0]
 }
 
-func MAKEINTRESOURCE(id uintptr) *uint16 {
-	return (*uint16)(unsafe.Pointer(id))
-}
+// There is no MAKEINTRESOURCE: a resource ID in a *uint16 or unsafe.Pointer
+// is a pointer below 4096 to the Go runtime, which aborts with "invalid
+// pointer found on stack" when it finds one while copying a goroutine
+// stack. Functions taking a resource name have a variant ending in ID that
+// takes the ID as a uintptr (LoadIconID, LoadCursorID, LoadImageID,
+// FindResourceID, LoadIconWithScaleDownID).
 
 func BoolToBOOL(value bool) BOOL {
 	if value {

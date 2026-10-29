@@ -583,8 +583,13 @@ func FillRgn(hdc HDC, hrgn HRGN, hbr HBRUSH) bool {
 	return r1 != 0
 }
 
-func FindResource(hModule HMODULE, lpName *uint16, lpType *uint16) HRSRC {
-	r1, _, _ := syscall.SyscallN(procFindResourceW.Addr(), uintptr(hModule), uintptr(unsafe.Pointer(lpName)), uintptr(unsafe.Pointer(lpType)))
+func FindResource(hModule HMODULE, lpName *uint16, lpType uintptr) HRSRC {
+	r1, _, _ := syscall.SyscallN(procFindResourceW.Addr(), uintptr(hModule), uintptr(unsafe.Pointer(lpName)), lpType)
+	return HRSRC(r1)
+}
+
+func FindResourceID(hModule HMODULE, lpName uintptr, lpType uintptr) HRSRC {
+	r1, _, _ := syscall.SyscallN(procFindResourceW.Addr(), uintptr(hModule), lpName, lpType)
 	return HRSRC(r1)
 }
 
@@ -978,13 +983,28 @@ func LoadCursor(hInstance HINSTANCE, lpCursorName *uint16) HCURSOR {
 	return HCURSOR(r1)
 }
 
+func LoadCursorID(hInstance HINSTANCE, lpCursorName uintptr) HCURSOR {
+	r1, _, _ := syscall.SyscallN(procLoadCursorW.Addr(), uintptr(hInstance), lpCursorName)
+	return HCURSOR(r1)
+}
+
 func LoadIcon(hInstance HINSTANCE, lpIconName *uint16) HICON {
 	r1, _, _ := syscall.SyscallN(procLoadIconW.Addr(), uintptr(hInstance), uintptr(unsafe.Pointer(lpIconName)))
 	return HICON(r1)
 }
 
+func LoadIconID(hInstance HINSTANCE, lpIconName uintptr) HICON {
+	r1, _, _ := syscall.SyscallN(procLoadIconW.Addr(), uintptr(hInstance), lpIconName)
+	return HICON(r1)
+}
+
 func LoadImage(hInst HINSTANCE, name *uint16, type_ uint32, cx int32, cy int32, fuLoad uint32) HANDLE {
 	r1, _, _ := syscall.SyscallN(procLoadImageW.Addr(), uintptr(hInst), uintptr(unsafe.Pointer(name)), uintptr(type_), uintptr(cx), uintptr(cy), uintptr(fuLoad))
+	return HANDLE(r1)
+}
+
+func LoadImageID(hInst HINSTANCE, name uintptr, type_ uint32, cx int32, cy int32, fuLoad uint32) HANDLE {
+	r1, _, _ := syscall.SyscallN(procLoadImageW.Addr(), uintptr(hInst), name, uintptr(type_), uintptr(cx), uintptr(cy), uintptr(fuLoad))
 	return HANDLE(r1)
 }
 

@@ -46,3 +46,19 @@ func LoadIconWithScaleDown(hInstance HINSTANCE, lpIconName *uint16, w int32, h i
 
 	return HRESULT(ret)
 }
+
+// LoadIconWithScaleDownID is LoadIconWithScaleDown for an integer resource
+// ID (MAKEINTRESOURCE in C).
+func LoadIconWithScaleDownID(hInstance HINSTANCE, id uintptr, w int32, h int32, hicon *HICON) HRESULT {
+	if loadIconWithScaleDown.Find() != nil {
+		return HRESULT(0)
+	}
+	ret, _, _ := syscall.SyscallN(loadIconWithScaleDown.Addr(),
+		uintptr(hInstance),
+		id,
+		uintptr(w),
+		uintptr(h),
+		uintptr(unsafe.Pointer(hicon)))
+
+	return HRESULT(ret)
+}

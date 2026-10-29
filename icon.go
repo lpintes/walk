@@ -21,7 +21,7 @@ import (
 type Icon struct {
 	filePath  string
 	index     int
-	res       *uint16
+	res       resourceName
 	dpi2hIcon map[int]win.HICON
 	size96dpi Size
 	isStock   bool
@@ -76,7 +76,7 @@ func IconShield() *Icon {
 }
 
 func stockIcon(id uintptr) *Icon {
-	return &Icon{res: win.MAKEINTRESOURCE(id), size96dpi: defaultIconSize(), isStock: true}
+	return &Icon{res: resourceNameFromID(id), size96dpi: defaultIconSize(), isStock: true}
 }
 
 // NewIconFromFile returns a new Icon, using the specified icon image file and default size.
@@ -100,7 +100,7 @@ func NewIconFromResource(name string) (*Icon, error) {
 
 // NewIconFromResourceWithSize returns a new Icon of size size, using the specified icon resource.
 func NewIconFromResourceWithSize(name string, size Size) (*Icon, error) {
-	return newIconFromResource(win.StringToUTF16Ptr(name), size)
+	return newIconFromResource(resourceNameFromString(name), size)
 }
 
 // NewIconFromResourceId returns a new Icon of default size, using the specified icon resource.
@@ -110,10 +110,10 @@ func NewIconFromResourceId(id int) (*Icon, error) {
 
 // NewIconFromResourceIdWithSize returns a new Icon of size size, using the specified icon resource.
 func NewIconFromResourceIdWithSize(id int, size Size) (*Icon, error) {
-	return newIconFromResource(win.MAKEINTRESOURCE(uintptr(id)), size)
+	return newIconFromResource(resourceNameFromID(uintptr(id)), size)
 }
 
-func newIconFromResource(res *uint16, size Size) (*Icon, error) {
+func newIconFromResource(res resourceName, size Size) (*Icon, error) {
 	if size.Width == 0 || size.Height == 0 {
 		size = defaultIconSize()
 	}
@@ -244,14 +244,14 @@ func (i *Icon) handleForDPIWithError(dpi int) (win.HICON, error) {
 	}
 
 	var hInst win.HINSTANCE
-	var name *uint16
+	var name resourceName
 	if i.filePath != "" {
 		absFilePath, err := filepath.Abs(i.filePath)
 		if err != nil {
 			return 0, err
 		}
 
-		name = win.StringToUTF16Ptr(absFilePath)
+		name = resourceNameFromString(absFilePath)
 	} else {
 		if !i.isStock {
 			if hInst = win.GetModuleHandle(nil); hInst == 0 {
@@ -272,8 +272,9 @@ func (i *Icon) handleForDPIWithError(dpi int) (win.HICON, error) {
 	var hIcon win.HICON
 
 	if i.hasIndex {
+		// hasIndex is only set together with filePath, so name is a string.
 		win.SHDefExtractIcon(
-			name,
+			name.name,
 			int32(i.index),
 			0,
 			nil,
@@ -283,12 +284,12 @@ func (i *Icon) handleForDPIWithError(dpi int) (win.HICON, error) {
 			return 0, newError("SHDefExtractIcon")
 		}
 	} else {
-		hr := win.LoadIconWithScaleDown(
-			hInst,
-			name,
-			int32(size.Width),
-			int32(size.Height),
-			&hIcon)
+		var hr win.HRESULT
+		if name.name != nil {
+			hr = win.LoadIconWithScaleDown(hInst, name.name, int32(size.Width), int32(size.Height), &hIcon)
+		} else {
+			hr = win.LoadIconWithScaleDownID(hInst, name.id, int32(size.Width), int32(size.Height), &hIcon)
+		}
 		if win.FAILED(hr) || hIcon == 0 {
 			return 0, lastError("LoadIconWithScaleDown")
 		}

@@ -17,13 +17,19 @@ type FontMemResource struct {
 	hFontResource win.HANDLE
 }
 
-func newFontMemResource(resourceName *uint16) (*FontMemResource, error) {
+func newFontMemResource(res resourceName) (*FontMemResource, error) {
 	hModule := win.HMODULE(win.GetModuleHandle(nil))
 	if hModule == win.HMODULE(0) {
 		return nil, lastError("GetModuleHandle")
 	}
 
-	hres := win.FindResource(hModule, resourceName, win.MAKEINTRESOURCE(8) /*RT_FONT*/)
+	const rtFont = 8 // RT_FONT
+	var hres win.HRSRC
+	if res.name != nil {
+		hres = win.FindResource(hModule, res.name, rtFont)
+	} else {
+		hres = win.FindResourceID(hModule, res.id, rtFont)
+	}
 	if hres == win.HRSRC(0) {
 		return nil, lastError("FindResource")
 	}
@@ -63,7 +69,7 @@ func NewFontMemResourceByName(name string) (*FontMemResource, error) {
 		return nil, err
 	}
 
-	return newFontMemResource(lpstr)
+	return newFontMemResource(resourceName{name: lpstr})
 }
 
 // NewFontMemResourceById function loads a font resource from the executable's resources
@@ -71,7 +77,7 @@ func NewFontMemResourceByName(name string) (*FontMemResource, error) {
 // The font must be embedded into resources using corresponding operator in the
 // application's RC script.
 func NewFontMemResourceById(id int) (*FontMemResource, error) {
-	return newFontMemResource(win.MAKEINTRESOURCE(uintptr(id)))
+	return newFontMemResource(resourceNameFromID(uintptr(id)))
 }
 
 // Dispose removes the font resource from memory

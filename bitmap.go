@@ -167,34 +167,40 @@ func NewBitmapFromImageForDPI(im image.Image, dpi int) (*Bitmap, error) {
 //
 // Deprecated: Newer applications should use NewBitmapFromResourceForDPI.
 func NewBitmapFromResource(name string) (*Bitmap, error) {
-	return newBitmapFromResource(win.StringToUTF16Ptr(name), 96)
+	return newBitmapFromResource(resourceNameFromString(name), 96)
 }
 
 // NewBitmapFromResourceForDPI creates a Bitmap at given DPI from resource by name.
 func NewBitmapFromResourceForDPI(name string, dpi int) (*Bitmap, error) {
-	return newBitmapFromResource(win.StringToUTF16Ptr(name), dpi)
+	return newBitmapFromResource(resourceNameFromString(name), dpi)
 }
 
 // NewBitmapFromResourceId creates a Bitmap at 96dpi from resource by ID.
 //
 // Deprecated: Newer applications should use NewBitmapFromResourceIdForDPI.
 func NewBitmapFromResourceId(id int) (*Bitmap, error) {
-	return newBitmapFromResource(win.MAKEINTRESOURCE(uintptr(id)), 96)
+	return newBitmapFromResource(resourceNameFromID(uintptr(id)), 96)
 }
 
 // NewBitmapFromResourceIdForDPI creates a Bitmap at given DPI from resource by ID.
 func NewBitmapFromResourceIdForDPI(id int, dpi int) (*Bitmap, error) {
-	return newBitmapFromResource(win.MAKEINTRESOURCE(uintptr(id)), dpi)
+	return newBitmapFromResource(resourceNameFromID(uintptr(id)), dpi)
 }
 
-func newBitmapFromResource(res *uint16, dpi int) (bm *Bitmap, err error) {
+func newBitmapFromResource(res resourceName, dpi int) (bm *Bitmap, err error) {
 	hInst := win.GetModuleHandle(nil)
 	if hInst == 0 {
 		err = lastError("GetModuleHandle")
 		return
 	}
 
-	if hBmp := win.LoadImage(hInst, res, win.IMAGE_BITMAP, 0, 0, win.LR_CREATEDIBSECTION); hBmp == 0 {
+	var hBmp win.HANDLE
+	if res.name != nil {
+		hBmp = win.LoadImage(hInst, res.name, win.IMAGE_BITMAP, 0, 0, win.LR_CREATEDIBSECTION)
+	} else {
+		hBmp = win.LoadImageID(hInst, res.id, win.IMAGE_BITMAP, 0, 0, win.LR_CREATEDIBSECTION)
+	}
+	if hBmp == 0 {
 		err = lastError("LoadImage")
 	} else {
 		bm, err = newBitmapFromHBITMAP(win.HBITMAP(hBmp), dpi)

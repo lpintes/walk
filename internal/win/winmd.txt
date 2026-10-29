@@ -1519,7 +1519,8 @@ func EnumClipboardFormats
 func ExcludeClipRect
 func ExtCreatePen
 func FillRgn
-func FindResource
+func FindResource lpType:uintptr
+func FindResourceID entry=FindResourceW lpName:uintptr lpType:uintptr
 func FindWindow
 func FindWindowEx
 func FlashWindowEx
@@ -1598,8 +1599,11 @@ func IsZoomed
 func KillTimer
 func LineTo
 func LoadCursor
+func LoadCursorID entry=LoadCursorW lpCursorName:uintptr
 func LoadIcon
+func LoadIconID entry=LoadIconW lpIconName:uintptr
 func LoadImage
+func LoadImageID entry=LoadImageW name:uintptr
 func LoadResource
 func MessageBox
 func MonitorFromWindow

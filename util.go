@@ -54,6 +54,24 @@ func ptrFromUintptr[T any](p uintptr) *T {
 	return *(**T)(unsafe.Pointer(&p))
 }
 
+// resourceName is the name of a resource in a module: a string, or an
+// integer ID when name is nil. The ID is never kept in a pointer as
+// MAKEINTRESOURCE does in C, because the Go runtime aborts when it finds a
+// pointer below 4096 on a goroutine stack; the functions ending in ID in
+// internal/win take it as a uintptr.
+type resourceName struct {
+	name *uint16
+	id   uintptr
+}
+
+func resourceNameFromString(name string) resourceName {
+	return resourceName{name: win.StringToUTF16Ptr(name)}
+}
+
+func resourceNameFromID(id uintptr) resourceName {
+	return resourceName{id: id}
+}
+
 func uint16CountUint16(s []uint16, v uint16) int {
 	var count int
 

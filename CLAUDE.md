@@ -33,7 +33,7 @@ The `LICENSE` and `AUTHORS` files must be preserved.
   - `GOOS=windows GOARCH=386 go build ./...`
   - `GOOS=windows GOARCH=arm64 go build ./...`
   - `gofmt -l .` must print nothing
-  - `GOOS=windows go vet ./...` (only the 3 known warnings in
+  - `GOOS=windows go vet ./...` (only the 2 known warnings in
     `internal/win`; do not add new ones)
   - `go test ./tools/...`
   - after changing `internal/win/winmd.txt` or the generator:
@@ -142,7 +142,7 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     lines.
   - Still hand-written by design: COM interface methods (except for
     interfaces generated with `methods` since step 12), macros and
-    helpers (`LOWORD`, `MAKEINTRESOURCE`, `BoolToBOOL`, ...), functions
+    helpers (`LOWORD`, `MAKELONG`, `BoolToBOOL`, ...), functions
     with a fallback for older Windows versions (`GetDpiForWindow`, ...),
     functions returning pointers (`GlobalLock`, `LockResource`), the
     function with a known bug (`DragAcceptFiles`) and
@@ -1264,6 +1264,20 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `OpenClipboard` too (a behavior change), and whether `SetText`
     should empty the clipboard first (today it adds the text to what
     another program put there without becoming the owner).
+- Fixed inherited problem (2026-10-29, committed to `master`): the Go
+  runtime aborted now and then on 386 with "runtime: bad pointer in
+  frame win.LoadIcon: 0x7 / fatal error: invalid pointer found on
+  stack" while copying a goroutine stack, because `MAKEINTRESOURCE`
+  kept resource IDs in a `*uint16`, a pointer below 4096 to the
+  runtime. `MAKEINTRESOURCE` is gone; `LoadIcon`, `LoadCursor`,
+  `LoadImage` and `FindResource` have generated variants `LoadIconID`,
+  `LoadCursorID`, `LoadImageID` and `FindResourceID` taking the ID as a
+  `uintptr` (same entry point; the generator writes the shared
+  `LazyProc` variable once), `FindResource` takes the type as a
+  `uintptr`, and the hand-written `LoadIconWithScaleDownID` sits next
+  to `LoadIconWithScaleDown`. In walk, `Icon`, `Bitmap` and
+  `FontMemResource` keep the name as `resourceName` (string pointer or
+  ID, `util.go`). `go vet` now reports 2 warnings in `internal/win`.
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 
@@ -1455,10 +1469,11 @@ and real dialogs all need new Win32/COM declarations.
   foreground stays on `Progman` or `Shell_TrayWnd`, also on a build
   without the 2026-10-28 MDI fix); run alone (`-Only mdi`) it passes.
   The `uia` focus check on 386 fails now and then the same way.
-- `go vet` reports 3 "possible misuse of unsafe.Pointer" warnings, all in
-  `internal/win` (`GlobalLock`, `SysAllocString`, `MAKEINTRESOURCE`).
-  They were reviewed in step 3: they convert memory allocated by Windows
-  or integer resource IDs, not Go memory, and stay as they are. The 63
+- `go vet` reports 2 "possible misuse of unsafe.Pointer" warnings, both in
+  `internal/win` (`GlobalLock`, `SysAllocString`).
+  They were reviewed in step 3: they convert memory allocated by Windows,
+  not Go memory, and stay as they are (the third, `MAKEINTRESOURCE`, was
+  removed on 2026-10-29). The 63
   warnings in walk went away in step 8 part 1 (`ptrFromUintptr`).
 - `TableView.updateLVSizes` sizes the frozen list view from the column
   widths converted to 96 DPI and back, so at 150 % scaling it can be one
