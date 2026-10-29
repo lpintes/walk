@@ -308,8 +308,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     all texts are unchanged.
   - Kept on purpose: the exact type assertions in `error.go`
     (`wrapErr` must not unwrap an `*Error` wrapped by someone else).
-    `lastError` and `errorFromHRESULT` now carry the Windows code
-    (step 8, part 3).
+    `errorFromHRESULT` now carries the Windows code (step 8, part 3;
+    `lastError` cannot, see "Known issues").
   - Cloud checks only; no Windows test needed beyond a smoke run, as
     the only runtime change is the `errors.As` in the presenter.
 - Step 8, part 3: pull request lpintes/walk#26, merged; `go test .`
@@ -317,7 +317,8 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   errors (the user approved
   the change of `Inner` on 2026-10-26). `lastError` and
   `errorFromHRESULT` return an `*Error` whose inner error is the code as
-  a `syscall.Errno` (`newErrWithCode`): the `GetLastError` value, or the
+  a `syscall.Errno` (`newErrWithCode`): the `GetLastError` value (always
+  0 under Go, so `lastError` never wraps one; see "Known issues"), or the
   32-bit value of the HRESULT (`hresultErrno`, for example
   `syscall.Errno(0x80070005)`). The same for the `WebView2` HRESULT
   errors (the loader uses the unexported `codeError`) and `ShellOpen`.
@@ -1457,13 +1458,18 @@ and real dialogs all need new Win32/COM declarations.
   error of the thread before every call into Windows, including the call
   of `GetLastError` itself (checked on Windows 11, 386 and amd64, with
   `RegisterHotKey`, which sets 1409). So `lastError` in `error.go` (about
-  100 call sites) never carries a code, contrary to the notes of step 8
-  part 3, and `ShellOpen` reports error 0. The code is only available as
-  the error returned by `syscall.SyscallN`; the generator option
-  `lasterror` (step 14 part 1) returns it from the wrapper, and
-  `errnoError` turns it into a walk error. Used so far by `RegisterHotKey`,
-  `CreateMutex`, `WaitForSingleObject` and `SendMessageTimeout`; moving the
-  remaining `lastError` callers to it is a separate pull request.
+  100 call sites) carries no code, contrary to the notes of step 8 part 3;
+  since 2026-10-29 it no longer calls `GetLastError` and says so. The code
+  is only available as the error returned by `syscall.SyscallN`; the
+  generator option `lasterror` (step 14 part 1) returns it from the
+  wrapper, and `errnoError` turns it into a walk error. Used by
+  `RegisterHotKey`, `CreateMutex`, `WaitForSingleObject`,
+  `SendMessageTimeout` and `ShellExecuteEx` (`ShellOpen`, which reported
+  error 0 before). Decision (2026-10-29): the remaining `lastError`
+  callers stay as they are. The code would only add a number to rare
+  failure messages (mostly invalid handles), and the signature change
+  would touch about 170 calls. Use `lasterror` where a program needs the
+  code.
 - In Windows Sandbox the `mdi` test fails "frame in the foreground" when
   `hotkeys` or `examples.ps1` ran before it in the same sandbox (the
   foreground stays on `Progman` or `Shell_TrayWnd`, also on a build

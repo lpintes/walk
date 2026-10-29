@@ -294,10 +294,10 @@ func ShellOpen(owner Form, target string) error {
 			NShow:  win.SW_SHOWNORMAL,
 		}
 		sei.CbSize = uint32(unsafe.Sizeof(sei))
-		if win.ShellExecuteEx(&sei) {
+		ok, errno := win.ShellExecuteEx(&sei)
+		if ok {
 			return nil
 		}
-		errno := syscall.Errno(win.GetLastError())
 		if sei.HInstApp == win.SE_ERR_NOASSOC {
 			return processError(newErrWithCode(fmt.Sprintf("ShellExecuteEx: no program is associated with %q", target), errno))
 		}

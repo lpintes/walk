@@ -1675,7 +1675,7 @@ func SetWindowPlacement
 func SetWindowPos
 func SetWindowText
 func SetWindowTheme
-func ShellExecuteEx
+func ShellExecuteEx lasterror
 func Shell_NotifyIcon
 func Shell_NotifyIconGetRect
 func ShowWindow

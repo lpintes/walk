@@ -1359,9 +1359,9 @@ func SetWindowTheme(hwnd HWND, pszSubAppName *uint16, pszSubIdList *uint16) HRES
 	return HRESULT(r1)
 }
 
-func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) bool {
-	r1, _, _ := syscall.SyscallN(procShellExecuteExW.Addr(), uintptr(unsafe.Pointer(pExecInfo)))
-	return r1 != 0
+func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) (bool, syscall.Errno) {
+	r1, _, e1 := syscall.SyscallN(procShellExecuteExW.Addr(), uintptr(unsafe.Pointer(pExecInfo)))
+	return r1 != 0, e1
 }
 
 func Shell_NotifyIcon(dwMessage uint32, lpData *NOTIFYICONDATA) bool {
