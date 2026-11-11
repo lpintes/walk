@@ -1299,6 +1299,28 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   as OK or Cancel, so an OK button with control ID 2 pressed Cancel.
   The fix avoids that message; `Dialog.WndProc` still does not check
   `lParam`.
+- Inherited problem rechecked (2026-11-11): "when a window opens, NVDA
+  says only its title, not the focused control" does not reproduce any
+  more. With NVDA 2026.3.1 on amd64 a `MainWindow` with an edit field
+  was announced as its title followed by the field, and a `Dialog` as
+  its title, "dialog", its static text and the field.
+- Fixed inherited problem (2026-11-11, committed to `master`): a form
+  without a focusable control never got the foreground when it opened,
+  and screen readers said nothing about it. walk shows forms with
+  `SW_SHOWNA`; only the `SetFocus` of the first layout activates them.
+  `applyLayoutResults` now gives the focus to the form itself when
+  `focusFirstCandidateDescendant` (which reports now whether it focused
+  something) finds no control and no window of the thread had the
+  focus, if the form is visible and enabled. Found by the new test
+  `tests/_wingui/openfocus`: `WindowBase.SetFocus` returned an error
+  whenever no window of the thread had the focus before (Win32
+  `SetFocus` then returns 0, the previous focus), although it had set
+  the focus, so the first edit field of a newly opened form never had
+  its text selected. It fails now only if the window does not have the
+  focus after the call. Tested in Windows Sandbox (386 and amd64): the
+  test fails on the old code and passes with the fixes (run alone);
+  `run.ps1` and `examples.ps1` show only the known problems, and `mdi`
+  run alone passes.
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 
@@ -1494,7 +1516,9 @@ and real dialogs all need new Win32/COM declarations.
   `hotkeys` or `examples.ps1` ran before it in the same sandbox (the
   foreground stays on `Progman` or `Shell_TrayWnd`, also on a build
   without the 2026-10-28 MDI fix); run alone (`-Only mdi`) it passes.
-  The `uia` focus check on 386 fails now and then the same way.
+  The `uia` focus check on 386 fails now and then the same way, and
+  so do the foreground checks of `openfocus` (its focus checks still
+  pass); in a full run with `-Examples` all three fail. Run them alone.
 - `go vet` reports 2 "possible misuse of unsafe.Pointer" warnings, both in
   `internal/win` (`GlobalLock`, `SysAllocString`).
   They were reviewed in step 3: they convert memory allocated by Windows,
@@ -1514,8 +1538,7 @@ and real dialogs all need new Win32/COM declarations.
   - `WebView`: the keyboard (Tab, F6) cannot move focus into the web
     content; NVDA can still read the page. `WebView2` (step 7) is meant
     to fix this.
-  - Seen with NVDA: when a window opens, only its title is announced, not
-    the focused control; most fields in the `databinding` example dialog
+  - Seen with NVDA: most fields in the `databinding` example dialog
     have no accessible name (labels are not associated);
     validation errors are shown only as tooltips and not announced.
 - Bugs inherited from lxn/win, found by comparing with the metadata in

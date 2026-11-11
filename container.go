@@ -443,14 +443,17 @@ func (cb *ContainerBase) onClearedWidgets() (err error) {
 	return
 }
 
-func (cb *ContainerBase) focusFirstCandidateDescendant() {
+// focusFirstCandidateDescendant sets the focus to the first focusable
+// descendant of the container and reports whether there was one that took
+// it.
+func (cb *ContainerBase) focusFirstCandidateDescendant() bool {
 	window := firstFocusableDescendant(cb)
 	if window == nil {
-		return
+		return false
 	}
 
 	if err := window.SetFocus(); err != nil {
-		return
+		return false
 	}
 
 	if textSel, ok := window.(textSelectable); ok {
@@ -462,6 +465,8 @@ func (cb *ContainerBase) focusFirstCandidateDescendant() {
 			})
 		})
 	}
+
+	return true
 }
 
 func firstFocusableDescendantCallback(hwnd win.HWND, lParam uintptr) uintptr {

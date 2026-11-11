@@ -235,6 +235,15 @@ feature `Containers-DisposableClientVM` and reboot once):
   icons, `CloseAllMdiChildren` and closing the frame. `mdi.exe manual`
   shows a frame with three documents for a test with a screen reader;
   events go to standard output and the status bar.
+- `openfocus`: a form gets the foreground and the focus when it opens.
+  A `MainWindow` with only a label (no focusable control) must become
+  the foreground window and have the focus itself; then a `Dialog` with
+  an edit field (the field has the focus) and a `Dialog` with only a
+  label (the dialog has the focus), and after each dialog the
+  `MainWindow` is in the foreground again. The test never calls
+  `SetForegroundWindow`; the foreground and focus WinEvents of the
+  process are printed as INFO lines. `openfocus.exe manual` opens the
+  same windows and leaves them open for a test with a screen reader.
 - `hotkeys`: global hotkeys and the single instance support (step 14
   part 1). The test is the first instance of an application ID and
   starts copies of itself (environment variable `WALK_HOTKEYS_CHILD`)

@@ -1970,7 +1970,10 @@ func (wb *WindowBase) Focused() bool {
 
 // SetFocus sets the keyboard input focus to the *WindowBase.
 func (wb *WindowBase) SetFocus() error {
-	if win.SetFocus(wb.hWnd) == 0 {
+	// SetFocus returns the window that had the focus before, which is 0
+	// both on failure and when no window of the thread had the focus (for
+	// example when a form opens), so the result alone is not enough.
+	if win.SetFocus(wb.hWnd) == 0 && win.GetFocus() != wb.hWnd {
 		return lastError("SetFocus")
 	}
 

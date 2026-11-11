@@ -79,7 +79,7 @@ function BuildGroup([object[]]$progs) {
 
 function Want([string]$name) { -not $NoTests -and (-not $Only -or $Only -contains $name) }
 
-$known = "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system", "mdi", "olednd", "liveregion", "com", "hdn", "ods"
+$known = "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system", "mdi", "openfocus", "olednd", "liveregion", "com", "hdn", "ods"
 $unknown = @($Only | Where-Object { $known -notcontains $_ })
 if ($unknown) { throw "unknown test: $($unknown -join ', ')" }
 
@@ -116,7 +116,7 @@ try {
 	}
 
 	$tests = @()
-	foreach ($n in "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system", "mdi") {
+	foreach ($n in "part3", "dragfinish", "webview", "webview2", "upstream", "shell", "uia", "richedit", "dialogs", "clipboard", "hotkeys", "system", "mdi", "openfocus") {
 		if (Want $n) { $tests += , @("./tests/_wingui/$n", (Join-Path $dest "tests\$n")) }
 	}
 	if (Want "olednd") {

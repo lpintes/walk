@@ -329,7 +329,18 @@ func applyLayoutResults(results []LayoutResult, stopwatch *stopwatch) error {
 							activeForm, _ := windowFromHandle(hwndForm).(Form)
 
 							if hwndFocused == 0 || form.Handle() == hwndFocused || activeForm != window.Form() {
-								form.AsFormBase().clientComposite.focusFirstCandidateDescendant()
+								if !form.AsFormBase().clientComposite.focusFirstCandidateDescendant() && hwndFocused == 0 {
+									// Forms are shown without being activated
+									// (SW_SHOWNA); the focus given to the first
+									// control activates them. A form without a
+									// focusable control takes the focus itself,
+									// so that it gets the foreground and screen
+									// readers announce it.
+									hwndForm := form.Handle()
+									if win.IsWindowVisible(hwndForm) && win.IsWindowEnabled(hwndForm) {
+										win.SetFocus(hwndForm)
+									}
+								}
 							}
 						}()
 					}

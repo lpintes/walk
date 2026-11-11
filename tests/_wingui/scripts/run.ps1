@@ -132,6 +132,13 @@ if (Want "webview2") {
 	Report "webview2" $p (Stop-Test $p 120)
 }
 
+if (Want "openfocus") {
+	# Checks the foreground, so it runs before hotkeys, after which the
+	# foreground may stay on the shell in Windows Sandbox.
+	$p = Start-Test (Join-Path $root "openfocus") "openfocus"
+	Report "openfocus" $p (Stop-Test $p 60)
+}
+
 if (Want "hotkeys") {
 	# Starts copies of itself as other instances of the program; each may
 	# wait up to 30 seconds for the first one.
