@@ -27,6 +27,13 @@
 //     Automation; if OnHyperlinkClicked is called it must get the target
 //     (Windows 11 does not call it for Invoke, which is reported as INFO).
 //     TDM_CLICK_BUTTON with IDOK closes the dialog: DlgCmdOK.
+//   - Enter: the test focuses a control and posts it WM_KEYDOWN of Enter,
+//     which goes through the message loop like a real key. On a PushButton
+//     of the main window it must click the button once, and an autorepeat
+//     key down must not click again. In a Dialog with OK as default and
+//     Cancel as cancel button, Enter must press the focused button (Cancel
+//     returns DlgCmdCancel, OK DlgCmdOK) and on the edit field the default
+//     button (DlgCmdOK).
 //
 // The checks run on a goroutine while the main window runs its message
 // loop; each modal dialog is opened with Synchronize and closed by the
@@ -42,6 +49,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -68,8 +76,10 @@ const (
 )
 
 var (
-	failed bool
-	mw     *walk.MainWindow
+	failed      bool
+	mw          *walk.MainWindow
+	enterButton *walk.PushButton
+	enterClicks atomic.Int32
 )
 
 func check(name string, ok bool, format string, args ...any) bool {
@@ -199,6 +209,11 @@ func main() {
 		Layout:   VBox{},
 		Children: []Widget{
 			Label{Text: "The dialogs of this test open and close by themselves."},
+			PushButton{
+				AssignTo:  &enterButton,
+				Text:      "Enter test",
+				OnClicked: func() { enterClicks.Add(1) },
+			},
 		},
 	}).Create(); err != nil {
 		fmt.Println("FAIL create window:", err)
@@ -232,6 +247,11 @@ func main() {
 
 func run() {
 	check("TaskDialogAvailable", walk.TaskDialogAvailable(), "false: the exe has no manifest asking for common controls 6")
+
+	checkEnterMainWindow()
+	checkEnterDialog("Enter on Cancel", func(_ *walk.LineEdit, _, cancel *walk.PushButton) walk.Widget { return cancel }, walk.DlgCmdCancel)
+	checkEnterDialog("Enter on OK", func(_ *walk.LineEdit, ok, _ *walk.PushButton) walk.Widget { return ok }, walk.DlgCmdOK)
+	checkEnterDialog("Enter on the edit field", func(edit *walk.LineEdit, _, _ *walk.PushButton) walk.Widget { return edit }, walk.DlgCmdOK)
 
 	a, err := uia.New()
 	if !checkErr("uia New", err) {
@@ -383,6 +403,110 @@ func checkWalkDialog(a *uia.Automation, ref view) {
 	}
 	check("walk dialog result", cmd == walk.DlgCmdCancel, "Run returned %d, want DlgCmdCancel (%d)", cmd, walk.DlgCmdCancel)
 	check("walk dialog EVENT_SYSTEM_DIALOGEND", waitDialogEvent("end", h), "not raised; events %v", dialogEventList())
+}
+
+// lParam of WM_KEYDOWN for Enter: repeat count 1, scan code 0x1C, and bit
+// 30 (the key was down before) for an autorepeat.
+const (
+	keyDownEnter       = 0x001C0001
+	keyDownEnterRepeat = 0x401C0001
+)
+
+// pressEnter focuses w on the UI thread and posts it WM_KEYDOWN of Enter, so
+// that the message loop handles it like a real key (IsDialogMessage
+// included). It reports whether w got the focus.
+func pressEnter(w walk.Widget, lParam uintptr) bool {
+	focused := make(chan bool, 1)
+	mw.Synchronize(func() {
+		w.SetFocus()
+		focused <- win.GetFocus() == w.Handle()
+	})
+	if ok, received := waitResult(focused); !received || !ok {
+		return false
+	}
+	win.PostMessage(w.Handle(), win.WM_KEYDOWN, win.VK_RETURN, lParam)
+	return true
+}
+
+func checkEnterMainWindow() {
+	if !check("main window Enter focus", pressEnter(enterButton, keyDownEnter), "the button did not get the focus") {
+		return
+	}
+	for i := 0; i < 20 && enterClicks.Load() == 0; i++ {
+		time.Sleep(100 * time.Millisecond)
+	}
+	check("main window Enter clicks the focused button", enterClicks.Load() == 1, "%d clicks, want 1", enterClicks.Load())
+
+	if !pressEnter(enterButton, keyDownEnterRepeat) {
+		check("main window Enter autorepeat focus", false, "the button did not get the focus")
+		return
+	}
+	time.Sleep(500 * time.Millisecond)
+	check("main window Enter autorepeat does not click", enterClicks.Load() == 1, "%d clicks, want 1", enterClicks.Load())
+}
+
+// checkEnterDialog opens a Dialog with an edit field and OK (default) and
+// Cancel (cancel) buttons, presses Enter on the control focus returns and
+// checks the result of Run.
+func checkEnterDialog(name string, focus func(edit *walk.LineEdit, ok, cancel *walk.PushButton) walk.Widget, want int) {
+	type controls struct {
+		h          win.HWND
+		edit       *walk.LineEdit
+		ok, cancel *walk.PushButton
+	}
+	opened := make(chan controls, 1)
+	done := make(chan int, 1)
+	mw.Synchronize(func() {
+		var dlg *walk.Dialog
+		var c controls
+		if err := (Dialog{
+			AssignTo:      &dlg,
+			Title:         "walk dialogs enter",
+			DefaultButton: &c.ok,
+			CancelButton:  &c.cancel,
+			MinSize:       Size{Width: 300, Height: 120},
+			Layout:        VBox{},
+			Children: []Widget{
+				LineEdit{AssignTo: &c.edit, Accessibility: Accessibility{Name: "File name"}},
+				Composite{
+					Layout: HBox{},
+					Children: []Widget{
+						HSpacer{},
+						PushButton{AssignTo: &c.ok, Text: "OK", OnClicked: func() { dlg.Accept() }},
+						PushButton{AssignTo: &c.cancel, Text: "Cancel", OnClicked: func() { dlg.Cancel() }},
+					},
+				},
+			},
+		}).Create(mw); err != nil {
+			check(name+" create dialog", false, "%v", err)
+			opened <- controls{}
+			return
+		}
+		c.h = dlg.Handle()
+		opened <- c
+		done <- dlg.Run()
+	})
+
+	c := <-opened
+	if c.h == 0 {
+		return
+	}
+	for i := 0; i < 50 && !win.IsWindowVisible(c.h); i++ {
+		time.Sleep(100 * time.Millisecond)
+	}
+	if !check(name+" focus", pressEnter(focus(c.edit, c.ok, c.cancel), keyDownEnter), "the control did not get the focus") {
+		win.PostMessage(c.h, win.WM_CLOSE, 0, 0)
+		waitResult(done)
+		return
+	}
+	cmd, ok := waitResult(done)
+	if !ok {
+		check(name, false, "Run did not return; closing the dialog")
+		win.PostMessage(c.h, win.WM_CLOSE, 0, 0)
+		waitResult(done)
+		return
+	}
+	check(name, cmd == want, "Run returned %d, want %d", cmd, want)
 }
 
 // waitForScript creates the named event Local\walk-dialogs-msaa, prints

@@ -86,6 +86,14 @@ func (pb *PushButton) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 	switch msg {
 	case win.WM_GETDLGCODE:
 		hwndFocus := win.GetFocus()
+		if hwndFocus == pb.hWnd && wParam == win.VK_RETURN {
+			// Enter presses the focused button, as in system dialogs.
+			// IsDialogMessage would do that only for a button that reports
+			// DLGC_DEFPUSHBUTTON; for any other it sends IDOK to the form,
+			// which a MainWindow ignores and a Dialog takes as a click on
+			// its default button. The button handles WM_KEYDOWN itself.
+			return win.DLGC_WANTALLKEYS
+		}
 		if hwndFocus == pb.hWnd {
 			form := ancestor(pb)
 			if form == nil {
@@ -107,6 +115,15 @@ func (pb *PushButton) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 		}
 
 		pb.ensureProperDialogDefaultButton(hwndFocus)
+
+	case win.WM_KEYDOWN:
+		// Bit 30 of lParam is set for autorepeat: holding Enter clicks
+		// once, so it cannot also press a button of a window the click
+		// opens.
+		if wParam == win.VK_RETURN && uint32(lParam)>>30 == 0 && pb.Enabled() {
+			pb.raiseClicked()
+			return 0
+		}
 
 	case win.WM_KILLFOCUS:
 		pb.ensureProperDialogDefaultButton(win.HWND(wParam))

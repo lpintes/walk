@@ -1279,6 +1279,26 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   to `LoadIconWithScaleDown`. In walk, `Icon`, `Bitmap` and
   `FontMemResource` keep the name as `resourceName` (string pointer or
   ID, `util.go`). `go vet` now reports 2 warnings in `internal/win`.
+- Fixed inherited problem (2026-11-11, committed to `master`): Enter
+  on a focused `PushButton` did nothing in a `MainWindow` and, in a
+  `Dialog`, clicked the default button instead of the focused one.
+  `IsDialogMessage` presses the focused button only if it reports
+  `DLGC_DEFPUSHBUTTON` (in `#32770` dialogs `DefDlgProc` moves that
+  style to the focused button); otherwise it sends `IDOK` to the form.
+  `PushButton` now returns `DLGC_WANTALLKEYS` from `WM_GETDLGCODE` for
+  Enter while it has the focus and clicks itself on `WM_KEYDOWN`
+  (not on autorepeat). Enter in other controls of a dialog still
+  presses the default button. The default button keeps its
+  `BS_DEFPUSHBUTTON` look while another button has the focus.
+  Tested in Windows Sandbox (386 and amd64) with the new Enter checks
+  of `tests/_wingui/dialogs`; on the old code they fail. That run also
+  showed that Enter on the focused default button could press the
+  wrong one: `IsDialogMessage` sent `WM_COMMAND` with the button's
+  control ID and `BN_CLICKED` (0) to the form, and `Dialog.WndProc`
+  takes any command with `HIWORD` 0 and `LOWORD` `IDOK` or `IDCANCEL`
+  as OK or Cancel, so an OK button with control ID 2 pressed Cancel.
+  The fix avoids that message; `Dialog.WndProc` still does not check
+  `lParam`.
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 
@@ -1496,8 +1516,7 @@ and real dialogs all need new Win32/COM declarations.
     to fix this.
   - Seen with NVDA: when a window opens, only its title is announced, not
     the focused control; most fields in the `databinding` example dialog
-    have no accessible name (labels are not associated); Enter on a
-    focused `PushButton` in a `MainWindow` does nothing (Space works);
+    have no accessible name (labels are not associated);
     validation errors are shown only as tooltips and not announced.
 - Bugs inherited from lxn/win, found by comparing with the metadata in
   step 3 and kept hand-written so that behavior does not change. Fixing
