@@ -142,6 +142,7 @@ const (
 type Accessibility struct {
 	wb          *WindowBase
 	liveSetting AccLiveSetting
+	nameSet     bool // SetName was called; a Label does not replace the name
 }
 
 // SetAccelerator sets window accelerator name using Dynamic Annotation.
@@ -164,8 +165,10 @@ func (a *Accessibility) SetHelp(help string) error {
 	return a.accSetPropertyStr(a.wb.hWnd, &win.PROPID_ACC_HELP, win.EVENT_OBJECT_HELPCHANGE, help)
 }
 
-// SetName sets window name using Dynamic Annotation.
+// SetName sets window name using Dynamic Annotation. It replaces the name a
+// Label gives the window (see Label.SetLabelFor).
 func (a *Accessibility) SetName(name string) error {
+	a.nameSet = true
 	return a.accSetPropertyStr(a.wb.hWnd, &win.PROPID_ACC_NAME, win.EVENT_OBJECT_NAMECHANGE, name)
 }
 

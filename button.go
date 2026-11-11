@@ -125,6 +125,12 @@ func (b *Button) SetText(value string) error {
 		return err
 	}
 
+	// A check box or radio button without text gets its name from a
+	// Label; with text it has its own.
+	if b.labeledBy != nil {
+		b.labeledBy.applyLabelFor()
+	}
+
 	b.RequestLayout()
 
 	return nil

@@ -244,6 +244,16 @@ feature `Containers-DisposableClientVM` and reboot once):
   `SetForegroundWindow`; the foreground and focus WinEvents of the
   process are printed as INFO lines. `openfocus.exe manual` opens the
   same windows and leaves them open for a test with a screen reader.
+- `labels`: a `Label` names the field after it. A grid as in
+  `examples/databinding` with a label before a `LineEdit`, `DateEdit`,
+  `ComboBox`, editable `ComboBox`, `NumberEdit`, `Slider`, `CheckBox`
+  without text and `TextEdit`: the UI Automation name of each field (and
+  of the edit control inside the `NumberEdit` and the editable
+  `ComboBox`) must be the label text without the mnemonic `&`. A
+  `LineEdit` whose name the program sets keeps it, and when a label text
+  changes, the name of its field follows. `LabeledBy` is printed as INFO.
+  `labels.exe manual` leaves the window open for a test with a screen
+  reader.
 - `hotkeys`: global hotkeys and the single instance support (step 14
   part 1). The test is the first instance of an application ID and
   starts copies of itself (environment variable `WALK_HOTKEYS_CHILD`)

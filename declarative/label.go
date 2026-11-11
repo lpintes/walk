@@ -7,6 +7,8 @@
 package declarative
 
 import (
+	"fmt"
+
 	"github.com/lpintes/walk"
 	"github.com/lpintes/walk/internal/win"
 )
@@ -57,8 +59,13 @@ type Label struct {
 
 	// Label
 
-	AssignTo      **walk.Label
-	EllipsisMode  EllipsisMode
+	AssignTo     **walk.Label
+	EllipsisMode EllipsisMode
+	// LabelFor is the Name of the widget the label names for screen
+	// readers (see walk.Label.SetLabelFor). Without it the label names the
+	// field right after it, unless NoLabelFor is set.
+	LabelFor      string
+	NoLabelFor    bool
 	NoPrefix      bool
 	Text          Property
 	TextAlignment Alignment1D
@@ -90,6 +97,22 @@ func (l Label) Create(builder *Builder) error {
 		}
 
 		w.SetTextColor(l.TextColor)
+
+		if l.NoLabelFor {
+			if err := w.SetLabelFor(nil); err != nil {
+				return err
+			}
+		}
+		if l.LabelFor != "" {
+			// The widget may come later in the tree.
+			builder.Defer(func() error {
+				target, ok := builder.name2Window[l.LabelFor].(walk.Widget)
+				if !ok {
+					return fmt.Errorf("Label LabelFor: no widget named %q", l.LabelFor)
+				}
+				return w.SetLabelFor(target)
+			})
+		}
 
 		return nil
 	})

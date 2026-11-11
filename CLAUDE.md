@@ -1321,6 +1321,47 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   test fails on the old code and passes with the fixes (run alone);
   `run.ps1` and `examples.ps1` show only the known problems, and `mdi`
   run alone passes.
+- Fixed inherited problem (2026-11-11, committed to `master`): fields
+  after a `Label` had no accessible name (all fields of the
+  `databinding` example dialog). The oleacc proxies name an unnamed
+  edit field, combo box and the like from the previous window in
+  z-order only if its class is `Static`; a walk `Label` is its own
+  class with the Static inside, and the `NumberEdit` edit is nested in
+  a composite. The user chose (2026-11-11) automatic and explicit
+  association (`labelfor.go`):
+  - A `Label` names the widget inserted right after it into the same
+    container if that widget implements the unexported `labelTarget`
+    (`LineEdit`, `TextEdit`, `RichEdit`, `DateEdit`, `Slider`,
+    `ProgressBar`, `ListBox`, `TreeView`, `TableView` with its list
+    views, `ComboBox` with the edit of an editable one, `NumberEdit`
+    with its edit, `CheckBox` and `RadioButton` only without text).
+    It sets `PROPID_ACC_NAME` through Dynamic Annotation on those
+    windows, with the mnemonic `&` removed unless the label has
+    `SS_NOPREFIX`, and follows `Label.SetText` and, for check boxes,
+    `Button.SetText`. The automatic naming is queued with
+    `Synchronize`, because a widget is inserted inside `InitWidget`,
+    before its inner windows exist and before the program could name
+    it. A name set with `Accessibility.SetName` (also the declarative
+    `Accessibility.Name`) wins; disposing the label or the widget
+    removes the name.
+  - New public API: `Label.SetLabelFor(widget)` (replaces the
+    automatic choice; nil turns it off) and `Label.LabelFor`;
+    declarative `Label.LabelFor` (the `Name` of a widget, resolved
+    after the tree is built) and `Label.NoLabelFor`.
+  - UI Automation `LabeledBy` stays empty (Dynamic Annotation cannot
+    set an element).
+  - Test `tests/_wingui/labels` (with a `manual` mode): every field
+    of a grid like the `databinding` dialog, the explicit API and
+    run-time changes; on the old code every name was empty, with the
+    fix all checks pass in Windows Sandbox on 386 and amd64, and
+    `sandbox.ps1 -Examples` shows only the known foreground failures.
+    Manual test with NVDA 2026.3.1 on amd64 (`examples/databinding`):
+    every field of the dialog is read with its label. Found there, not
+    fixed yet: every `RadioButton` is a tab stop (standard is one per
+    group), and NVDA does not say the `GroupBox` title for its radio
+    buttons, because its `findGroupboxObject` looks for a `BS_GROUPBOX`
+    button among the previous windows with the same parent, and walk's
+    group box button is a sibling of the composite holding the buttons.
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 
@@ -1538,9 +1579,8 @@ and real dialogs all need new Win32/COM declarations.
   - `WebView`: the keyboard (Tab, F6) cannot move focus into the web
     content; NVDA can still read the page. `WebView2` (step 7) is meant
     to fix this.
-  - Seen with NVDA: most fields in the `databinding` example dialog
-    have no accessible name (labels are not associated);
-    validation errors are shown only as tooltips and not announced.
+  - Seen with NVDA: validation errors are shown only as tooltips and
+    not announced.
 - Bugs inherited from lxn/win, found by comparing with the metadata in
   step 3 and kept hand-written so that behavior does not change. Fixing
   them changes behavior and needs GUI testing:

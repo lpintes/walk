@@ -19,6 +19,12 @@ const (
 type Label struct {
 	static
 	textChangedPublisher EventPublisher
+
+	// See labelfor.go.
+	labelFor                Widget
+	labelForExplicit        bool
+	labelForHWnds           []win.HWND
+	labelForDisposingHandle int
 }
 
 func NewLabel(parent Container) (*Label, error) {
@@ -93,7 +99,15 @@ func (l *Label) SetText(text string) error {
 		return nil
 	}
 
+	l.applyLabelFor()
+
 	l.textChangedPublisher.Publish()
 
 	return nil
+}
+
+func (l *Label) Dispose() {
+	l.dropLabelFor()
+
+	l.static.Dispose()
 }

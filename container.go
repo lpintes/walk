@@ -402,6 +402,13 @@ func (cb *ContainerBase) onInsertedWidget(index int, widget Widget) (err error) 
 
 	widget.(applyFonter).applyFont(cb.Font())
 
+	// A Label names the field right after it, see labelfor.go.
+	if index > 0 {
+		if l, ok := cb.children.At(index - 1).(*Label); ok {
+			l.autoLabelFor(widget)
+		}
+	}
+
 	return
 }
 

@@ -139,6 +139,11 @@ if (Want "openfocus") {
 	Report "openfocus" $p (Stop-Test $p 60)
 }
 
+if (Want "labels") {
+	$p = Start-Test (Join-Path $root "labels") "labels"
+	Report "labels" $p (Stop-Test $p 60)
+}
+
 if (Want "hotkeys") {
 	# Starts copies of itself as other instances of the program; each may
 	# wait up to 30 seconds for the first one.

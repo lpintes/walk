@@ -99,6 +99,7 @@ type WidgetBase struct {
 	graphicsEffects             *WidgetGraphicsEffectList
 	alignment                   Alignment2D
 	alwaysConsumeSpace          bool
+	labeledBy                   *Label // the Label naming this widget, see labelfor.go
 }
 
 // InitWidget initializes a Widget.
