@@ -49,11 +49,12 @@ func NewRadioButton(parent Container) (*RadioButton, error) {
 		rb.group = new(RadioButtonGroup)
 	}
 
+	// WS_TABSTOP is managed by RadioButtonGroup.updateTabStops.
 	if err := InitWidget(
 		rb,
 		parent,
 		"BUTTON",
-		groupBit|win.WS_TABSTOP|win.WS_VISIBLE|win.BS_AUTORADIOBUTTON,
+		groupBit|win.WS_VISIBLE|win.BS_AUTORADIOBUTTON,
 		0); err != nil {
 		return nil, err
 	}
@@ -74,23 +75,70 @@ func NewRadioButton(parent Container) (*RadioButton, error) {
 			return nil
 		},
 		func(v any) error {
-			checked := v == rb.value
-			if checked {
-				rb.group.checkedButton = rb
-			}
-			rb.SetChecked(checked)
+			rb.SetChecked(v == rb.value)
 
 			return nil
 		},
 		rb.CheckedChanged()))
 
 	rb.group.buttons = append(rb.group.buttons, rb)
+	rb.group.updateTabStops()
 
 	return rb, nil
 }
 
+// updateTabStops gives WS_TABSTOP to the checked button of the group, or to
+// the first one when none is checked, and removes it from the others. So Tab
+// stops once in a group and the arrow keys move inside it, as in system
+// dialogs, where the BUTTON control sets and clears WS_TABSTOP of a radio
+// button on BM_SETCHECK. That alone is not enough here, because walk never
+// sends BM_SETCHECK to a button that stays unchecked.
+func (rbg *RadioButtonGroup) updateTabStops() {
+	var stop *RadioButton
+	for _, b := range rbg.buttons {
+		if b.IsDisposed() {
+			continue
+		}
+		if stop == nil {
+			stop = b
+		}
+		if b.Checked() {
+			stop = b
+			break
+		}
+	}
+
+	for _, b := range rbg.buttons {
+		if !b.IsDisposed() {
+			b.ensureStyleBits(win.WS_TABSTOP, b == stop)
+		}
+	}
+}
+
 func (rb *RadioButton) radioButton() *RadioButton {
 	return rb
+}
+
+// setChecked checks or unchecks the button. Checking it unchecks the other
+// buttons of the group, which BM_SETCHECK does not do; the BUTTON control
+// does it only for its own clicks, and only within its WS_GROUP range.
+func (rb *RadioButton) setChecked(checked bool) {
+	if checked {
+		prev := rb.group.checkedButton
+		rb.group.checkedButton = rb
+		for _, b := range rb.group.buttons {
+			// prev is unchecked even if the control has already done it,
+			// so that its CheckedChanged is published, as before.
+			if b != rb && !b.IsDisposed() && (b == prev || b.Checked()) {
+				b.Button.setChecked(false)
+			}
+		}
+	} else if rb.group.checkedButton == rb {
+		rb.group.checkedButton = nil
+	}
+
+	rb.Button.setChecked(checked)
+	rb.group.updateTabStops()
 }
 
 func (rb *RadioButton) TextOnLeftSide() bool {
@@ -118,15 +166,11 @@ func (rb *RadioButton) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr
 	case win.WM_COMMAND:
 		switch win.HIWORD(uint32(wParam)) {
 		case win.BN_CLICKED:
-			prevChecked := rb.group.checkedButton
-			rb.group.checkedButton = rb
-
-			if prevChecked != rb {
-				if prevChecked != nil {
-					prevChecked.setChecked(false)
-				}
-
+			if rb.group.checkedButton != rb {
 				rb.setChecked(true)
+			} else {
+				// The control has checked itself again.
+				rb.group.updateTabStops()
 			}
 		}
 	}

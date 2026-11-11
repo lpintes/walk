@@ -1357,11 +1357,35 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
     `sandbox.ps1 -Examples` shows only the known foreground failures.
     Manual test with NVDA 2026.3.1 on amd64 (`examples/databinding`):
     every field of the dialog is read with its label. Found there, not
-    fixed yet: every `RadioButton` is a tab stop (standard is one per
-    group), and NVDA does not say the `GroupBox` title for its radio
+    fixed yet: NVDA does not say the `GroupBox` title for its radio
     buttons, because its `findGroupboxObject` looks for a `BS_GROUPBOX`
     button among the previous windows with the same parent, and walk's
     group box button is a sibling of the composite holding the buttons.
+    (The other finding, every `RadioButton` a tab stop, is fixed, see
+    the next entry.)
+- Fixed inherited problem (2026-11-11, committed to `master`): every
+  `RadioButton` was a tab stop, so Tab stopped on each button of a
+  group; in system dialogs a group is one tab stop and the arrow keys
+  move inside it. The `BUTTON` control sets `WS_TABSTOP` of a radio
+  button on `BM_SETCHECK` with a check and clears it on one without
+  (Wine `dlls/user32/button.c` does the same), but walk created every
+  button with `WS_TABSTOP` and never sent `BM_SETCHECK` to one that
+  stays unchecked. `RadioButtonGroup.updateTabStops` now gives
+  `WS_TABSTOP` to the checked button of the group, or to the first one
+  when none is checked, after every creation and check change, and
+  `firstFocusableDescendant` no longer skips unchecked radio buttons
+  (a form starting with an unchecked group focuses its first button).
+  Fixed on the way: `RadioButton.SetChecked(true)` did not uncheck the
+  other buttons of the group, and `checkedButton` was updated only by
+  clicks and the `CheckedValue` property, so after `SetChecked` a click
+  or an arrow key left two buttons checked. `RadioButton.setChecked`
+  now unchecks the others (the previously checked one always gets its
+  `CheckedChanged`, as before). Test `tests/_wingui/radiotab`: on the
+  old code 13 checks fail in Windows Sandbox on 386 and amd64, with the
+  fix all pass; `sandbox.ps1 -Examples` shows only the known foreground
+  failures. Manual test with NVDA on amd64 (`examples/databinding`):
+  Tab stops once in the "Sex" group, the arrows move between Male,
+  Female and Hermaphrodite.
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 

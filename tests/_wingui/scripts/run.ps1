@@ -144,6 +144,11 @@ if (Want "labels") {
 	Report "labels" $p (Stop-Test $p 60)
 }
 
+if (Want "radiotab") {
+	$p = Start-Test (Join-Path $root "radiotab") "radiotab"
+	Report "radiotab" $p (Stop-Test $p 60)
+}
+
 if (Want "hotkeys") {
 	# Starts copies of itself as other instances of the program; each may
 	# wait up to 30 seconds for the first one.

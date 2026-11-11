@@ -481,13 +481,9 @@ func firstFocusableDescendantCallback(hwnd win.HWND, lParam uintptr) uintptr {
 		return 1
 	}
 
+	// A radio button group has one tab stop, the checked button or the
+	// first one (RadioButtonGroup.updateTabStops).
 	if win.GetWindowLong(hwnd, win.GWL_STYLE)&win.WS_TABSTOP > 0 {
-		if rb, ok := windowFromHandle(hwnd).(radioButtonish); ok {
-			if !rb.radioButton().Checked() {
-				return 1
-			}
-		}
-
 		hwndPtr := ptrFromUintptr[win.HWND](lParam)
 		*hwndPtr = hwnd
 		return 0

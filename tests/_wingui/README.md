@@ -254,6 +254,14 @@ feature `Containers-DisposableClientVM` and reboot once):
   changes, the name of its field follows. `LabeledBy` is printed as INFO.
   `labels.exe manual` leaves the window open for a test with a screen
   reader.
+- `radiotab`: a group of radio buttons is one tab stop, the checked
+  button or the first one when none is checked. Checks `WS_TABSTOP` of
+  two groups and the order of `GetNextDlgTabItem` at the start and after
+  `SetChecked`, a Down arrow posted to a radio button (the focus wraps to
+  the first button of the group and checks it), Tab posted from the edit
+  field through both groups and the button, and the first focus of a
+  dialog that starts with an unchecked group. `radiotab.exe manual`
+  leaves the window open for a test with a screen reader.
 - `hotkeys`: global hotkeys and the single instance support (step 14
   part 1). The test is the first instance of an application ID and
   starts copies of itself (environment variable `WALK_HOTKEYS_CHILD`)
