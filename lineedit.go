@@ -352,6 +352,13 @@ func (le *LineEdit) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) u
 			return win.DLGC_WANTALLKEYS
 		}
 
+	case win.WM_CHAR:
+		// A single-line edit beeps on the Enter character (Ctrl+Enter gives '\n').
+		// Enter is handled on WM_KEYDOWN, so the character is dropped.
+		if wParam == '\r' || wParam == '\n' {
+			return 0
+		}
+
 	case win.WM_KEYDOWN:
 		switch Key(wParam) {
 		case KeyA:
