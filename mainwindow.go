@@ -149,7 +149,9 @@ func (mw *MainWindow) ClientBoundsPixels() Rectangle {
 		bounds.Height -= tlbBounds.Height
 	}
 
-	if mw.statusBar.Visible() {
+	// The status bar is created after SetMenu, which (at least on Wine)
+	// already triggers WM_SIZE, so it may still be nil here.
+	if mw.statusBar != nil && mw.statusBar.Visible() {
 		bounds.Height -= mw.statusBar.HeightPixels()
 	}
 
@@ -253,9 +255,11 @@ func (mw *MainWindow) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr)
 			}
 		}
 
-		bounds := Rectangle{0, cb.Y + cb.Height, cb.Width, mw.statusBar.HeightPixels()}
-		if mw.statusBar.BoundsPixels() != bounds {
-			mw.statusBar.SetBoundsPixels(bounds)
+		if mw.statusBar != nil {
+			bounds := Rectangle{0, cb.Y + cb.Height, cb.Width, mw.statusBar.HeightPixels()}
+			if mw.statusBar.BoundsPixels() != bounds {
+				mw.statusBar.SetBoundsPixels(bounds)
+			}
 		}
 
 	case win.WM_INITMENUPOPUP:
