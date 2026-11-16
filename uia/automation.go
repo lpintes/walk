@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/lpintes/walk/internal/win"
@@ -34,6 +35,8 @@ var (
 	errOtherAutomation = errors.New("uia: element of another Automation")
 	errNilElement      = errors.New("uia: nil element")
 )
+
+const transactionTimeout = 200 * time.Millisecond
 
 // hresultError returns the error for a failed UI Automation call.
 func hresultError(op string, hr win.HRESULT) error {
@@ -94,6 +97,16 @@ func (a *Automation) run(started chan<- error) {
 		return
 	}
 	a.uia = (*win.IUIAutomation)(p)
+	if err := a.setTransactionTimeout(); err != nil {
+		if a.uia5 != nil {
+			a.uia5.Release()
+			a.uia5 = nil
+		}
+		a.uia.Release()
+		a.uia = nil
+		started <- err
+		return
+	}
 	started <- nil
 
 	for f := range a.calls {
@@ -115,6 +128,19 @@ func (a *Automation) run(started chan<- error) {
 		a.uia5.Release()
 	}
 	a.uia.Release()
+}
+
+func (a *Automation) setTransactionTimeout() error {
+	uia5, hr := a.automation5()
+	if win.FAILED(hr) {
+		return hresultError("QueryInterface IUIAutomation5", hr)
+	}
+	ms := uintptr(transactionTimeout / time.Millisecond)
+	result, _, _ := syscall.SyscallN(uia5.LpVtbl.Put_TransactionTimeout, uintptr(unsafe.Pointer(uia5)), ms)
+	if win.FAILED(win.HRESULT(result)) {
+		return hresultError("Put_TransactionTimeout", win.HRESULT(result))
+	}
+	return nil
 }
 
 // do runs f on the thread of the Automation and returns its error.
