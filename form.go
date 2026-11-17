@@ -679,6 +679,35 @@ func (fb *FormBase) Hide() {
 	fb.window.SetVisible(false)
 }
 
+// SetVisible shows or hides the form.
+//
+// Other windows are shown with SW_SHOWNA. A top-level form that becomes
+// visible is shown with SW_SHOW, so it is active as soon as ShowWindow
+// returns, as on Windows a program's first window shown with nCmdShow.
+// Before, only the SetFocus of its first layout activated it. Under Wine
+// that left a window to the X window manager: Wine activated it again
+// with a late internal request even after a message box opened at once
+// had disabled it, and the box never got the keys.
+func (fb *FormBase) SetVisible(visible bool) {
+	if visible && !fb.Visible() && fb.activatesWhenShown() {
+		fb.setVisible(true, win.SW_SHOW)
+		return
+	}
+
+	fb.WindowBase.SetVisible(visible)
+}
+
+// activatesWhenShown reports whether the form takes the activation when
+// it becomes visible: a top-level, enabled form. An MDI child is
+// activated by its MDI client.
+func (fb *FormBase) activatesWhenShown() bool {
+	if fb.mdiChild || !win.IsWindowEnabled(fb.hWnd) {
+		return false
+	}
+
+	return win.GetWindowLong(fb.hWnd, win.GWL_STYLE)&win.WS_CHILD == 0
+}
+
 func (fb *FormBase) Show() {
 	fb.proposedSize = maxSize(SizeFrom96DPI(fb.minSize96dpi, fb.DPI()), fb.SizePixels())
 

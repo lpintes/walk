@@ -1386,6 +1386,19 @@ Details and rationale for steps 4 to 11 are in "Candidate next steps" below.
   failures. Manual test with NVDA on amd64 (`examples/databinding`):
   Tab stops once in the "Sex" group, the arrows move between Male,
   Female and Hermaphrodite.
+- Fixed (2026-11-17, Wine): a message box opened right after the main
+  window (from a `Synchronize` before `Run`) never got the keys under
+  Wine 11.21. walk showed every form with `SW_SHOWNA`, so the window
+  was activated only by the X window manager and the first layout;
+  Wine's explorer then sent a late internal `WM_WINE_SETACTIVEWINDOW`
+  that activated the main window after the box had disabled it (Wine
+  bug, analysis and C repro in lpintes/wine-atspi
+  `tests/msgbox-race.c`). `FormBase.SetVisible` now shows a top-level,
+  enabled, non-MDI-child form that becomes visible with `SW_SHOW`, so
+  it is active when `ShowWindow` returns; other windows keep
+  `SW_SHOWNA`. caption-player without tools under Wine: 0 of 3 runs
+  before, 3 of 3 after. Windows Sandbox: `openfocus` and `mdi` (each
+  alone) and `dialogs` pass on 386 and amd64.
 - Step 9: not started; step 8 can continue (generic event types are
   step 9).
 

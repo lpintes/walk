@@ -1350,9 +1350,19 @@ func (wb *WindowBase) Visible() bool {
 
 // SetVisible sets if the *WindowBase is visible.
 func (wb *WindowBase) SetVisible(visible bool) {
+	wb.setVisible(visible, win.SW_SHOWNA)
+}
+
+// setVisible is SetVisible with the ShowWindow command used to show the
+// window.
+func (wb *WindowBase) setVisible(visible bool, showCmd int32) {
 	old := wb.Visible()
 
-	setWindowVisible(wb.hWnd, visible)
+	if visible {
+		win.ShowWindow(wb.hWnd, showCmd)
+	} else {
+		win.ShowWindow(wb.hWnd, win.SW_HIDE)
+	}
 
 	wb.visible = visible
 
