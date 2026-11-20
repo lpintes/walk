@@ -833,6 +833,13 @@ func (lb *ListBox) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) ui
 		if uint32(lParam)>>30 == 0 && Key(wParam) == KeyReturn && lb.CurrentIndex() > -1 {
 			lb.itemActivatedPublisher.Publish()
 		}
+
+	case win.WM_CHAR:
+		// Ctrl+Enter also sends a line feed, which the list's type-ahead search
+		// would take as a letter and move the current item.
+		if wParam == '\n' {
+			return 0
+		}
 	}
 
 	return lb.WidgetBase.WndProc(hwnd, msg, wParam, lParam)
